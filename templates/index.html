@@ -1,1 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareDrop | Powered by IHC Diagnostics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }</style>
+</head>
+<body class="text-slate-800 antialiased pb-28">
 
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="/" class="flex flex-col">
+        <div class="text-2xl font-black text-slate-900 tracking-tight">CareDrop</div>
+        <span class="text-[10px] font-extrabold text-emerald-600 tracking-wider uppercase">Powered by IHC Diagnostics</span>
+      </a>
+      <div class="flex items-center space-x-3">
+        {% if user %}
+          <div class="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+            <span class="text-xs font-bold text-emerald-800">{{ user['phone'] }}</span>
+            <a href="/logout" class="text-xs text-red-500 font-bold hover:underline ml-2">Exit</a>
+          </div>
+        {% else %}
+          <button onclick="toggleLogin()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition">Login</button>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 mt-6">
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm mb-6">
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">Home Sample Collection</h1>
+      <p class="text-slate-500 text-sm mb-5">Search verified laboratory tests in Yamunanagar with transparent pricing.</p>
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="fa-solid fa-magnifying-glass text-slate-400"></i></div>
+        <input type="text" id="searchInput" onkeyup="filterTests()" placeholder="Search test name (e.g., Thyroid, CBC)..." class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium">
+      </div>
+    </div>
+
+    <div onclick="toggleRxModal()" class="bg-gradient-to-br from-emerald-600 to-teal-700 p-6 rounded-3xl text-white shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer mb-8 gap-4">
+      <div>
+        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white mb-3"><i class="fa-solid fa-camera text-lg"></i></div>
+        <h2 class="text-xl font-extrabold mb-1">Upload Prescription</h2>
+        <p class="text-emerald-100 text-xs leading-relaxed">Have a doctor's slip? Upload a photo and we will set up the tests for you.</p>
+      </div>
+      <div class="inline-flex items-center text-xs font-bold text-white bg-white/10 px-4 py-2.5 rounded-xl shrink-0">Upload Now <i class="fa-solid fa-arrow-right ml-1.5"></i></div>
+    </div>
+
+    <h3 class="font-extrabold text-slate-900 text-base mb-3">Test Categories</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8" id="categoryContainer">
+      <button onclick="filterByCategory('All')" class="flex items-center gap-3 bg-slate-900 text-white p-3.5 rounded-2xl shadow-sm text-left">
+        <div class="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-border-all"></i></div>
+        <div><h4 class="font-bold text-xs">All Tests</h4><p class="text-[9px] text-slate-400">Complete view</p></div>
+      </button>
+      {% for cat in categories %}
+      <button onclick="filterByCategory('{{ cat }}')" class="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-500 transition text-left group">
+        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-vial"></i></div>
+        <div><h4 class="font-bold text-xs text-slate-900 group-hover:text-emerald-600 transition">{{ cat }}</h4><p class="text-[9px] text-slate-400">Verified</p></div>
+      </button>
+      {% endfor %}
+    </div>
+
+    <h3 class="font-extrabold text-slate-900 text-base mb-3">Available Tests</h3>
+    <div id="testList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% for test in tests %}
+      <div class="test-card bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center" data-category="{{ test['category'] }}">
+        <div class="pr-3">
+          <span class="inline-block bg-slate-100 text-slate-600 text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider mb-1">{{ test['category'] }}</span>
+          <h4 class="test-name font-bold text-slate-900 text-sm">{{ test['test_name'] }}</h4>
+          <p class="text-[11px] text-slate-500 font-semibold mt-0.5">{{ test['lab_name'] }}</p>
+          <div class="text-base font-black text-emerald-600 mt-1.5">₹{{ test['b2c_price'] }}</div>
+        </div>
+        <button data-name="{{ test['test_name'] }}" data-price="{{ test['b2c_price'] }}" onclick="addToCart(this.dataset.name, parseInt(this.dataset.price))" class="shrink-0 bg-slate-900 hover:bg-emerald-600 text-white font-bold px-3.5 py-2 rounded-xl transition text-xs flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-plus text-[10px]"></i> Add
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 shadow-2xl z-30 py-3 px-4">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-6 text-xs font-bold">
+        <a href="/" class="flex items-center space-x-2 text-emerald-600"><i class="fa-solid fa-house"></i> <span>Home</span></a>
+        <a href="https://wa.me/91903479760" target="_blank" class="flex items-center space-x-2 text-slate-500 hover:text-slate-900"><i class="fa-brands fa-whatsapp text-sm"></i> <span>Support</span></a>
+      </div>
+      <button onclick="toggleCart()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg flex items-center space-x-2.5 transition text-xs">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span>View Cart</span>
+        <span id="cartBadge" class="bg-white text-emerald-700 text-[10px] px-1.5 py-0.2 rounded-full font-black">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <div id="cartModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+        <h2 class="text-lg font-black text-slate-900">Confirm Booking</h2>
+        <button onclick="toggleCart()" class="text-slate-400 hover:text-slate-900 bg-slate-100 w-7 h-7 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+      </div>
+      
+      <div id="cartItems" class="space-y-2 mb-4"></div>
+
+      <form action="/checkout" method="POST" class="space-y-3 pt-3 border-t border-slate-100">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Patient Full Name</label>
+          <input type="text" name="patient_name" required placeholder="Enter patient name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Complete Home Address (Yamunanagar)</label>
+          <textarea name="address" required placeholder="House No, Street, Landmark, Area" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center justify-between text-xs font-bold text-emerald-900">
+          <span><i class="fa-solid fa-wallet mr-1.5"></i> Payment Mode</span>
+          <span class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px]">Pay on Sample Collection</span>
+        </div>
+
+        <div class="flex justify-between font-black text-lg pt-2 text-slate-900">
+          <span>Total Payable</span>
+          <span id="cartTotal">₹0</span>
+        </div>
+
+        <input type="hidden" name="cart_data" id="cartDataInput">
+        <input type="hidden" name="total_amount" id="totalAmountInput">
+
+        {% if user %}
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition text-xs mt-2">Book Home Collection</button>
+        {% else %}
+          <button type="button" onclick="toggleCart(); toggleLogin();" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl transition text-xs mt-2">Login to Confirm Booking</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <div id="loginModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-black text-slate-900">Patient Sign In</h2>
+        <button onclick="toggleLogin()" class="text-slate-400 hover:text-slate-900 bg-slate-100 w-7 h-7 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+      </div>
+      <form action="/login" method="POST" class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Full Name</label>
+          <input type="text" name="name" required placeholder="e.g., Rajesh Kumar" class="w-full border border-slate-200 bg-slate-50 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-xs font-semibold">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Mobile Number</label>
+          <input type="tel" name="phone" required placeholder="10-digit mobile number" class="w-full border border-slate-200 bg-slate-50 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-xs font-semibold">
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition text-xs shadow-md mt-2">Sign In / Register</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="rxModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-black text-slate-900">Upload Prescription</h2>
+        <button onclick="toggleRxModal()" class="text-slate-400 hover:text-slate-900 bg-slate-100 w-7 h-7 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+      </div>
+      <form action="/upload-prescription" method="POST">
+        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center mb-4 bg-slate-50">
+          <i class="fa-solid fa-cloud-arrow-up text-emerald-600 text-2xl mb-1"></i>
+          <input type="file" name="rx_image" accept="image/*" required class="w-full mt-1 text-[11px] text-slate-500">
+        </div>
+        {% if user %}
+          <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition text-xs">Submit Slip</button>
+        {% else %}
+          <button type="button" onclick="toggleRxModal(); toggleLogin();" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl transition text-xs">Login to Upload</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let cart = [];
+
+    function filterTests() {
+      let input = document.getElementById('searchInput').value.toLowerCase();
+      let cards = document.getElementsByClassName('test-card');
+      for (let i = 0; i < cards.length; i++) {
+        let name = cards[i].querySelector('.test-name').innerText.toLowerCase();
+        cards[i].style.display = name.includes(input) ? "flex" : "none";
+      }
+    }
+
+    function filterByCategory(cat) {
+      let cards = document.getElementsByClassName('test-card');
+      for (let i = 0; i < cards.length; i++) {
+        if (cat === 'All' || cards[i].getAttribute('data-category') === cat) {
+          cards[i].style.display = "flex";
+        } else {
+          cards[i].style.display = "none";
+        }
+      }
+    }
+
+    function toggleLogin() { document.getElementById('loginModal').classList.toggle('hidden'); }
+    function toggleCart() { document.getElementById('cartModal').classList.toggle('hidden'); updateCartUI(); }
+    function toggleRxModal() { document.getElementById('rxModal').classList.toggle('hidden'); }
+
+    function addToCart(name, price) {
+      cart.push({ name: name, price: price });
+      document.getElementById('cartBadge').innerText = cart.length;
+    }
+
+    function remove(index) {
+      cart.splice(index, 1);
+      document.getElementById('cartBadge').innerText = cart.length;
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      let container = document.getElementById('cartItems');
+      let total = 0;
+      
+      if (cart.length === 0) {
+        container.innerHTML = '<div class="py-6 text-center text-slate-400 font-bold text-xs"><i class="fa-solid fa-basket-shopping text-2xl mb-1 block"></i>Your cart is empty</div>';
+      } else {
+        container.innerHTML = cart.map((item, i) => {
+          total += item.price;
+          return `
+            <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <span class="font-bold text-xs text-slate-900">${item.name}</span>
+              <div class="flex items-center gap-3">
+                <span class="text-emerald-600 font-black text-xs">₹${item.price}</span>
+                <button onclick="remove(${i})" class="text-slate-400 hover:text-red-500 transition text-xs"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>`;
+        }).join('');
+      }
+      
+      document.getElementById('cartTotal').innerText = '₹' + total;
+      document.getElementById('cartDataInput').value = JSON.stringify(cart);
+      document.getElementById('totalAmountInput').value = total;
+    }
+  </script>
+</body>
+</html>
