@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop | Next-Gen Diagnostics & Home Sample Collection</title>
+    <title>CareDrop — Elite Diagnostics & At-Home Concierge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,124 +13,173 @@
                 extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
                     colors: {
-                        brand: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 900: '#064e3b' }
+                        obsidian: '#090a0f',
+                        carddark: '#12151c',
+                        neonmint: '#00F2FE',
+                        neonemerald: '#4FACFE'
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white min-h-screen">
+<body class="bg-obsidian text-slate-100 antialiased selection:bg-emerald-500 selection:text-white min-h-screen">
 
-    <!-- Glowing Background Effect -->
+    <!-- Atmospheric Glow Backgrounds -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/3 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -top-60 left-1/4 w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[120px]"></div>
+        <div class="absolute top-1/2 -right-40 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-[100px]"></div>
     </div>
 
-    <!-- Header / Navbar -->
-    <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-3 group">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-                    <i class="fa-solid fa-droplet text-white text-lg"></i>
+    <!-- Navigation -->
+    <header class="sticky top-0 z-50 backdrop-blur-2xl bg-obsidian/70 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-3.5 group">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-xl shadow-emerald-500/10 group-hover:rotate-6 transition-transform">
+                    <i class="fa-solid fa-dna text-slate-950 text-xl font-bold"></i>
                 </div>
                 <div>
-                    <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">CareDrop</span>
-                    <span class="block text-[10px] font-semibold tracking-widest uppercase text-emerald-400">Precision Diagnostics</span>
+                    <span class="text-2xl font-black tracking-tight text-white">CAREDROP<span class="text-emerald-400">.</span></span>
+                    <span class="block text-[10px] font-bold tracking-widest uppercase text-slate-400">Clinical Concierge</span>
                 </div>
             </a>
 
             <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Phlebotomists Active in Area</span>
+                </div>
                 {% if user %}
-                    <div class="hidden sm:flex items-center space-x-2 bg-slate-900/90 border border-slate-800 px-4 py-2 rounded-full shadow-inner">
-                        <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                        <span class="text-xs font-medium text-slate-300">{{ user['phone'] }}</span>
-                    </div>
-                    <a href="/logout" class="text-xs font-semibold px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all">Sign Out</a>
+                    <a href="/logout" class="px-5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs hover:bg-rose-500/20 transition-all">Sign Out</a>
                 {% else %}
-                    <a href="/admin-login" class="text-xs font-semibold px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white transition-all">Admin Portal</a>
+                    <a href="/admin-login" class="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-xs transition-all">Admin Portal</a>
                 {% endif %}
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="relative z-10 pt-16 pb-12 px-6">
-        <div class="max-w-4xl mx-auto text-center space-y-6">
-            <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold tracking-wide uppercase">
-                <i class="fa-solid fa-bolt-lightning"></i>
-                <span>Instant Home Sample Collection</span>
-            </div>
-            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-                Advanced Healthcare, <br>
-                <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Delivered to Your Doorstep.</span>
-            </h1>
-            <p class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto font-light">
-                Skip the laboratory queues. Book certified diagnostic tests effortlessly with transparent pricing and expert sample collection.
-            </p>
-
-            <!-- Search Bar Form -->
-            <form action="/" method="GET" class="pt-4 max-w-2xl mx-auto">
-                <div class="relative flex items-center shadow-2xl shadow-emerald-950/50 rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/90 backdrop-blur-md p-1.5">
-                    <div class="pl-4 text-emerald-400">
-                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
-                    </div>
-                    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search by test name (e.g., CBC, Lipid Profile, Thyroid)..." 
-                           class="w-full bg-transparent px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none">
-                    <button type="submit" class="bg-gradient-to-r from-brand-600 to-emerald-500 hover:from-brand-500 hover:to-emerald-400 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-md">
-                        Search Tests
-                    </button>
+    <!-- Asymmetric Hero Section -->
+    <section class="relative z-10 pt-12 pb-16 px-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <div class="lg:col-span-7 space-y-8">
+                <div class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-widest uppercase">
+                    <i class="fa-solid fa-shield-heart"></i>
+                    <span>Zero-Queue Diagnostics</span>
                 </div>
-            </form>
+                
+                <h1 class="text-5xl sm:text-7xl font-black tracking-tight text-white leading-[1.08]">
+                    Precision health data, <br>
+                    <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">engineered for you.</span>
+                </h1>
+                
+                <p class="text-base sm:text-lg text-slate-400 font-light max-w-xl leading-relaxed">
+                    We replaced clinical sterile waiting rooms with elite home sample collection. Transparent pricing, NABL-certified accuracy, delivered directly to your device.
+                </p>
+
+                <!-- Search Form -->
+                <form action="/" method="GET" class="max-w-xl">
+                    <div class="relative flex items-center bg-carddark border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-emerald-500/50 transition-colors">
+                        <div class="pl-4 text-emerald-400">
+                            <i class="fa-solid fa-bolt text-lg"></i>
+                        </div>
+                        <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search test profile (e.g., CBC, Thyroid, Vitamin D)..." 
+                               class="w-full bg-transparent px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none">
+                        <button type="submit" class="bg-emerald-400 hover:bg-emerald-300 text-slate-950 px-7 py-3 rounded-xl font-extrabold text-xs tracking-wider uppercase transition-all shadow-lg shadow-emerald-400/20">
+                            Explore
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Floating Interactive Status Card -->
+            <div class="lg:col-span-5">
+                <div class="relative bg-gradient-to-b from-white/10 to-white/5 p-1 rounded-3xl backdrop-blur-2xl border border-white/10 shadow-2xl">
+                    <div class="bg-carddark rounded-[22px] p-8 space-y-6">
+                        <div class="flex items-center justify-between pb-6 border-b border-white/5">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-bold text-white">Average Turnaround</span>
+                                    <span class="text-xs text-slate-400">Fast digital reporting</span>
+                                </div>
+                            </div>
+                            <span class="text-xl font-black text-emerald-400">6 Hours</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between text-xs text-slate-300">
+                                <span class="flex items-center space-x-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Sterile Sample Kits</span></span>
+                                <span class="font-bold text-white">100% Safe</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-slate-300">
+                                <span class="flex items-center space-x-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Certified Pathologists</span></span>
+                                <span class="font-bold text-white">Verified</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-slate-300">
+                                <span class="flex items-center space-x-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Home Collection Fee</span></span>
+                                <span class="font-bold text-emerald-400">Free</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-medium text-center">
+                                Direct booking active for home sample dispatches.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 
-    <!-- Categories Pills -->
-    <section class="relative z-10 max-w-7xl mx-auto px-6 pb-8">
-        <div class="flex items-center justify-start sm:justify-center overflow-x-auto space-x-3 pb-4 no-scrollbar">
-            <a href="/" class="px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide border transition-all whitespace-nowrap {% if not request.args.get('cat') %}bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20{% else %}bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white{% endif %}">
-                All Diagnostics
+    <!-- Categories Selector Bar -->
+    <section class="relative z-10 max-w-7xl mx-auto px-6 pb-12">
+        <div class="flex items-center space-x-3 overflow-x-auto pb-4 no-scrollbar">
+            <a href="/" class="px-6 py-3 rounded-xl text-xs font-bold tracking-wider uppercase border transition-all whitespace-nowrap {% if not request.args.get('cat') %}bg-emerald-400 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-400/20{% else %}bg-carddark border-white/10 text-slate-400 hover:border-white/30 hover:text-white{% endif %}">
+                All Tests
             </a>
             {% for cat in categories %}
-            <a href="/?cat={{ cat }}" class="px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide border transition-all whitespace-nowrap {% if request.args.get('cat') == cat %}bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20{% else %}bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white{% endif %}">
+            <a href="/?cat={{ cat }}" class="px-6 py-3 rounded-xl text-xs font-bold tracking-wider uppercase border transition-all whitespace-nowrap {% if request.args.get('cat') == cat %}bg-emerald-400 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-400/20{% else %}bg-carddark border-white/10 text-slate-400 hover:border-white/30 hover:text-white{% endif %}">
                 {{ cat }}
             </a>
             {% endfor %}
         </div>
     </section>
 
-    <!-- Test Cards Grid -->
+    <!-- Distinct Test Grid -->
     <main class="relative z-10 max-w-7xl mx-auto px-6 pb-24">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for test in tests %}
-            <div class="group bg-slate-900/60 border border-slate-800/80 hover:border-emerald-500/40 rounded-3xl p-6 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 flex flex-col justify-between">
+            <div class="group relative bg-carddark border border-white/5 hover:border-emerald-500/40 rounded-3xl p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/10 flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="px-3 py-1 rounded-full bg-slate-800 text-emerald-400 text-[11px] font-bold tracking-wider uppercase border border-slate-700/50">
+                    <div class="flex items-center justify-between mb-6">
+                        <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-emerald-400 text-[10px] font-black tracking-widest uppercase">
                             {{ test['category'] }}
                         </span>
-                        <div class="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-colors">
-                            <i class="fa-solid fa-flask-vial text-xs"></i>
+                        <div class="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-slate-950 group-hover:bg-emerald-400 transition-all">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                         </div>
                     </div>
 
-                    <h3 class="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors mb-2">
+                    <h3 class="text-xl font-extrabold text-white group-hover:text-emerald-300 transition-colors mb-3">
                         {{ test['name'] }}
                     </h3>
-                    <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed font-light mb-6">
+                    <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed font-light mb-8">
                         {{ test['description'] }}
                     </p>
                 </div>
 
-                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between mt-auto">
+                <div class="pt-6 border-t border-white/5 flex items-center justify-between mt-auto">
                     <div>
-                        <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-medium">Package Price</span>
-                        <span class="text-xl font-extrabold text-white">₹{{ test['price'] }}</span>
+                        <span class="block text-[10px] text-slate-500 uppercase tracking-widest font-bold">Total Price</span>
+                        <span class="text-2xl font-black text-white">₹{{ test['price'] }}</span>
                     </div>
-                    <a href="/book?test_id={{ test['id'] }}" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-brand-600 text-white font-semibold text-xs transition-all duration-200 border border-slate-700 hover:border-emerald-500 shadow-md flex items-center space-x-2">
-                        <span>Book Test</span>
-                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    <a href="/book?test_id={{ test['id'] }}" class="px-6 py-3 rounded-xl bg-white/10 hover:bg-emerald-400 hover:text-slate-950 text-white font-extrabold text-xs tracking-wider uppercase transition-all duration-200 border border-white/10 shadow-md">
+                        Book Slot
                     </a>
                 </div>
             </div>
@@ -139,8 +188,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-900 bg-slate-950 py-8 text-center text-xs text-slate-600">
-        <p>&copy; 2026 CareDrop Diagnostics. Built for seamless medical access.</p>
+    <footer class="border-t border-white/5 bg-obsidian py-12 text-center text-xs text-slate-500">
+        <p class="font-medium">&copy; 2026 CareDrop Diagnostics Core System. Engineered for elite medical logistics.</p>
     </footer>
 
 </body>
