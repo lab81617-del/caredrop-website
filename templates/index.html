@@ -2,103 +2,185 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CareDrop | Powered by IHC Diagnostics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] } } } }</script>
+    <script>
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        clinical: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }
+                    }
+                } 
+            } 
+        }
+    </script>
+    <style>
+        /* Hide scrollbar for a cleaner mobile experience */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-sky-600 flex items-center justify-center text-white shadow-md shadow-sky-600/20">
-                    <i class="fa-solid fa-heart-pulse text-lg"></i>
+    <!-- Premium Header -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+            
+            <!-- Logo Section -->
+            <a href="/" class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-clinical-500 to-clinical-700 flex items-center justify-center text-white shadow-lg shadow-clinical-500/30">
+                    <i class="fa-solid fa-heart-pulse text-sm sm:text-lg"></i>
                 </div>
-                <div>
-                    <span class="text-xl font-extrabold tracking-tight text-slate-900">CareDrop</span>
-                    <span class="block text-[10px] font-bold uppercase tracking-widest text-sky-600">Powered by IHC Diagnostics</span>
+                <div class="flex flex-col">
+                    <span class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 leading-none">CareDrop</span>
+                    <span class="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-clinical-600 mt-0.5">Powered by IHC Diagnostics</span>
                 </div>
             </a>
 
-            <div class="flex items-center space-x-3">
-                <a href="/cart" class="relative px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <span>Cart</span>
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                {% if user %}
+                    <a href="/my-bookings" class="hidden sm:flex items-center space-x-2 px-4 py-2 rounded-full bg-clinical-50 text-clinical-700 text-xs font-bold hover:bg-clinical-100 transition-colors">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>History</span>
+                    </a>
+                {% endif %}
+                
+                <a href="/cart" class="relative flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-clinical-600 hover:bg-clinical-700 text-white transition-all shadow-md shadow-clinical-600/20 active:scale-95">
+                    <i class="fa-solid fa-cart-shopping text-xs sm:text-sm mr-1.5"></i>
+                    <span class="text-xs sm:text-sm font-bold">Cart</span>
                     {% if cart_count > 0 %}
-                    <span class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold flex items-center justify-center">{{ cart_count }}</span>
+                        <span class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 border-2 border-white text-white text-[10px] font-black flex items-center justify-center shadow-sm">
+                            {{ cart_count }}
+                        </span>
                     {% endif %}
                 </a>
-                {% if user %}
-                    <a href="/my-bookings" class="px-3.5 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-xs font-bold hover:bg-sky-100 transition-all">My Bookings</a>
-                    <a href="/logout" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all">Sign Out</a>
-                {% endif %}
             </div>
         </div>
     </header>
 
-    <section class="bg-gradient-to-b from-sky-50 via-white to-slate-50 py-14 px-6 border-b border-slate-200">
-        <div class="max-w-3xl mx-auto text-center space-y-6">
-            <div class="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-sky-100 text-sky-700 text-xs font-bold uppercase tracking-wider">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span>NABL Certified Laboratories & Expert Phlebotomists</span>
+    <!-- Refined Hero Section -->
+    <section class="bg-white px-4 py-8 sm:py-16 border-b border-slate-100 relative overflow-hidden">
+        <!-- Subtle background decoration -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-clinical-50 blur-3xl opacity-60 pointer-events-none"></div>
+        
+        <div class="max-w-3xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center justify-center space-x-1.5 px-3 py-1 mb-4 rounded-full bg-clinical-50 text-clinical-700 border border-clinical-100">
+                <i class="fa-solid fa-shield-check text-[10px]"></i>
+                <span class="text-[10px] font-bold uppercase tracking-widest">NABL Certified Labs</span>
             </div>
-            <h1 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Advanced Diagnostic Tests, <br>Delivered Safely to Your Home.
+            
+            <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15] mb-4">
+                Precision Diagnostics, <br class="hidden sm:block">
+                <span class="text-clinical-600">Delivered to You.</span>
             </h1>
-            <form action="/" method="GET" class="pt-2">
-                <div class="flex items-center bg-white border border-slate-300 rounded-2xl p-2 shadow-lg focus-within:border-sky-600 transition-all">
-                    <div class="pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
-                    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search test (e.g., CBC, Lipid, Thyroid)..." 
-                           class="w-full bg-transparent px-4 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none">
-                    <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md">Search</button>
+            
+            <!-- Floating Search Bar -->
+            <form action="/" method="GET" class="max-w-xl mx-auto mt-6 sm:mt-8">
+                <div class="flex items-center bg-white border border-slate-200 rounded-full p-1.5 shadow-lg shadow-slate-200/50 focus-within:border-clinical-500 focus-within:ring-4 focus-within:ring-clinical-50 transition-all">
+                    <div class="pl-4 text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </div>
+                    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search tests (e.g., CBC, Thyroid)..." 
+                           class="w-full bg-transparent px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-medium">
+                    <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider transition-colors">
+                        Search
+                    </button>
                 </div>
             </form>
         </div>
     </section>
 
-    <div class="max-w-7xl mx-auto px-6 py-6 w-full">
-        <div class="flex items-center space-x-2 overflow-x-auto pb-2 no-scrollbar">
-            <a href="/" class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if not request.args.get('cat') %}bg-slate-900 text-white shadow-md{% else %}bg-white border border-slate-200 text-slate-600 hover:bg-slate-100{% endif %}">All Tests</a>
-            {% for cat in categories %}
-            <a href="/?cat={{ cat }}" class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if request.args.get('cat') == cat %}bg-slate-900 text-white shadow-md{% else %}bg-white border border-slate-200 text-slate-600 hover:bg-slate-100{% endif %}">{{ cat }}</a>
-            {% endfor %}
+    <!-- Modern Category Pills -->
+    <div class="bg-slate-50 sticky top-16 sm:top-20 z-40 border-b border-slate-200/60 shadow-sm shadow-slate-100 backdrop-blur-md bg-slate-50/90">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4">
+            <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar">
+                <a href="/" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if not request.args.get('cat') %}bg-slate-900 text-white shadow-md{% else %}bg-white border border-slate-200 text-slate-600 hover:bg-slate-100{% endif %}">
+                    All Tests
+                </a>
+                {% for cat in categories %}
+                <a href="/?cat={{ cat }}" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if request.args.get('cat') == cat %}bg-slate-900 text-white shadow-md{% else %}bg-white border border-slate-200 text-slate-600 hover:bg-slate-100{% endif %}">
+                    {{ cat }}
+                </a>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-6 pb-20 w-full">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Premium Test Grid -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:py-12 w-full flex-grow">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {% for test in tests %}
-            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="px-3 py-1 rounded-full bg-sky-50 text-sky-700 text-[10px] font-extrabold uppercase tracking-widest border border-sky-100">{{ test['category'] }}</span>
-                        <span class="text-xs font-semibold text-slate-500"><i class="fa-regular fa-clock mr-1"></i> {{ test['report_timing'] }}</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">{{ test['name'] }}</h3>
-                    <p class="text-xs text-slate-500 line-clamp-3 leading-relaxed mb-4 font-normal">{{ test['description'] }}</p>
-                    <div class="mb-4 text-xs font-semibold text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <i class="fa-solid fa-utensils mr-1 text-sky-600"></i> Fasting Required: <span class="text-slate-900 font-bold">{{ test['fasting_required'] }}</span>
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:shadow-clinical-500/10 hover:border-clinical-200 transition-all duration-300 flex flex-col group">
+                
+                <!-- Card Header -->
+                <div class="flex items-start justify-between mb-3">
+                    <span class="px-2.5 py-1 rounded-md bg-clinical-50 text-clinical-700 text-[9px] font-black uppercase tracking-widest border border-clinical-100">
+                        {{ test['category'] | default('General') }}
+                    </span>
+                    <div class="flex items-center text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
+                        <i class="fa-regular fa-clock mr-1.5 text-clinical-500"></i> 
+                        {{ test['report_timing'] | default('24 Hours') }}
                     </div>
                 </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
-                    <div>
-                        <span class="block text-[10px] text-slate-400 uppercase tracking-wider font-bold">Price</span>
-                        <span class="text-xl font-extrabold text-slate-900">₹{{ test['price'] }}</span>
+
+                <!-- Test Info -->
+                <h3 class="text-lg font-extrabold text-slate-900 leading-tight mb-2 group-hover:text-clinical-700 transition-colors">
+                    {{ test['name'] | default('Diagnostic Test') }}
+                </h3>
+                <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
+                    {{ test['description'] | default('Comprehensive diagnostic profiling for accurate medical assessment.') }}
+                </p>
+
+                <!-- Fasting Requirement Box -->
+                <div class="mb-5 mt-auto flex items-center p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+                    <div class="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center mr-2 shadow-sm text-slate-400">
+                        <i class="fa-solid fa-utensils text-[10px]"></i>
                     </div>
-                    <a href="/cart/add/{{ test['id'] }}" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-sm">
-                        <i class="fa-solid fa-cart-plus mr-1"></i> Add to Cart
+                    <div>
+                        <span class="block text-[9px] font-bold uppercase tracking-widest text-slate-400 leading-none mb-0.5">Fasting</span>
+                        <span class="font-bold text-slate-800 leading-none">{{ test['fasting_required'] | default('Not Required') }}</span>
+                    </div>
+                </div>
+
+                <!-- Price & Action -->
+                <div class="pt-4 border-t border-slate-100 flex items-end justify-between">
+                    <div>
+                        <span class="block text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Total Price</span>
+                        <div class="flex items-baseline text-slate-900">
+                            <span class="text-sm font-bold mr-0.5">₹</span>
+                            <span class="text-2xl font-black tracking-tight">{{ test['price'] | default('0') }}</span>
+                        </div>
+                    </div>
+                    
+                    <a href="/cart/add/{{ test['id'] | default(0) }}" class="flex items-center justify-center px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-clinical-600 text-white text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 shadow-md">
+                        <i class="fa-solid fa-plus mr-1.5 opacity-70"></i> Add
                     </a>
                 </div>
+            </div>
+            {% else %}
+            <!-- Empty State Fallback -->
+            <div class="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white border border-slate-200 rounded-3xl border-dashed">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-4">
+                    <i class="fa-solid fa-flask text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1">No Tests Found</h3>
+                <p class="text-sm text-slate-500 max-w-sm">We couldn't load the diagnostics catalog. Please ensure your database is initialized.</p>
             </div>
             {% endfor %}
         </div>
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-8 text-center text-xs text-slate-500">
-        <p>&copy; 2026 CareDrop Diagnostics Core System. Powered by IHC Diagnostics.</p>
+    <footer class="bg-white border-t border-slate-200 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-xs font-semibold text-slate-400">&copy; 2026 CareDrop Medical Operations. <br class="sm:hidden">Powered by IHC Diagnostics.</p>
+        </div>
     </footer>
+
 </body>
 </html>
