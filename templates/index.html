@@ -6,84 +6,110 @@
     <title>CareDrop | Premium Diagnostics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }, colors: { navy: '#0f172a', teal: '#0d9488', pearl: '#f8fafc' } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: '#2563eb', secondary: '#eff6ff', dark: '#0f172a' }
+                } 
+            } 
+        }
+    </script>
     <style>.no-scrollbar::-webkit-scrollbar { display: none; }</style>
 </head>
-<body class="bg-pearl text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-[#f8fafc] text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <header class="sticky top-0 z-50 bg-navy text-white shadow-lg">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2">
-                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-teal flex items-center justify-center text-white shadow-md">
-                    <i class="fa-solid fa-dna text-sm sm:text-lg"></i>
+            <a href="/" class="flex items-center space-x-2.5">
+                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-md">
+                    <i class="fa-solid fa-notes-medical text-lg"></i>
                 </div>
                 <div class="flex flex-col">
-                    <span class="text-lg sm:text-xl font-black tracking-tight leading-none">CareDrop</span>
-                    <span class="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-teal/80 mt-0.5">Powered by IHC</span>
+                    <span class="text-xl font-extrabold tracking-tight text-dark leading-none">CareDrop</span>
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-primary mt-1">Powered by IHC</span>
                 </div>
             </a>
 
             <div class="flex items-center space-x-3">
-                <a href="/cart" class="flex items-center px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-all active:scale-95">
-                    <i class="fa-solid fa-cart-shopping text-sm mr-2 text-teal"></i>
-                    <span class="text-xs sm:text-sm font-bold">Cart ({{ cart_count }})</span>
+                <a href="/cart" class="flex items-center justify-center px-5 py-2.5 rounded-full bg-dark hover:bg-slate-800 text-white transition-all shadow-md active:scale-95">
+                    <i class="fa-solid fa-cart-shopping text-sm mr-2"></i>
+                    <span class="text-sm font-bold">Cart</span>
+                    {% if cart_count > 0 %}
+                        <span class="ml-2 w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">{{ cart_count }}</span>
+                    {% endif %}
                 </a>
             </div>
         </div>
     </header>
 
-    <section class="bg-navy text-white px-4 py-12 sm:py-20 rounded-b-[40px] shadow-xl relative overflow-hidden">
-        <div class="max-w-3xl mx-auto text-center relative z-10">
-            <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-[1.15] mb-4">
-                Clinical Precision, <br>
-                <span class="text-teal">At Your Doorstep.</span>
+    <!-- Hero Section -->
+    <section class="bg-white px-4 py-12 sm:py-20 border-b border-slate-100">
+        <div class="max-w-3xl mx-auto text-center">
+            <div class="inline-flex items-center space-x-1.5 px-3 py-1 mb-6 rounded-full bg-secondary text-primary border border-blue-100">
+                <i class="fa-solid fa-shield-check text-[10px]"></i>
+                <span class="text-[10px] font-bold uppercase tracking-widest">NABL Certified</span>
+            </div>
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-dark tracking-tight leading-[1.15] mb-4">
+                Advanced Diagnostics, <br>
+                <span class="text-primary">At Your Doorstep.</span>
             </h1>
-            <p class="text-sm text-slate-300 font-medium max-w-lg mx-auto mb-8">NABL-certified pathology and expert phlebotomists. Search and schedule your home collection instantly.</p>
             
-            <form action="/" method="GET" class="max-w-xl mx-auto">
-                <div class="flex items-center bg-white rounded-full p-1.5 shadow-2xl focus-within:ring-4 focus-within:ring-teal/50 transition-all">
+            <form action="/" method="GET" class="max-w-lg mx-auto mt-8">
+                <div class="flex items-center bg-white border border-slate-300 rounded-2xl p-1.5 shadow-sm focus-within:border-primary focus-within:ring-4 focus-within:ring-secondary transition-all">
                     <i class="fa-solid fa-magnifying-glass pl-4 text-slate-400"></i>
-                    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search CBC, Lipid, Thyroid..." 
-                           class="w-full bg-transparent px-3 py-2 text-sm text-navy placeholder-slate-400 focus:outline-none font-bold">
-                    <button type="submit" class="bg-teal hover:bg-teal/90 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider transition-colors">Search</button>
+                    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search tests (e.g. CBC, Thyroid)..." 
+                           class="w-full bg-transparent px-3 py-3 text-sm text-dark placeholder-slate-400 focus:outline-none font-medium">
+                    <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors">Search</button>
                 </div>
             </form>
         </div>
     </section>
 
-    <div class="max-w-7xl mx-auto px-4 py-6 w-full -mt-4 relative z-20">
-        <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar bg-white p-2 rounded-full shadow-sm border border-slate-100">
-            <a href="/" class="px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap {% if not request.args.get('cat') %}bg-navy text-white{% else %}text-slate-500 hover:bg-pearl{% endif %}">All</a>
-            {% for cat in categories %}
-            <a href="/?cat={{ cat }}" class="px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap {% if request.args.get('cat') == cat %}bg-navy text-white{% else %}text-slate-500 hover:bg-pearl{% endif %}">{{ cat }}</a>
-            {% endfor %}
+    <!-- Categories -->
+    <div class="bg-white border-b border-slate-200 sticky top-16 sm:top-20 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar">
+                <a href="/" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if not request.args.get('cat') %}bg-dark text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">All Tests</a>
+                {% for cat in categories %}
+                <a href="/?cat={{ cat }}" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if request.args.get('cat') == cat %}bg-dark text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">{{ cat }}</a>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 pb-20 w-full flex-grow">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- Test Grid -->
+    <main class="max-w-7xl mx-auto px-4 py-10 w-full flex-grow">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for test in tests %}
-            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
                 <div>
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="px-3 py-1 bg-pearl text-teal text-[10px] font-black uppercase rounded-lg border border-slate-100">{{ test['category'] }}</span>
-                        <span class="text-[10px] font-bold text-slate-400"><i class="fa-regular fa-clock mr-1 text-teal"></i>{{ test['report_timing'] }}</span>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="px-2.5 py-1 rounded-md bg-secondary text-primary text-[10px] font-bold uppercase tracking-wider border border-blue-100">{{ test['category'] or 'General' }}</span>
+                        <span class="text-[11px] font-semibold text-slate-500"><i class="fa-regular fa-clock mr-1 text-primary"></i>{{ test['report_timing'] or '24 Hours' }}</span>
                     </div>
-                    <h3 class="text-lg font-black text-navy leading-tight mb-2">{{ test['name'] }}</h3>
-                    <p class="text-xs text-slate-500 font-medium mb-4 line-clamp-2">{{ test['description'] }}</p>
+                    <h3 class="text-lg font-bold text-dark leading-tight mb-2">{{ test['name'] or 'Test Package' }}</h3>
+                    <p class="text-sm text-slate-500 line-clamp-2 mb-6">{{ test['description'] or 'Comprehensive diagnostic package.' }}</p>
                     
-                    <div class="flex items-center p-3 rounded-xl bg-pearl border border-slate-100 mb-6">
-                        <i class="fa-solid fa-utensils text-teal mr-3"></i>
+                    <div class="mb-6 p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center">
+                        <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center mr-3 text-slate-400">
+                            <i class="fa-solid fa-utensils text-xs"></i>
+                        </div>
                         <div>
-                            <span class="block text-[9px] font-bold uppercase text-slate-400">Fasting</span>
-                            <span class="text-xs font-bold text-navy">{{ test['fasting_required'] }}</span>
+                            <span class="block text-[10px] font-bold uppercase text-slate-400 tracking-wider">Fasting Requirement</span>
+                            <span class="text-sm font-semibold text-dark">{{ test['fasting_required'] or 'Not Required' }}</span>
                         </div>
                     </div>
                 </div>
                 <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <span class="text-2xl font-black text-navy tracking-tight">₹{{ test['price'] }}</span>
-                    <a href="/cart/add/{{ test['id'] }}" class="px-5 py-3 rounded-xl bg-navy hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider active:scale-95 transition-all shadow-md">Add to Cart</a>
+                    <div>
+                        <span class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Total Price</span>
+                        <span class="text-2xl font-black text-dark">₹{{ test['price'] or '0' }}</span>
+                    </div>
+                    <a href="/cart/add/{{ test['id'] }}" class="px-5 py-3 rounded-xl bg-primary hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 shadow-md">Add to Cart</a>
                 </div>
             </div>
             {% endfor %}
