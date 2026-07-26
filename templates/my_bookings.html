@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] } } } }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <header class="bg-white border-b border-slate-200 py-4 px-6 shadow-sm">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="/" class="text-xs font-bold text-slate-600 hover:text-slate-900"><i class="fa-solid fa-arrow-left mr-2"></i> Back to Home</a>
+            <span class="text-xs font-bold text-sky-600">Patient ID: {{ user }}</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-10 w-full">
+        <div class="mb-6">
+            <h1 class="text-2xl font-extrabold text-slate-900">Your Test Booking History</h1>
+            <p class="text-xs text-slate-500 mt-1">Track your scheduled home sample collections.</p>
+        </div>
+
+        <div class="space-y-4">
+            {% for b in bookings %}
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <span class="px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 font-bold text-[10px] uppercase border border-sky-100">Booking #{{ b['id'] }}</span>
+                    <h3 class="text-lg font-bold text-slate-900 pt-1">{{ b['test_name'] }}</h3>
+                    <p class="text-xs text-slate-500"><i class="fa-solid fa-calendar mr-1"></i> Scheduled Date: <span class="font-bold text-slate-700">{{ b['booking_date'] }}</span></p>
+                    <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i> Address: {{ b['address'] }}</p>
+                </div>
+                <div class="text-left sm:text-right space-y-2">
+                    <span class="block text-base font-extrabold text-slate-900">₹{{ b['price'] }}</span>
+                    <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold text-[10px] uppercase">
+                        {{ b['status'] }}
+                    </span>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-400">
+                <p class="text-sm">You haven't booked any tests yet.</p>
+                <a href="/" class="inline-block mt-4 px-5 py-2.5 rounded-xl bg-sky-600 text-white font-bold text-xs uppercase tracking-wider shadow-md">Explore Tests</a>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 CareDrop Diagnostics. Powered by IHC Diagnostics.</p>
+    </footer>
+
+</body>
+</html>
