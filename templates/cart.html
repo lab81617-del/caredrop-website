@@ -3,52 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Test Cart | CareDrop</title>
+    <title>Cart | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { colors: { charcoal: { 800: '#2C3539', 900: '#1A2124' }, teal: { 500: '#00ADB5' }, canvas: '#F4F7F6' } } } }</script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
-    <header class="bg-white border-b border-slate-200 py-4 px-6 shadow-sm">
-        <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <a href="/" class="text-xs font-bold text-slate-600 hover:text-slate-900"><i class="fa-solid fa-arrow-left mr-2"></i> Continue Shopping</a>
-            <span class="text-xs font-bold text-sky-600">Powered by IHC Diagnostics</span>
-        </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto px-6 py-10 w-full">
-        <h1 class="text-2xl font-extrabold text-slate-900 mb-6">Selected Test Cart</h1>
+<body class="bg-canvas text-charcoal-800 font-sans antialiased min-h-screen">
+    <header class="bg-charcoal-900 text-white py-4 px-6 shadow-md"><div class="max-w-4xl mx-auto font-bold"><a href="/" class="text-teal-500">← Back to Lab</a></div></header>
+    <main class="max-w-4xl mx-auto px-4 py-10 w-full">
+        <h1 class="text-3xl font-extrabold text-charcoal-900 mb-6">Your Cart</h1>
         {% if tests %}
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
             {% for test in tests %}
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-100">
                 <div>
-                    <h3 class="font-bold text-slate-900 text-sm">{{ test['name'] }}</h3>
-                    <span class="text-xs text-slate-500">Report in {{ test['report_timing'] }} • Fasting: {{ test['fasting_required'] }}</span>
+                    <h3 class="font-bold text-charcoal-900">{{ test['name'] }}</h3>
+                    <p class="text-xs text-slate-500">Fasting: {{ test['fasting_required'] }}</p>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="font-extrabold text-slate-900 text-base">₹{{ test['price'] }}</span>
-                    <a href="/cart/remove/{{ test['id'] }}" class="text-rose-500 hover:text-rose-700 text-xs font-bold"><i class="fa-solid fa-trash"></i></a>
+                    <span class="font-extrabold">₹{{ test['price'] }}</span>
+                    <a href="/cart/remove/{{ test['id'] }}" class="text-red-500 text-sm font-bold hover:underline">Remove</a>
                 </div>
             </div>
             {% endfor %}
-            <div class="flex items-center justify-between pt-4 text-base font-extrabold text-slate-900">
-                <span>Total Amount:</span>
-                <span class="text-xl text-sky-600">₹{{ total }}</span>
+            <div class="flex justify-between items-center pt-4 text-xl font-black">
+                <span>Total:</span><span class="text-teal-600">₹{{ total }}</span>
             </div>
         </div>
-        <a href="/book" class="block w-full py-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase tracking-wider text-center transition-all shadow-md">Proceed to Home Sample Booking</a>
+        <a href="/checkout" class="block w-full text-center mt-6 py-4 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-bold text-sm uppercase tracking-wider shadow-md">Proceed to Checkout</a>
         {% else %}
-        <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-400">
-            <p class="text-sm mb-4">Your cart is currently empty.</p>
-            <a href="/" class="px-5 py-2.5 rounded-xl bg-sky-600 text-white font-bold text-xs uppercase tracking-wider shadow-md">Explore Tests</a>
-        </div>
+        <div class="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-500 font-bold">Your cart is empty.</div>
         {% endif %}
     </main>
-
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 CareDrop Diagnostics. Powered by IHC Diagnostics.</p>
-    </footer>
 </body>
 </html>
