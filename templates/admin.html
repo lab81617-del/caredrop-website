@@ -31,7 +31,7 @@
     <main class="max-w-7xl mx-auto px-6 py-10 w-full">
         <div class="mb-8">
             <h1 class="text-2xl font-extrabold text-slate-900">Patient Bookings Management</h1>
-            <p class="text-xs text-slate-500 mt-1">Real-time sample collection dispatch queue.</p>
+            <p class="text-xs text-slate-500 mt-1">Real-time sample collection dispatch queue and control center.</p>
         </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -47,6 +47,7 @@
                             <th class="p-4">Address</th>
                             <th class="p-4">Date</th>
                             <th class="p-4">Status</th>
+                            <th class="p-4">Controls</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-xs">
@@ -60,14 +61,18 @@
                             <td class="p-4 text-slate-600 max-w-xs truncate">{{ b['address'] }}</td>
                             <td class="p-4 text-slate-600">{{ b['booking_date'] }}</td>
                             <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold text-[10px] uppercase">
+                                <span class="px-2.5 py-1 rounded-full {% if b['status'] == 'Completed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %} font-bold text-[10px] uppercase">
                                     {{ b['status'] }}
                                 </span>
+                            </td>
+                            <td class="p-4 space-x-2 whitespace-nowrap">
+                                <a href="/admin/update-status/{{ b['id'] }}/Completed" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase shadow-sm">Complete</a>
+                                <a href="/admin/update-status/{{ b['id'] }}/Cancelled" class="px-3 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[10px] uppercase">Cancel</a>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-slate-400">No active bookings registered in the system database yet.</td>
+                            <td colspan="9" class="p-12 text-center text-slate-400">No active bookings registered in the system database yet.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -77,7 +82,7 @@
     </main>
 
     <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 CareDrop Diagnostics Core System.</p>
+        <p>&copy; 2026 CareDrop Diagnostics Core System. Powered by IHC Diagnostics.</p>
     </footer>
 
 </body>
