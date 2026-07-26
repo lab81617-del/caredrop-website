@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { colors: { charcoal: { 800: '#2C3539', 900: '#1A2124' }, teal: { 500: '#00ADB5' }, canvas: '#F4F7F6' } } } }</script>
+</head>
+<body class="bg-canvas text-charcoal-800 font-sans antialiased min-h-screen">
+    <header class="bg-charcoal-900 text-white py-4 px-6 shadow-md"><div class="max-w-xl mx-auto font-bold"><a href="/cart" class="text-teal-500">← Back to Cart</a></div></header>
+    <main class="max-w-xl mx-auto px-4 py-10 w-full">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+            <h1 class="text-2xl font-extrabold text-charcoal-900 mb-6">Patient Details</h1>
+            <form action="/checkout" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Full Name</label>
+                    <input type="text" name="patient_name" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:border-teal-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mobile Number (Used for tracking)</label>
+                    <input type="tel" name="phone" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:border-teal-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Home Collection Address</label>
+                    <textarea name="address" required rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:border-teal-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Collection Date</label>
+                    <input type="date" name="date" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:border-teal-500">
+                </div>
+                <button type="submit" class="w-full mt-4 py-4 rounded-lg bg-charcoal-900 hover:bg-teal-500 text-white font-bold text-sm uppercase tracking-wider shadow-md transition-colors">Confirm Booking</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
