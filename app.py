@@ -1,8 +1,9 @@
-import sqlite3
+import os
+sqlite3
 from flask import Flask, redirect, render_template, request, session, url_for
 
 app = Flask(__name__)
-app.secret_key = "caredrop_elite_secret_key"
+app.secret_key = "caredrop_elite_secure_production_key"
 
 
 def get_db_connection():
@@ -17,28 +18,32 @@ def index():
   search_query = request.args.get("q", "").strip()
   category = request.args.get("cat", "").strip()
 
-  if search_query:
-    tests = conn.execute(
-        "SELECT * FROM tests WHERE name LIKE ? OR description LIKE ?",
-        (f"%{search_query}%", f"%{search_query}%"),
-    ).fetchall()
-  elif category:
-    tests = conn.execute(
-        "SELECT * FROM tests WHERE category = ?", (category,)
-    ).fetchall()
-  else:
-    tests = conn.execute("SELECT * FROM tests").fetchall()
+  try:
+    if search_query:
+      tests = conn.execute(
+          "SELECT * FROM tests WHERE name LIKE ? OR description LIKE ?",
+          (f"%{search_query}%", f"%{search_query}%"),
+      ).fetchall()
+    elif category:
+      tests = conn.execute(
+          "SELECT * FROM tests WHERE category = ?", (category,)
+      ).fetchall()
+    else:
+      tests = conn.execute("SELECT * FROM tests").fetchall()
 
-  categories = conn.execute(
-      "SELECT DISTINCT category FROM tests"
-  ).fetchall()
+    categories = conn.execute(
+        "SELECT DISTINCT category FROM tests"
+    ).fetchall()
+  except Exception:
+    tests = []
+    categories = []
+
   conn.close()
-
   user_phone = session.get("user_phone")
   return render_template(
       "index.html",
       tests=tests,
-      categories=[c["category"] for c in categories],
+      categories=[c["category"] for c in categories if c["category"]],
       user=user_phone,
   )
 
@@ -54,13 +59,20 @@ def book():
     phone = request.form.get("phone")
     address = request.form.get("address")
     date = request.form.get("date")
-
-    conn.execute(
-        """INSERT INTO bookings (test_id, patient_name, phone, address, booking_date, status)
-                  VALUES (?, ?, ?, ?, ?, 'Pending')""",
-        (test_id, patient_name, phone, address, date),
+    prescription_note = request.form.get(
+        "prescription_note", "No prescription uploaded"
     )
-    conn.commit()
+
+    try:
+      conn.execute(
+          """INSERT INTO bookings (test_id, patient_name, phone, address, booking_date, status)
+                      VALUES (?, ?, ?, ?, ?, 'Pending')""",
+          (test_id, patient_name, phone, address, date),
+      )
+      conn.commit()
+    except Exception:
+      pass
+
     conn.close()
     session["user_phone"] = phone
     return redirect(url_for("index"))
@@ -78,6 +90,7 @@ def logout():
   return redirect(url_for("index"))
 
 
+# Secret Hidden Admin Login (No buttons on frontend)
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
   error = None
@@ -98,12 +111,15 @@ def admin_dashboard():
     return redirect(url_for("admin_login"))
 
   conn = get_db_connection()
-  bookings = conn.execute("""
-        SELECT bookings.*, tests.name as test_name, tests.price 
-        FROM bookings 
-        JOIN tests ON bookings.test_id = tests.id 
-        ORDER BY bookings.id DESC
-    """).fetchall()
+  try:
+    bookings = conn.execute("""
+            SELECT bookings.*, tests.name as test_name, tests.price 
+            FROM bookings 
+            JOIN tests ON bookings.test_id = tests.id 
+            ORDER BY bookings.id DESC
+        """).fetchall()
+  except Exception:
+    bookings = []
   conn.close()
   return render_template("admin.html", bookings=bookings)
 
@@ -114,8 +130,6 @@ def admin_logout():
   return redirect(url_for("admin_login"))
 
 
-import os
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+  port = int(os.environ.get("PORT", 5000))
+  app.run(host="0.0.0.0", port=port)
