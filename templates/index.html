@@ -70,6 +70,24 @@
             </form>
         </div>
     </section>
+    <!-- Notification Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    });
+</script>
+
+<!-- Company Bio -->
+<section class="bg-white py-12 px-4 border-b border-slate-100">
+    <div class="max-w-4xl mx-auto text-center space-y-4">
+        <h2 class="text-2xl font-black text-charcoal-900">About CareDrop Diagnostics</h2>
+        <p class="text-slate-600 font-medium leading-relaxed">
+            CareDrop is a premier medical logistics platform engineered to bridge the gap between world-class pathology labs and patient homes. Backed by IHC Diagnostics, our mission is to eliminate waiting room anxiety through sterile, on-demand sample collections. We partner with NABL-accredited facilities to ensure your clinical data is accurate, secure, and delivered with unprecedented speed.
+        </p>
+    </div>
+</section>
 
     <!-- Categories -->
     <div class="bg-canvas border-b border-slate-200 sticky top-[72px] sm:top-[80px] z-40">
