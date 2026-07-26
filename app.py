@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from flask import Flask, redirect, render_template, request, session, url_for
+
 app = Flask(__name__)
 app.secret_key = "caredrop_elite_secure_production_key"
 
@@ -47,6 +48,27 @@ def index():
   )
 
 
+@app.route("/my-bookings")
+def my_bookings():
+  user_phone = session.get("user_phone")
+  if not user_phone:
+    return redirect(url_for("index"))
+
+  conn = get_db_connection()
+  bookings = conn.execute(
+      """
+        SELECT bookings.*, tests.name as test_name, tests.price 
+        FROM bookings 
+        JOIN tests ON bookings.test_id = tests.id 
+        WHERE bookings.phone = ? 
+        ORDER BY bookings.id DESC
+    """,
+      (user_phone,),
+  ).fetchall()
+  conn.close()
+  return render_template("my_bookings.html", bookings=bookings, user=user_phone)
+
+
 @app.route("/book", methods=["GET", "POST"])
 def book():
   conn = get_db_connection()
@@ -58,9 +80,6 @@ def book():
     phone = request.form.get("phone")
     address = request.form.get("address")
     date = request.form.get("date")
-    prescription_note = request.form.get(
-        "prescription_note", "No prescription uploaded"
-    )
 
     try:
       conn.execute(
@@ -89,7 +108,6 @@ def logout():
   return redirect(url_for("index"))
 
 
-# Secret Hidden Admin Login (No buttons on frontend)
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
   error = None
@@ -121,6 +139,20 @@ def admin_dashboard():
     bookings = []
   conn.close()
   return render_template("admin.html", bookings=bookings)
+
+
+@app.route("/admin/update-status/<int:booking_id>/<status>")
+def update_status(booking_id, status):
+  if not session.get("admin_logged_in"):
+    return redirect(url_for("admin_login"))
+
+  conn = get_db_connection()
+  conn.execute(
+      "UPDATE bookings SET status = ? WHERE id = ?", (status, booking_id)
+  )
+  conn.commit()
+  conn.close()
+  return redirect(url_for("admin_dashboard"))
 
 
 @app.route("/admin/logout")
