@@ -1,7 +1,6 @@
 import os
-sqlite3
+import sqlite3
 from flask import Flask, redirect, render_template, request, session, url_for
-
 app = Flask(__name__)
 app.secret_key = "caredrop_elite_secure_production_key"
 
