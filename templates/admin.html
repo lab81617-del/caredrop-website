@@ -3,104 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CareDrop | Admin Console</title>
+    <title>SaaS Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { primary: '#2563eb', dark: '#0f172a' } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body class="bg-[#f8fafc] text-slate-800 antialiased min-h-screen">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-lg bg-dark flex items-center justify-center text-white"><i class="fa-solid fa-shield-halved text-xs"></i></div>
-                <span class="font-bold text-dark text-sm sm:text-base">Management Console</span>
-            </div>
-            <a href="/admin/logout" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold transition-colors">Sign Out</a>
-        </div>
+    <header class="bg-slate-900 text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-md">
+        <span class="font-extrabold tracking-wide">CareDrop B2B Console</span>
+        <a href="/admin/logout" class="px-4 py-2 bg-rose-600 rounded-md text-xs font-bold">Sign Out</a>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        
-        <!-- Add Test Form -->
-        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-            <h2 class="text-lg font-bold text-dark mb-6"><i class="fa-solid fa-square-plus text-primary mr-2"></i>Add Diagnostic Package</h2>
-            <form action="/admin/add-test" method="POST" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">Test Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Complete Blood Count" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
-                </div>
-                
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">Category</label>
-                    <input type="text" name="category" required placeholder="e.g. Pathology" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">Price (₹)</label>
-                    <input type="number" name="price" required placeholder="e.g. 500" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">Fasting Requirement</label>
-                    <input type="text" name="fasting" placeholder="e.g. 10-12 hours" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">Report Timing</label>
-                    <input type="text" name="timing" placeholder="e.g. 24 Hours" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
-                </div>
-
-                <div class="sm:col-span-2 lg:col-span-3">
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">Description</label>
-                    <input type="text" name="description" placeholder="Short description of the test..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
-                </div>
-
-                <button type="submit" class="sm:col-span-2 lg:col-span-3 w-full py-3.5 rounded-xl bg-dark hover:bg-slate-800 text-white font-bold text-sm transition-all shadow-md mt-2">Publish Test Package</button>
+        <!-- Add Test with Margin -->
+        <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Create Diagnostic Package</h2>
+            <form action="/admin/add-test" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <input type="text" name="name" required placeholder="Test Name" class="border p-3 rounded-md text-sm">
+                <input type="text" name="category" required placeholder="Category" class="border p-3 rounded-md text-sm">
+                <input type="text" name="fasting" placeholder="Fasting (e.g. 12 Hrs)" class="border p-3 rounded-md text-sm">
+                <input type="number" name="price" required placeholder="Customer Price (₹)" class="border p-3 rounded-md text-sm border-blue-300">
+                <input type="number" name="margin" required placeholder="Your B2B Margin (₹)" class="border p-3 rounded-md text-sm border-green-300 bg-green-50">
+                <input type="text" name="timing" placeholder="Report Time (e.g. 24 Hrs)" class="border p-3 rounded-md text-sm">
+                <input type="text" name="description" placeholder="Description..." class="sm:col-span-3 border p-3 rounded-md text-sm">
+                <button type="submit" class="sm:col-span-3 py-3 bg-slate-900 text-white rounded-md font-bold">Deploy Test</button>
             </form>
         </section>
 
-        <!-- Dispatch Queue -->
+        <!-- Dispatch & Lab Routing -->
         <section>
-            <h2 class="text-lg font-bold text-dark mb-4"><i class="fa-solid fa-truck-medical text-primary mr-2"></i>Active Collection Queue</h2>
-            
-            {% if bookings %}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {% for b in bookings %}
-                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
-                        
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-md border border-slate-200">#{{ b['id'] }}</span>
-                            <span class="px-2.5 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-wider rounded-md border border-amber-200">{{ b['status'] }}</span>
-                        </div>
-                        
-                        <h3 class="font-extrabold text-dark text-lg leading-tight mb-1">{{ b['patient_name'] }}</h3>
-                        <p class="text-xs text-slate-500 font-semibold mb-4"><i class="fa-solid fa-phone mr-1.5 text-primary"></i>{{ b['phone'] }}</p>
-                        
-                        <div class="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-100">
-                            <p class="text-xs font-bold text-primary mb-1">{{ b['test_name'] }}</p>
-                            <p class="text-[11px] font-medium text-slate-500 leading-relaxed"><i class="fa-solid fa-location-dot mr-1.5"></i>{{ b['address'] }}</p>
-                            <p class="text-[11px] font-medium text-slate-500 mt-2"><i class="fa-regular fa-calendar mr-1.5"></i>{{ b['booking_date'] }}</p>
-                        </div>
-                        
-                        <div class="flex items-center justify-between border-t border-slate-100 pt-4">
-                            <span class="text-xl font-black text-dark">₹{{ b['price'] }}</span>
-                            <div class="flex space-x-2">
-                                <a href="/admin/update-status/{{ b['id'] }}/Completed" class="w-9 h-9 rounded-lg bg-green-500 hover:bg-green-600 flex items-center justify-center text-white shadow-sm active:scale-95 transition-all"><i class="fa-solid fa-check text-sm"></i></a>
-                                <a href="/admin/update-status/{{ b['id'] }}/Cancelled" class="w-9 h-9 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 shadow-sm active:scale-95 transition-all"><i class="fa-solid fa-xmark text-sm"></i></a>
-                            </div>
-                        </div>
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Live Logistics & Operations</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for b in bookings %}
+                <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                    <div class="flex justify-between items-center border-b pb-2 mb-2">
+                        <span class="text-xs font-bold text-slate-500">Booking #{{ b['id'] }}</span>
+                        <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">Margin: ₹{{ b['margin'] }}</span>
                     </div>
-                    {% endfor %}
+                    <h3 class="font-bold text-lg">{{ b['patient_name'] }}</h3>
+                    <p class="text-xs text-slate-600 mb-2">{{ b['phone'] }} | {{ b['booking_date'] }}</p>
+                    <div class="bg-blue-50 p-2 rounded mb-4">
+                        <p class="font-bold text-sm text-blue-800">{{ b['test_name'] }}</p>
+                        <p class="text-xs text-blue-600">Price Collected: ₹{{ b['price'] }}</p>
+                    </div>
+                    
+                    <!-- Advanced Update Form (Status, Lab, PDF) -->
+                    <form action="/admin/update-booking/{{ b['id'] }}" method="POST" enctype="multipart/form-data" class="space-y-3 border-t pt-3">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-slate-500">Route to Lab</label>
+                            <input type="text" name="lab_assigned" value="{{ b['lab_assigned'] }}" placeholder="e.g. Dr. Lal PathLabs" class="w-full border rounded p-2 text-xs">
+                        </div>
+                        <div class="flex space-x-2">
+                            <select name="status" class="w-1/2 border rounded p-2 text-xs font-bold bg-slate-50">
+                                <option value="{{ b['status'] }}">{{ b['status'] }} (Current)</option>
+                                <option value="Sample Collected">Sample Collected</option>
+                                <option value="At Lab">At Lab</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                            <input type="file" name="report_pdf" accept="application/pdf" class="w-1/2 text-[10px] border rounded p-1">
+                        </div>
+                        <button type="submit" class="w-full bg-slate-900 text-white text-xs font-bold py-2 rounded hover:bg-slate-800">Update Booking & Upload</button>
+                    </form>
                 </div>
-            {% else %}
-                <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
-                    <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-3"><i class="fa-solid fa-box-open text-xl"></i></div>
-                    <p class="text-slate-500 font-medium text-sm">No active collections in queue.</p>
-                </div>
-            {% endif %}
+                {% endfor %}
+            </div>
         </section>
     </main>
 </body>
