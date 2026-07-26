@@ -3,7 +3,7 @@ import sqlite3
 from flask import Flask, redirect, render_template, request, session, url_for
 
 app = Flask(__name__)
-app.secret_key = "caredrop_ultimate_production_key"
+app.secret_key = "caredrop_trademark_production_key"
 
 def get_db_connection():
     conn = sqlite3.connect("caredrop.db")
@@ -11,11 +11,9 @@ def get_db_connection():
     return conn
 
 def upgrade_db():
-    """Forces database column updates so old databases never crash the app."""
+    """Forces database column updates so it never crashes."""
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    # Ensure base tables exist
     cursor.execute('''CREATE TABLE IF NOT EXISTS tests (
         id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, 
         price INTEGER NOT NULL, description TEXT, fasting_required TEXT, report_timing TEXT
@@ -25,21 +23,16 @@ def upgrade_db():
         phone TEXT NOT NULL, address TEXT NOT NULL, booking_date TEXT NOT NULL, status TEXT DEFAULT 'Pending',
         FOREIGN KEY (test_id) REFERENCES tests (id)
     )''')
-    
-    # Force add missing columns if using an old database file
-    try:
-        cursor.execute("ALTER TABLE tests ADD COLUMN fasting_required TEXT DEFAULT 'No'")
-    except Exception: pass
-    try:
-        cursor.execute("ALTER TABLE tests ADD COLUMN report_timing TEXT DEFAULT '24 Hours'")
-    except Exception: pass
-    
+    try: cursor.execute("ALTER TABLE tests ADD COLUMN fasting_required TEXT DEFAULT 'No'")
+    except: pass
+    try: cursor.execute("ALTER TABLE tests ADD COLUMN report_timing TEXT DEFAULT '24 Hours'")
+    except: pass
     conn.commit()
     conn.close()
 
-# Run upgrade automatically on startup
 upgrade_db()
 
+# --- PATIENT / FRONTEND ROUTES ---
 @app.route("/")
 def index():
     conn = get_db_connection()
@@ -54,7 +47,7 @@ def index():
         else:
             tests = conn.execute("SELECT * FROM tests").fetchall()
         categories = conn.execute("SELECT DISTINCT category FROM tests").fetchall()
-    except Exception:
+    except:
         tests, categories = [], []
     conn.close()
     
@@ -69,6 +62,13 @@ def add_to_cart(test_id):
         session.modified = True
     return redirect(url_for("index"))
 
+@app.route("/cart/remove/<int:test_id>")
+def remove_from_cart(test_id):
+    if "cart" in session:
+        session["cart"] = [i for i in session["cart"] if i != test_id]
+        session.modified = True
+    return redirect(url_for("view_cart"))
+
 @app.route("/cart")
 def view_cart():
     cart_ids = session.get("cart", [])
@@ -77,11 +77,50 @@ def view_cart():
     placeholders = ",".join(["?"] * len(cart_ids))
     tests = conn.execute(f"SELECT * FROM tests WHERE id IN ({placeholders})", cart_ids).fetchall()
     conn.close()
-    
-    # Safe total calculation
     total = sum(int(t["price"]) if str(t["price"]).isdigit() else 0 for t in tests)
     return render_template("cart.html", tests=tests, total=total)
 
+@app.route("/checkout", methods=["GET", "POST"])
+def checkout():
+    cart_ids = session.get("cart", [])
+    if not cart_ids: return redirect(url_for("index"))
+    
+    if request.method == "POST":
+        patient_name = request.form.get("patient_name")
+        phone = request.form.get("phone")
+        address = request.form.get("address")
+        date = request.form.get("date")
+        
+        conn = get_db_connection()
+        for test_id in cart_ids:
+            conn.execute("INSERT INTO bookings (test_id, patient_name, phone, address, booking_date) VALUES (?, ?, ?, ?, ?)",
+                         (test_id, patient_name, phone, address, date))
+        conn.commit()
+        conn.close()
+        
+        session.pop("cart", None)
+        session["user_phone"] = phone
+        return redirect(url_for("my_bookings"))
+        
+    return render_template("checkout.html")
+
+@app.route("/my-bookings")
+def my_bookings():
+    user_phone = session.get("user_phone")
+    if not user_phone: return redirect(url_for("index"))
+    conn = get_db_connection()
+    bookings = conn.execute('''SELECT bookings.*, tests.name as test_name, tests.price 
+                               FROM bookings JOIN tests ON bookings.test_id = tests.id 
+                               WHERE bookings.phone = ? ORDER BY bookings.id DESC''', (user_phone,)).fetchall()
+    conn.close()
+    return render_template("my_bookings.html", bookings=bookings, user=user_phone)
+
+@app.route("/logout")
+def logout():
+    session.pop("user_phone", None)
+    return redirect(url_for("index"))
+
+# --- ADMIN ROUTES ---
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -98,31 +137,16 @@ def admin_dashboard():
     try:
         bookings = conn.execute("SELECT bookings.*, tests.name as test_name, tests.price FROM bookings JOIN tests ON bookings.test_id = tests.id ORDER BY bookings.id DESC").fetchall()
         tests = conn.execute("SELECT * FROM tests ORDER BY id DESC").fetchall()
-    except Exception:
-        bookings, tests = [], []
+    except: bookings, tests = [], []
     conn.close()
     return render_template("admin.html", bookings=bookings, tests=tests)
 
-@app.route("/admin/add-test", methods=["GET", "POST"])
+@app.route("/admin/add-test", methods=["POST"])
 def add_test():
-    # If user refreshes page (GET request), safely redirect them back instead of throwing 405 error
-    if request.method == "GET": 
-        return redirect(url_for("admin_dashboard"))
-        
     if not session.get("admin_logged_in"): return redirect(url_for("admin_login"))
-    
-    # Safe data retrieval with fallbacks
-    name = request.form.get("name", "Custom Test").strip() or "Custom Test"
-    category = request.form.get("category", "General").strip() or "General"
-    raw_price = request.form.get("price", "0").strip()
-    price = int(raw_price) if raw_price.isdigit() else 0
-    desc = request.form.get("description", "").strip() or "Diagnostic laboratory package."
-    fasting = request.form.get("fasting", "No").strip() or "No"
-    timing = request.form.get("timing", "24 Hours").strip() or "24 Hours"
-
     conn = get_db_connection()
     conn.execute("INSERT INTO tests (name, category, price, description, fasting_required, report_timing) VALUES (?, ?, ?, ?, ?, ?)",
-                 (name, category, price, desc, fasting, timing))
+                 (request.form.get("name"), request.form.get("category"), request.form.get("price", "0"), request.form.get("description"), request.form.get("fasting", "No"), request.form.get("timing", "24 Hours")))
     conn.commit()
     conn.close()
     return redirect(url_for("admin_dashboard"))
