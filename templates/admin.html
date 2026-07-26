@@ -7,18 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] } } } }
-    </script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] } } } }</script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
 
     <header class="bg-white border-b border-slate-200 py-4 px-6 shadow-sm">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
+                <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold"><i class="fa-solid fa-shield-halved"></i></div>
                 <span class="text-base font-extrabold text-slate-900">CareDrop Management Console</span>
             </div>
             <div class="flex items-center space-x-3">
@@ -28,62 +24,90 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-10 w-full">
-        <div class="mb-8">
-            <h1 class="text-2xl font-extrabold text-slate-900">Patient Bookings Management</h1>
-            <p class="text-xs text-slate-500 mt-1">Real-time sample collection dispatch queue and control center.</p>
+    <main class="max-w-7xl mx-auto px-6 py-10 w-full space-y-12">
+        
+        <!-- Add New Test Panel -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+            <h2 class="text-xl font-extrabold text-slate-900 mb-4">Add Custom Test or Package</h2>
+            <form action="/admin/add-test" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Test/Package Name</label>
+                    <input type="text" name="name" required placeholder="e.g., Full Body Checkup" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Category</label>
+                    <input type="text" name="category" required placeholder="e.g., Pathology, Cardiology" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Price (₹)</label>
+                    <input type="number" name="price" required placeholder="1499" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Fasting Required</label>
+                    <input type="text" name="fasting" placeholder="Yes / No / 10-12 hrs" value="No" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Report Timing</label>
+                    <input type="text" name="timing" placeholder="e.g., 24 Hours" value="24 Hours" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Description / Included Parameters</label>
+                    <textarea name="description" rows="2" placeholder="List components or package description..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none"></textarea>
+                </div>
+                <div class="md:col-span-3">
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider shadow-md">Add Test to Database</button>
+                </div>
+            </form>
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                            <th class="p-4">ID</th>
-                            <th class="p-4">Patient Name</th>
-                            <th class="p-4">Phone</th>
-                            <th class="p-4">Test Booked</th>
-                            <th class="p-4">Price</th>
-                            <th class="p-4">Address</th>
-                            <th class="p-4">Date</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Controls</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-xs">
-                        {% for b in bookings %}
-                        <tr class="hover:bg-slate-50/80 transition-colors">
-                            <td class="p-4 font-bold text-slate-400">#{{ b['id'] }}</td>
-                            <td class="p-4 font-bold text-slate-900">{{ b['patient_name'] }}</td>
-                            <td class="p-4 text-slate-600">{{ b['phone'] }}</td>
-                            <td class="p-4 font-semibold text-sky-600">{{ b['test_name'] }}</td>
-                            <td class="p-4 font-extrabold text-slate-900">₹{{ b['price'] }}</td>
-                            <td class="p-4 text-slate-600 max-w-xs truncate">{{ b['address'] }}</td>
-                            <td class="p-4 text-slate-600">{{ b['booking_date'] }}</td>
-                            <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-full {% if b['status'] == 'Completed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %} font-bold text-[10px] uppercase">
-                                    {{ b['status'] }}
-                                </span>
-                            </td>
-                            <td class="p-4 space-x-2 whitespace-nowrap">
-                                <a href="/admin/update-status/{{ b['id'] }}/Completed" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase shadow-sm">Complete</a>
-                                <a href="/admin/update-status/{{ b['id'] }}/Cancelled" class="px-3 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[10px] uppercase">Cancel</a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="9" class="p-12 text-center text-slate-400">No active bookings registered in the system database yet.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Bookings Management -->
+        <div>
+            <h2 class="text-xl font-extrabold text-slate-900 mb-4">Patient Bookings Dispatch Queue</h2>
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                                <th class="p-4">ID</th>
+                                <th class="p-4">Patient Name</th>
+                                <th class="p-4">Phone</th>
+                                <th class="p-4">Test Booked</th>
+                                <th class="p-4">Price</th>
+                                <th class="p-4">Address</th>
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Controls</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-xs">
+                            {% for b in bookings %}
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 font-bold text-slate-400">#{{ b['id'] }}</td>
+                                <td class="p-4 font-bold text-slate-900">{{ b['patient_name'] }}</td>
+                                <td class="p-4 text-slate-600">{{ b['phone'] }}</td>
+                                <td class="p-4 font-semibold text-sky-600">{{ b['test_name'] }}</td>
+                                <td class="p-4 font-extrabold text-slate-900">₹{{ b['price'] }}</td>
+                                <td class="p-4 text-slate-600 max-w-xs truncate">{{ b['address'] }}</td>
+                                <td class="p-4 text-slate-600">{{ b['booking_date'] }}</td>
+                                <td class="p-4"><span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold text-[10px] uppercase">{{ b['status'] }}</span></td>
+                                <td class="p-4 space-x-2 whitespace-nowrap">
+                                    <a href="/admin/update-status/{{ b['id'] }}/Completed" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[10px] uppercase">Complete</a>
+                                    <a href="/admin/update-status/{{ b['id'] }}/Cancelled" class="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 font-bold text-[10px] uppercase">Cancel</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="9" class="p-10 text-center text-slate-400">No active bookings registered yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
     </main>
 
     <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
         <p>&copy; 2026 CareDrop Diagnostics Core System. Powered by IHC Diagnostics.</p>
     </footer>
-
 </body>
 </html>
