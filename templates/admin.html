@@ -2,112 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | CareDrop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CareDrop | Admin Console</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }, colors: { navy: '#0f172a', teal: '#0d9488', pearl: '#f8fafc' } } } }</script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+<body class="bg-pearl text-slate-800 antialiased min-h-screen">
 
-    <header class="bg-white border-b border-slate-200 py-4 px-6 shadow-sm">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <header class="bg-navy text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold"><i class="fa-solid fa-shield-halved"></i></div>
-                <span class="text-base font-extrabold text-slate-900">CareDrop Management Console</span>
+                <i class="fa-solid fa-shield-halved text-teal"></i>
+                <span class="font-extrabold tracking-wide text-sm sm:text-base">Command Center</span>
             </div>
-            <div class="flex items-center space-x-3">
-                <a href="/" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all">Home View</a>
-                <a href="/admin/logout" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 transition-all">Sign Out</a>
-            </div>
+            <a href="/admin/logout" class="px-4 py-1.5 rounded-full bg-rose-500/20 text-rose-300 text-xs font-bold hover:bg-rose-500/40 transition-colors">Sign Out</a>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-10 w-full space-y-12">
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-10">
         
-        <!-- Add New Test Panel -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-            <h2 class="text-xl font-extrabold text-slate-900 mb-4">Add Custom Test or Package</h2>
-            <form action="/admin/add-test" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Test/Package Name</label>
-                    <input type="text" name="name" required placeholder="e.g., Full Body Checkup" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Category</label>
-                    <input type="text" name="category" required placeholder="e.g., Pathology, Cardiology" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Price (₹)</label>
-                    <input type="number" name="price" required placeholder="1499" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Fasting Required</label>
-                    <input type="text" name="fasting" placeholder="Yes / No / 10-12 hrs" value="No" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Report Timing</label>
-                    <input type="text" name="timing" placeholder="e.g., 24 Hours" value="24 Hours" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none">
-                </div>
-                <div class="md:col-span-3">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Description / Included Parameters</label>
-                    <textarea name="description" rows="2" placeholder="List components or package description..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none"></textarea>
-                </div>
-                <div class="md:col-span-3">
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider shadow-md">Add Test to Database</button>
-                </div>
+        <!-- Add Test Form -->
+        <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-extrabold text-navy mb-4"><i class="fa-solid fa-plus-circle text-teal mr-2"></i>Add New Test Package</h2>
+            <form action="/admin/add-test" method="POST" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <input type="text" name="name" required placeholder="Test Name" class="w-full bg-pearl border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal">
+                <input type="text" name="category" required placeholder="Category (e.g. Blood)" class="w-full bg-pearl border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal">
+                <input type="number" name="price" required placeholder="Price (₹)" class="w-full bg-pearl border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal">
+                <input type="text" name="fasting" placeholder="Fasting (e.g. 12 Hrs)" class="w-full bg-pearl border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal">
+                <input type="text" name="timing" placeholder="Report Time (e.g. 24 Hrs)" class="w-full bg-pearl border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal">
+                <input type="text" name="description" placeholder="Short description..." class="w-full bg-pearl border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal">
+                <button type="submit" class="sm:col-span-2 lg:col-span-3 w-full py-3 rounded-xl bg-navy hover:bg-slate-800 text-white font-bold text-sm transition-all shadow-md">Deploy Test to Public</button>
             </form>
-        </div>
+        </section>
 
-        <!-- Bookings Management -->
-        <div>
-            <h2 class="text-xl font-extrabold text-slate-900 mb-4">Patient Bookings Dispatch Queue</h2>
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                                <th class="p-4">ID</th>
-                                <th class="p-4">Patient Name</th>
-                                <th class="p-4">Phone</th>
-                                <th class="p-4">Test Booked</th>
-                                <th class="p-4">Price</th>
-                                <th class="p-4">Address</th>
-                                <th class="p-4">Date</th>
-                                <th class="p-4">Status</th>
-                                <th class="p-4">Controls</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-xs">
-                            {% for b in bookings %}
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="p-4 font-bold text-slate-400">#{{ b['id'] }}</td>
-                                <td class="p-4 font-bold text-slate-900">{{ b['patient_name'] }}</td>
-                                <td class="p-4 text-slate-600">{{ b['phone'] }}</td>
-                                <td class="p-4 font-semibold text-sky-600">{{ b['test_name'] }}</td>
-                                <td class="p-4 font-extrabold text-slate-900">₹{{ b['price'] }}</td>
-                                <td class="p-4 text-slate-600 max-w-xs truncate">{{ b['address'] }}</td>
-                                <td class="p-4 text-slate-600">{{ b['booking_date'] }}</td>
-                                <td class="p-4"><span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold text-[10px] uppercase">{{ b['status'] }}</span></td>
-                                <td class="p-4 space-x-2 whitespace-nowrap">
-                                    <a href="/admin/update-status/{{ b['id'] }}/Completed" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[10px] uppercase">Complete</a>
-                                    <a href="/admin/update-status/{{ b['id'] }}/Cancelled" class="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 font-bold text-[10px] uppercase">Cancel</a>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="9" class="p-10 text-center text-slate-400">No active bookings registered yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <!-- Dispatch Queue (Mobile Cards & PC Table) -->
+        <section>
+            <h2 class="text-lg font-extrabold text-navy mb-4"><i class="fa-solid fa-list-check text-teal mr-2"></i>Active Dispatch Queue</h2>
+            
+            {% if bookings %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for b in bookings %}
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="px-2 py-1 bg-navy text-white text-[10px] font-bold rounded-md">ID #{{ b['id'] }}</span>
+                                <span class="px-2 py-1 bg-amber-100 text-amber-800 text-[10px] font-bold uppercase rounded-md">{{ b['status'] }}</span>
+                            </div>
+                            <h3 class="font-extrabold text-navy text-base mb-1">{{ b['patient_name'] }}</h3>
+                            <p class="text-xs text-slate-500 font-semibold mb-3"><i class="fa-solid fa-phone mr-1 text-teal"></i>{{ b['phone'] }}</p>
+                            
+                            <div class="bg-pearl p-3 rounded-xl mb-4 border border-slate-100">
+                                <p class="text-xs font-bold text-teal mb-1">{{ b['test_name'] }}</p>
+                                <p class="text-[11px] text-slate-500 leading-tight"><i class="fa-solid fa-location-dot mr-1"></i>{{ b['address'] }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-slate-100 pt-4">
+                            <span class="text-lg font-black text-navy">₹{{ b['price'] }}</span>
+                            <div class="flex space-x-2">
+                                <a href="/admin/update-status/{{ b['id'] }}/Completed" class="w-8 h-8 rounded-full bg-teal flex items-center justify-center text-white shadow-md active:scale-95 transition-all"><i class="fa-solid fa-check text-xs"></i></a>
+                                <a href="/admin/update-status/{{ b['id'] }}/Cancelled" class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-md active:scale-95 transition-all"><i class="fa-solid fa-xmark text-xs"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-            </div>
-        </div>
+            {% else %}
+                <div class="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300">
+                    <p class="text-slate-400 font-bold">No active collections.</p>
+                </div>
+            {% endif %}
+        </section>
 
     </main>
-
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 CareDrop Diagnostics Core System. Powered by IHC Diagnostics.</p>
-    </footer>
 </body>
 </html>
