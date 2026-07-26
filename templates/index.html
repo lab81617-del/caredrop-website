@@ -25,6 +25,15 @@
 </head>
 <body class="bg-canvas text-charcoal-800 antialiased min-h-screen flex flex-col">
 
+    <!-- Notification Permission Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+        });
+    </script>
+
     <!-- Brand Header -->
     <header class="sticky top-0 z-50 bg-charcoal-900 text-white shadow-md border-b border-teal-500/20">
         <div class="max-w-7xl mx-auto px-4 h-18 sm:h-20 flex items-center justify-between">
@@ -70,24 +79,6 @@
             </form>
         </div>
     </section>
-    <!-- Notification Script -->
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        if ("Notification" in window && Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
-    });
-</script>
-
-<!-- Company Bio -->
-<section class="bg-white py-12 px-4 border-b border-slate-100">
-    <div class="max-w-4xl mx-auto text-center space-y-4">
-        <h2 class="text-2xl font-black text-charcoal-900">About CareDrop Diagnostics</h2>
-        <p class="text-slate-600 font-medium leading-relaxed">
-            CareDrop is a premier medical logistics platform engineered to bridge the gap between world-class pathology labs and patient homes. Backed by IHC Diagnostics, our mission is to eliminate waiting room anxiety through sterile, on-demand sample collections. We partner with NABL-accredited facilities to ensure your clinical data is accurate, secure, and delivered with unprecedented speed.
-        </p>
-    </div>
-</section>
 
     <!-- Categories -->
     <div class="bg-canvas border-b border-slate-200 sticky top-[72px] sm:top-[80px] z-40">
@@ -130,9 +121,55 @@
             {% endfor %}
         </div>
     </main>
-    <!-- WhatsApp Support Widget -->
-<a href="https://wa.me/919999999999" target="_blank" class="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50">
-    <i class="fa-brands fa-whatsapp text-3xl"></i>
-</a>
+
+    <!-- Company Bio (Anchored at the bottom) -->
+    <section class="bg-charcoal-900 text-white py-16 px-4 border-t border-teal-500/20">
+        <div class="max-w-4xl mx-auto text-center space-y-4">
+            <div class="w-12 h-12 bg-teal-500 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-teal-500/30">
+                <i class="fa-solid fa-microscope text-xl"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold tracking-tight">About CareDrop Diagnostics</h2>
+            <p class="text-slate-300 font-medium leading-relaxed max-w-2xl mx-auto">
+                CareDrop is a premier medical logistics platform engineered to bridge the gap between world-class pathology labs and patient homes. Backed by IHC Diagnostics, our mission is to eliminate waiting room anxiety through sterile, on-demand sample collections. We partner with NABL-accredited facilities to ensure your clinical data is accurate, secure, and delivered with unprecedented speed.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-charcoal-800 text-slate-400 py-6 text-center text-xs font-bold">
+        <p>&copy; 2026 CareDrop Medical Operations. Powered by IHC Diagnostics.</p>
+    </footer>
+
+    <!-- Floating Multi-WhatsApp Widget -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <!-- Hidden Support Menu -->
+        <div id="wa-menu" class="hidden bg-white border border-slate-200 rounded-xl shadow-2xl mb-3 overflow-hidden transition-all origin-bottom-right">
+            <div class="bg-charcoal-900 text-white px-4 py-3 text-xs font-bold uppercase tracking-wider border-b border-teal-500/30">
+                Support Channels
+            </div>
+            <!-- Department 1: General Support -->
+            <a href="https://wa.me/919999999991" target="_blank" class="flex items-center px-5 py-4 hover:bg-slate-50 transition-colors border-b border-slate-100">
+                <i class="fa-brands fa-whatsapp text-[#25D366] text-2xl mr-3"></i>
+                <div>
+                    <span class="block text-sm font-bold text-charcoal-900">General Support</span>
+                    <span class="block text-xs text-slate-500">Booking & general queries</span>
+                </div>
+            </a>
+            <!-- Department 2: Lab Reports -->
+            <a href="https://wa.me/919999999992" target="_blank" class="flex items-center px-5 py-4 hover:bg-slate-50 transition-colors">
+                <i class="fa-brands fa-whatsapp text-[#25D366] text-2xl mr-3"></i>
+                <div>
+                    <span class="block text-sm font-bold text-charcoal-900">Lab Reports</span>
+                    <span class="block text-xs text-slate-500">PDFs & result status</span>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Toggle Button -->
+        <button onclick="document.getElementById('wa-menu').classList.toggle('hidden')" class="w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/40 flex items-center justify-center hover:scale-105 transition-transform">
+            <i class="fa-brands fa-whatsapp text-3xl"></i>
+        </button>
+    </div>
+
 </body>
 </html>
