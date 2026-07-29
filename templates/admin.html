@@ -2,73 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SaaS Command Center</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDrop Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; }
+        .header { background: #0D9488; color: white; padding: 20px 30px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .order-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 5px solid #0D9488; }
+        .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px; }
+        .patient-details { display: flex; gap: 40px; margin-bottom: 15px; }
+        .detail-box span { display: block; font-size: 12px; color: #64748B; text-transform: uppercase; font-weight: 700; margin-bottom: 3px;}
+        .detail-box strong { font-size: 15px; }
+        .test-list { background: #F8FAFC; padding: 10px 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
+        .test-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; }
+        .total { text-align: right; font-size: 18px; font-weight: 800; color: #0D9488; margin-top: 10px; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+<body>
+    <div class="header">
+        <h2>IHC Admin Dashboard</h2>
+        <div>Live Order Feed</div>
+    </div>
 
-    <header class="bg-slate-900 text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-md">
-        <span class="font-extrabold tracking-wide">CareDrop B2B Console</span>
-        <a href="/admin/logout" class="px-4 py-2 bg-rose-600 rounded-md text-xs font-bold">Sign Out</a>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        <!-- Add Test with Margin -->
-        <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-            <h2 class="text-lg font-bold text-slate-900 mb-4">Create Diagnostic Package</h2>
-            <form action="/admin/add-test" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <input type="text" name="name" required placeholder="Test Name" class="border p-3 rounded-md text-sm">
-                <input type="text" name="category" required placeholder="Category" class="border p-3 rounded-md text-sm">
-                <input type="text" name="fasting" placeholder="Fasting (e.g. 12 Hrs)" class="border p-3 rounded-md text-sm">
-                <input type="number" name="price" required placeholder="Customer Price (₹)" class="border p-3 rounded-md text-sm border-blue-300">
-                <input type="number" name="margin" required placeholder="Your B2B Margin (₹)" class="border p-3 rounded-md text-sm border-green-300 bg-green-50">
-                <input type="text" name="timing" placeholder="Report Time (e.g. 24 Hrs)" class="border p-3 rounded-md text-sm">
-                <input type="text" name="description" placeholder="Description..." class="sm:col-span-3 border p-3 rounded-md text-sm">
-                <button type="submit" class="sm:col-span-3 py-3 bg-slate-900 text-white rounded-md font-bold">Deploy Test</button>
-            </form>
-        </section>
-
-        <!-- Dispatch & Lab Routing -->
-        <section>
-            <h2 class="text-lg font-bold text-slate-900 mb-4">Live Logistics & Operations</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for b in bookings %}
-                <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                    <div class="flex justify-between items-center border-b pb-2 mb-2">
-                        <span class="text-xs font-bold text-slate-500">Booking #{{ b['id'] }}</span>
-                        <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">Margin: ₹{{ b['margin'] }}</span>
-                    </div>
-                    <h3 class="font-bold text-lg">{{ b['patient_name'] }}</h3>
-                    <p class="text-xs text-slate-600 mb-2">{{ b['phone'] }} | {{ b['booking_date'] }}</p>
-                    <div class="bg-blue-50 p-2 rounded mb-4">
-                        <p class="font-bold text-sm text-blue-800">{{ b['test_name'] }}</p>
-                        <p class="text-xs text-blue-600">Price Collected: ₹{{ b['price'] }}</p>
-                    </div>
-                    
-                    <!-- Advanced Update Form (Status, Lab, PDF) -->
-                    <form action="/admin/update-booking/{{ b['id'] }}" method="POST" enctype="multipart/form-data" class="space-y-3 border-t pt-3">
-                        <div>
-                            <label class="text-[10px] font-bold uppercase text-slate-500">Route to Lab</label>
-                            <input type="text" name="lab_assigned" value="{{ b['lab_assigned'] }}" placeholder="e.g. Dr. Lal PathLabs" class="w-full border rounded p-2 text-xs">
-                        </div>
-                        <div class="flex space-x-2">
-                            <select name="status" class="w-1/2 border rounded p-2 text-xs font-bold bg-slate-50">
-                                <option value="{{ b['status'] }}">{{ b['status'] }} (Current)</option>
-                                <option value="Sample Collected">Sample Collected</option>
-                                <option value="At Lab">At Lab</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                            <input type="file" name="report_pdf" accept="application/pdf" class="w-1/2 text-[10px] border rounded p-1">
-                        </div>
-                        <button type="submit" class="w-full bg-slate-900 text-white text-xs font-bold py-2 rounded hover:bg-slate-800">Update Booking & Upload</button>
-                    </form>
+    {% for order in orders %}
+    <div class="order-card">
+        <div class="order-header">
+            <h3>Order #{{ order.id }}</h3>
+            <span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">Action Required</span>
+        </div>
+        <div class="patient-details">
+            <div class="detail-box"><span>Patient Name</span><strong>{{ order.patient_name }}</strong></div>
+            <div class="detail-box"><span>Phone Number</span><strong>{{ order.phone }}</strong></div>
+            <div class="detail-box"><span>Collection Slot</span><strong>{{ order.collection_date }} | {{ order.time_slot }}</strong></div>
+            <div class="detail-box"><span>Address</span><strong>{{ order.address }}</strong></div>
+        </div>
+        <div class="test-list">
+            <div style="font-size: 12px; color: #64748B; font-weight: 700; margin-bottom: 8px;">TESTS TO COLLECT:</div>
+            {% for item in order.items %}
+                <div class="test-item">
+                    <span>🧪 {{ item.test_name }} <em style="color:#94A3B8;">(Send to: {{ item.lab_name }})</em></span>
+                    <strong>₹{{ item.price }}</strong>
                 </div>
-                {% endfor %}
-            </div>
-        </section>
-    </main>
+            {% endfor %}
+            <div class="total">Total to Collect: ₹{{ order.total_amount }}</div>
+        </div>
+    </div>
+    {% endfor %}
 </body>
 </html>
