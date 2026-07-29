@@ -15,10 +15,12 @@
         label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; outline: none; }
         .btn { width: 100%; padding: 14px; background: var(--primary); color: white; font-size: 16px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .section { margin-bottom: 30px; }
         .hidden { display: none; }
+        
+        .upsell-banner { background: linear-gradient(to right, #FFF7ED, #FFEDD5); border: 1px solid #F97316; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; align-items: center; justify-content: space-between; gap:10px; }
+        .upsell-text { font-size: 13px; color: #9A3412; font-weight: 600; }
+        .btn-upgrade { background: #F97316; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 12px; white-space: nowrap;}
+        
         .summary-box { background: #F0FDF4; border: 1px solid #BBF7D0; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
         .success-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-content { background: white; padding: 40px; border-radius: 16px; text-align: center; max-width: 400px; }
@@ -29,31 +31,38 @@
 <div class="container">
     <h2>Secure Checkout</h2>
 
-    <!-- Contact & OTP Section -->
-    <div id="contactSection" class="section">
-        <div class="form-group"><label>Full Name</label><input type="text" id="name" placeholder="John Doe"></div>
-        <div class="form-group"><label>Phone Number</label><input type="tel" id="phone" placeholder="9876543210"></div>
-        <div class="form-group"><label>Email Address</label><input type="email" id="email" placeholder="john@example.com"></div>
+    <!-- Contact Section -->
+    <div id="contactSection">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="name" placeholder="Enter full name" required></div>
+        <div class="form-group"><label>Phone Number *</label><input type="tel" id="phone" placeholder="10-digit number" required></div>
+        <div class="form-group"><label>Email Address *</label><input type="email" id="email" placeholder="For OTP and PDF Report" required></div>
         <button class="btn" id="btnSendOtp" onclick="sendOtp()">Verify Email & Continue</button>
         
         <div id="otpBox" class="hidden" style="margin-top: 15px;">
-            <div class="form-group"><label>Enter OTP sent to email</label><input type="text" id="otpCode" placeholder="123456"></div>
+            <div class="form-group"><label>Enter OTP *</label><input type="text" id="otpCode" placeholder="6-digit code"></div>
             <button class="btn" onclick="verifyOtp()" style="background: #111827;">Confirm OTP</button>
         </div>
     </div>
 
-    <!-- Booking Details (Hidden until verified) -->
-    <div id="bookingSection" class="section hidden">
+    <!-- Booking Details -->
+    <div id="bookingSection" class="hidden">
+        
+        <!-- Smart Upsell Moved Here -->
+        <div class="upsell-banner" id="upsellBanner">
+            <div class="upsell-text">💡 Upgrade to "Executive Full Body" for ₹999 and add CBC + LFT to your cart instantly!</div>
+            <button class="btn-upgrade">Switch to Package</button>
+        </div>
+
         <div class="summary-box">
-            <h3 style="color: #166534; margin-bottom: 5px;">Total Amount: ₹<span id="displayTotal">0</span></h3>
+            <h3 style="color: #166534; margin-bottom: 5px;">Total Estimate: ₹<span id="displayTotal">0</span></h3>
             <p style="font-size: 13px; color: #15803D; font-weight: 600;">✅ Pay via Cash or UPI on Collection</p>
         </div>
 
-        <div class="form-group"><label>Patient Name (If booking for family member)</label><input type="text" id="patientName"></div>
-        <div class="form-group"><label>Full Home Address (Yamunanagar only)</label><input type="text" id="address" placeholder="House No, Area, Landmark"></div>
-        <div class="form-group"><label>Collection Date</label><input type="date" id="date"></div>
+        <div class="form-group"><label>Patient Name *</label><input type="text" id="patientName" required></div>
+        <div class="form-group"><label>Full Home Address *</label><input type="text" id="address" placeholder="House No, Area, Landmark" required></div>
+        <div class="form-group"><label>Collection Date *</label><input type="date" id="date" required></div>
         <div class="form-group">
-            <label>Time Slot</label>
+            <label>Time Slot *</label>
             <select id="timeSlot">
                 <option value="6:00 AM - 8:00 AM">Morning (6:00 AM - 8:00 AM) - Best for Fasting</option>
                 <option value="9:00 AM - 12:00 PM">Late Morning (9:00 AM - 12:00 PM)</option>
@@ -61,11 +70,6 @@
             </select>
         </div>
         
-        <label style="display: flex; gap: 10px; align-items: flex-start; margin-top: 20px;">
-            <input type="checkbox" id="consent" style="width: auto; margin-top: 4px;">
-            <span style="font-size: 12px; color: var(--text-dark);">I consent to IHC Diagnostics collecting my sample and understand payment is due upon collection.</span>
-        </label>
-
         <button class="btn" onclick="placeOrder()" style="margin-top: 20px;">Confirm Booking</button>
     </div>
 </div>
@@ -74,96 +78,75 @@
     <div class="modal-content">
         <h1 style="font-size: 50px; margin-bottom: 10px;">✅</h1>
         <h2>Booking Confirmed!</h2>
-        <p style="margin: 15px 0; color: #4B5563;">Your order <b id="orderIdTag"></b> has been received. Our rider will arrive at your selected time slot.</p>
+        <p style="margin: 15px 0; color: #4B5563;">Your order <b id="orderIdTag"></b> has been received. Check your email for details.</p>
         <a href="/" class="btn" style="display: inline-block; text-decoration: none;">Return Home</a>
     </div>
 </div>
 
 <script>
-    // Load cart data and calculate total
     const cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
     if(cart.length === 0) { alert("Cart is empty!"); window.location.href = '/tests'; }
     
-    let total = 0;
-    cart.forEach(item => { total += parseFloat(item.currentPrice); });
+    let total = 0; cart.forEach(item => total += parseFloat(item.currentPrice));
     document.getElementById('displayTotal').innerText = total.toFixed(2);
 
-    // Default patient name to user name
-    document.getElementById('name').addEventListener('input', (e) => {
-        document.getElementById('patientName').value = e.target.value;
-    });
+    if(cart.length >= 2) document.getElementById('upsellBanner').style.display = 'flex';
+
+    document.getElementById('name').addEventListener('input', (e) => document.getElementById('patientName').value = e.target.value);
 
     async function sendOtp() {
         const email = document.getElementById('email').value;
-        if(!email) return alert("Please enter email");
+        const name = document.getElementById('name').value;
+        const phone = document.getElementById('phone').value;
+        
+        if(!name || !phone || !email) return alert("❌ Please fill in your Name, Phone, and Email to continue.");
         
         document.getElementById('btnSendOtp').disabled = true;
-        document.getElementById('btnSendOtp').innerText = "Sending...";
+        document.getElementById('btnSendOtp').innerText = "Sending OTP...";
         
-        const res = await fetch('/api/send-otp', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email})
-        });
+        const res = await fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email}) });
         const data = await res.json();
         
         if(data.success) {
             document.getElementById('btnSendOtp').style.display = 'none';
             document.getElementById('otpBox').classList.remove('hidden');
-        } else {
-            alert("Error sending OTP");
-        }
+        } else alert("Error sending OTP");
     }
 
     async function verifyOtp() {
         const otp = document.getElementById('otpCode').value;
         const email = document.getElementById('email').value;
+        if(!otp) return alert("❌ Please enter the OTP.");
         
-        const res = await fetch('/api/verify-otp', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email, otp})
-        });
+        const res = await fetch('/api/verify-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email, otp}) });
         const data = await res.json();
         
         if(data.success) {
             document.getElementById('contactSection').style.display = 'none';
             document.getElementById('bookingSection').classList.remove('hidden');
-        } else {
-            alert("Invalid OTP");
-        }
+        } else alert("❌ Invalid OTP. Please check your email and try again.");
     }
 
     async function placeOrder() {
-        if(!document.getElementById('consent').checked) return alert("Please check the consent box.");
-        if(!document.getElementById('address').value || !document.getElementById('date').value) return alert("Fill all details.");
+        const pName = document.getElementById('patientName').value;
+        const addr = document.getElementById('address').value;
+        const d = document.getElementById('date').value;
+        
+        if(!pName || !addr || !d) return alert("❌ Wait! You must fill in the Patient Name, Address, and Date.");
 
         const orderData = {
-            name: document.getElementById('name').value,
-            phone: document.getElementById('phone').value,
-            email: document.getElementById('email').value,
-            patient_name: document.getElementById('patientName').value,
-            address: document.getElementById('address').value,
-            date: document.getElementById('date').value,
-            time_slot: document.getElementById('timeSlot').value,
-            total: total,
-            cart: cart
+            name: document.getElementById('name').value, phone: document.getElementById('phone').value, email: document.getElementById('email').value,
+            patient_name: pName, address: addr, date: d, time_slot: document.getElementById('timeSlot').value, total: total, cart: cart
         };
 
-        const res = await fetch('/api/place-order', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(orderData)
-        });
+        const res = await fetch('/api/place-order', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(orderData) });
         const data = await res.json();
 
         if(data.success) {
             document.getElementById('orderIdTag').innerText = "#" + data.order_id;
             document.getElementById('successModal').classList.remove('hidden');
-            sessionStorage.removeItem('caredrop_cart'); // clear cart
-        } else {
-            alert("Booking failed: " + data.message);
-        }
+            sessionStorage.removeItem('caredrop_cart');
+        } else alert("Booking failed: " + data.message);
     }
 </script>
 
