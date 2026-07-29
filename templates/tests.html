@@ -181,10 +181,9 @@
             total.innerText = sum.toFixed(2);
         }
 
-       function proceedToCheckout() {
+     function proceedToCheckout() {
             sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
-            // THE CACHE BUSTER: Forces the phone to download fresh code every time!
-            window.location.href = '/checkout?v=' + new Date().getTime();
+            window.location.href = '/book'; // THIS BYPASSES THE CACHE!
         }
 
        // AUTO ADD PACKAGES FROM HOMEPAGE
