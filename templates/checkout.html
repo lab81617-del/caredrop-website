@@ -39,18 +39,18 @@
 <div class="container">
     <h2>Complete Your Booking</h2>
 
-    <!-- STRICT HTML5 FORM: The browser will not allow the submitOrder function to run if any 'required' box is empty -->
-    <form id="checkoutForm" onsubmit="submitOrder(event)">
+    <!-- Completely renamed form to break the cache loop -->
+    <form id="secureBookingForm" onsubmit="processFinalBooking(event)">
         
-        <div class="section-title">1. Contact Information</div>
+        <div class="section-title">1. Your Contact Details</div>
         <div class="form-row">
-            <div class="form-group"><label>Booking Name *</label><input type="text" id="name" placeholder="E.g. John Doe" required></div>
-            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" pattern="[0-9]{10}" required title="Please enter a valid 10 digit phone number"></div>
+            <div class="form-group"><label>Your Name *</label><input type="text" id="name" placeholder="E.g. John Doe" required></div>
+            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" pattern="[0-9]{10}" required></div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For Digital Reports" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For your digital reports" required></div>
 
         <div class="section-title">2. Patient Details</div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of person providing the sample" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of the person giving the sample" required></div>
         
         <div class="form-row">
             <div class="form-group"><label>Age *</label><input type="number" id="age" placeholder="Years" min="1" max="120" required></div>
@@ -83,16 +83,14 @@
 
         <div class="summary-box">
             <h3 style="color: #166534; margin-bottom: 5px; font-size: 22px;">Total Amount: ₹<span id="displayTotal">0</span></h3>
-            <p style="font-size: 14px; color: #15803D; font-weight: 600;">✅ Pay via Cash or UPI at your doorstep</p>
+            <p style="font-size: 14px; color: #15803D; font-weight: 600;">✅ Pay via Cash or UPI during home collection</p>
         </div>
 
         <label class="consent-label">
-            <!-- Consent is REQUIRED by HTML5 -->
             <input type="checkbox" id="consentBox" required>
-            <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert collection service led by DMLT professionals, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
+            <span class="consent-text">I consent to CareDrop collecting my sample. I understand that my sample will be professionally collected and processed by my chosen NABL-accredited partner lab.</span>
         </label>
         
-        <!-- Button MUST be type="submit" for HTML locks to work -->
         <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
     </form>
 </div>
@@ -103,7 +101,7 @@
         <h1 style="font-size: 60px; margin-bottom: 10px;">✅</h1>
         <h2 style="font-size: 26px; color: #0F172A; margin-bottom: 10px;">Booking Confirmed!</h2>
         <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">Your order <b id="orderIdTag" style="color: var(--primary);"></b> has been safely received.</p>
-        <p style="color: #475569; font-size: 14px; margin-bottom: 20px;">Our certified DMLT rider will arrive at your location on your selected date and time.</p>
+        <p style="color: #475569; font-size: 14px; margin-bottom: 20px;">Our certified health professional will arrive at your address on your selected date and time.</p>
         <a href="/" class="btn-submit" style="display: inline-block; text-decoration: none; font-size: 16px; padding: 14px;">Return to Home</a>
     </div>
 </div>
@@ -115,33 +113,52 @@
     let total = 0; cart.forEach(item => total += parseFloat(item.currentPrice));
     document.getElementById('displayTotal').innerText = total.toFixed(2);
 
+    // Auto-fill patient name if booking for yourself
     document.getElementById('name').addEventListener('input', (e) => {
         if(!document.getElementById('patientName').value || document.getElementById('patientName').value.length < e.target.value.length) {
             document.getElementById('patientName').value = e.target.value;
         }
     });
 
-    // This function ONLY runs if the browser confirms every single required box is filled
-    async function submitOrder(event) {
-        event.preventDefault(); // Stop standard reload
+    // Renamed function: The browser CANNOT bypass this anymore.
+    async function processFinalBooking(event) {
+        event.preventDefault(); 
         
+        // Final explicit check just to be absolutely certain
+        const bName = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const pName = document.getElementById('patientName').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const gender = document.getElementById('gender').value;
+        const address = document.getElementById('address').value.trim();
+        const date = document.getElementById('date').value;
+        const timeSlot = document.getElementById('timeSlot').value;
+        const consent = document.getElementById('consentBox').checked;
+
+        if(!bName || !phone || !email || !pName || !age || !gender || !address || !date || !timeSlot) {
+            alert("Please fill out all required details before confirming.");
+            return; 
+        }
+
+        if(!consent) {
+            alert("Please accept the consent checkbox at the bottom to confirm your booking.");
+            return;
+        }
+
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
 
-        const pName = document.getElementById('patientName').value.trim();
-        const age = document.getElementById('age').value.trim();
-        const gender = document.getElementById('gender').value;
         const fullPatientDetail = pName + " (" + age + " Yrs, " + gender + ")";
-
         const orderData = {
-            name: document.getElementById('name').value.trim(), 
-            phone: document.getElementById('phone').value.trim(), 
-            email: document.getElementById('email').value.trim(),
+            name: bName, 
+            phone: phone, 
+            email: email,
             patient_name: fullPatientDetail, 
-            address: document.getElementById('address').value.trim(), 
-            date: document.getElementById('date').value, 
-            time_slot: document.getElementById('timeSlot').value, 
+            address: address, 
+            date: date, 
+            time_slot: timeSlot, 
             total: total, 
             cart: cart
         };
@@ -155,17 +172,16 @@
             const data = await res.json();
 
             if(data.success) {
-                // SUCCESS
                 document.getElementById('orderIdTag').innerText = "#" + data.order_id;
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
             } else {
-                alert("❌ Booking failed: " + data.message);
+                alert("Booking failed: " + data.message);
                 btn.innerText = "Confirm Booking";
                 btn.disabled = false;
             }
         } catch(e) {
-            alert("❌ Network Error: Could not connect to database.");
+            alert("Network Error: Could not connect to the server.");
             btn.innerText = "Confirm Booking";
             btn.disabled = false;
         }
