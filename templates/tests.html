@@ -107,7 +107,7 @@
                     <div style="font-size: 12px; color: var(--text-muted);">Total Estimate</div>
                     <div class="total-price">₹<span id="cartTotal">0</span></div>
                 </div>
-                <button class="btn-checkout" onclick="alert('Checkout Page Coming Next!')">Proceed to Checkout →</button>
+               <button class="btn-checkout" onclick="sessionStorage.setItem('caredrop_cart', JSON.stringify(cart)); window.location.href='/checkout'">Proceed to Checkout →</button>
             </div>
         </div>
     </div>
