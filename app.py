@@ -100,38 +100,44 @@ def admin_dashboard():
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
     data = request.json
-    
-    # --- THE BACKEND BRICK WALL ---
-    # If the phone bypasses the frontend, the Python server catches it here and blocks it!
-    required_fields = ['name', 'phone', 'patient_name', 'address', 'date']
-    for field in required_fields:
-        if not data.get(field) or str(data.get(field)).strip() == "":
-            return jsonify({"success": False, "message": "Server Blocked: Please fill out all required details!"})
-    
-    if not data.get('cart') or len(data.get('cart')) == 0:
-        return jsonify({"success": False, "message": "Server Blocked: Your cart is empty!"})
-    # ------------------------------
+    if not data:
+        return jsonify({"success": False, "message": "No data received by server."}), 400
+
+    # STRICT SERVER-SIDE SANITIZATION
+    name = str(data.get('name', '')).strip()
+    phone = str(data.get('phone', '')).strip()
+    email = str(data.get('email', '')).strip()
+    patient_name = str(data.get('patient_name', '')).strip()
+    address = str(data.get('address', '')).strip()
+    date = str(data.get('date', '')).strip()
+    cart = data.get('cart', [])
+
+    if not name or not phone or not email or not patient_name or not address or not date:
+        return jsonify({"success": False, "message": "Rejected by server: Missing mandatory text fields."})
+
+    if not cart or len(cart) == 0:
+        return jsonify({"success": False, "message": "Rejected by server: Cart is empty."})
 
     conn = get_db()
     cursor = conn.cursor()
     
     try:
-        cursor.execute("SELECT id FROM users WHERE email = %s", (data['email'],))
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         if user:
             user_id = user[0]
         else:
             cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", 
-                           (data['name'], data['phone'], data['email']))
+                           (name, phone, email))
             user_id = cursor.fetchone()[0]
 
         cursor.execute("""
             INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount)
             VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-        """, (user_id, data['patient_name'], data['address'], data['date'], data['time_slot'], data['total']))
+        """, (user_id, patient_name, address, date, data.get('time_slot', 'Morning'), data.get('total', 0)))
         order_id = cursor.fetchone()[0]
 
-        for item in data['cart']:
+        for item in cart:
             cursor.execute("""
                 INSERT INTO order_items (order_id, test_id, lab_id, price)
                 VALUES (%s, %s, %s, %s)
@@ -139,13 +145,13 @@ def place_order():
             
         conn.commit()
         
-        msg = f"Your CareDrop Booking #{order_id} is confirmed!\n\nPatient: {data['patient_name']}\nDate: {data['date']} ({data['time_slot']})\nAmount to Pay on Collection: Rs. {data['total']}"
-        send_email_async(data['email'], f"Booking Confirmed - #{order_id}", msg)
+        msg = f"Your CareDrop Booking #{order_id} is confirmed!\n\nPatient: {patient_name}\nDate: {date}\nAmount to Pay on Collection: Rs. {data.get('total', 0)}"
+        send_email_async(email, f"Booking Confirmed - #{order_id}", msg)
         
         return jsonify({"success": True, "order_id": order_id})
     except Exception as e:
         conn.rollback()
-        return jsonify({"success": False, "message": str(e)})
+        return jsonify({"success": False, "message": str(e)}), 500
     finally:
         release_db(conn)
 
