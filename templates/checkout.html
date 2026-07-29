@@ -39,8 +39,8 @@
 <div class="container">
     <h2>Complete Your Booking</h2>
 
-    <!-- THE LOCK: onsubmit explicitly fires our validation script -->
-    <form id="checkoutForm" onsubmit="return placeOrder(event)">
+    <!-- THE LOCK: No onsubmit attribute, handled strictly by the button click -->
+    <form id="checkoutForm">
         
         <div class="section-title">1. Contact Information</div>
         <div class="form-row">
@@ -91,7 +91,8 @@
             <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert collection service led by DMLT professionals, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
         </label>
         
-        <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
+        <!-- Action Button -->
+        <button type="button" class="btn-submit" id="submitBtn" onclick="submitOrder()">Confirm Booking</button>
     </form>
 </div>
 
@@ -121,31 +122,28 @@
     });
 
     // The Double-Locked Submission
-    async function placeOrder(event) {
-        event.preventDefault(); // Stop the page from reloading
-        
+    async function submitOrder() {
         const form = document.getElementById('checkoutForm');
         
-        // LOCK 1: Check native browser rules (Required boxes, correct phone length, etc)
-        if (!form.checkValidity()) {
-            form.reportValidity(); // This makes the browser physically point at the empty box
-            return false;
+        // LOCK 1: Check native browser rules (Required boxes)
+        if (!form.reportValidity()) {
+            return; // Stops the process instantly
         }
         
-        // LOCK 2: Manual Consent Check (Just in case the browser misses it)
+        // LOCK 2: Manual Consent Check
         if(!document.getElementById('consentBox').checked) {
             alert("❌ You must check the consent box to confirm the booking.");
-            return false;
+            return; 
         }
 
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
 
-        const patientName = document.getElementById('patientName').value.trim();
+        const pName = document.getElementById('patientName').value.trim();
         const age = document.getElementById('age').value.trim();
         const gender = document.getElementById('gender').value;
-        const fullPatientDetail = patientName + " (" + age + " Yrs, " + gender + ")";
+        const fullPatientDetail = pName + " (" + age + " Yrs, " + gender + ")";
 
         const orderData = {
             name: document.getElementById('name').value.trim(), 
@@ -168,7 +166,7 @@
             const data = await res.json();
 
             if(data.success) {
-                // SUCCESS - Order is now in your Neon Database!
+                // SUCCESS - Order is in Neon!
                 document.getElementById('orderIdTag').innerText = "#" + data.order_id;
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
@@ -178,12 +176,10 @@
                 btn.disabled = false;
             }
         } catch(e) {
-            alert("❌ Server connection error. Please try again.");
+            alert("❌ Network Error: Could not connect to database.");
             btn.innerText = "Confirm Booking";
             btn.disabled = false;
         }
-        
-        return false;
     }
 </script>
 
