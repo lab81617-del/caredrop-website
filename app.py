@@ -14,9 +14,8 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 
-# --- DATABASE CONNECTION (Fixed for Multi-Threading) ---
+# --- DATABASE CONNECTION ---
 def get_db():
-    # Creates a fresh, secure connection for every single request
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
 def release_db(conn):
@@ -54,8 +53,9 @@ def tests_catalog():
         """)
         tests_list = cursor.fetchall()
         
+        # THE FIX: We cast the price to a FLOAT so the website can read it!
         cursor.execute("""
-            SELECT ltp.test_id, ltp.price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
+            SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
             FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id
             WHERE l.is_active = TRUE
         """)
