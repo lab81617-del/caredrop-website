@@ -1,193 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Tests | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #0D9488; --bg-main: #F8FAFC; --card-bg: #FFFFFF; --text-dark: #0F172A; --border-light: #E2E8F0; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-dark); padding-bottom: 120px; }
-        
-        .navbar { background: var(--card-bg); padding: 15px 20px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
-        .logo { font-size: 22px; font-weight: 800; color: var(--primary); text-decoration: none; }
-        
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
-        
-        /* Upgraded Search Bar */
-        .search-container { position: relative; margin-bottom: 30px; }
-        .search-box { width: 100%; padding: 16px 20px 16px 45px; border-radius: 16px; border: 1px solid var(--border-light); font-size: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); outline: none; transition: 0.2s; }
-        .search-box:focus { border-color: var(--primary); box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15); }
-        .search-icon { position: absolute; left: 16px; top: 16px; font-size: 18px; color: #94A3B8; }
+document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pkg = urlParams.get('add_pkg');
+            if (pkg) {
+                let testsToAdd = [];
+                if(pkg === 'executive') testsToAdd = ['cbc', 'thyroid', 'liver', 'fasting'];
+                if(pkg === 'diabetic') testsToAdd = ['hba1c', 'fasting', 'lipid', 'urine'];
+                if(pkg === 'pcod') testsToAdd = ['fsh', 'testosterone', 'insulin', 'thyroid'];
 
-        /* Premium Test Cards */
-        .category-title { font-size: 22px; font-weight: 800; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid var(--border-light); color: #334155; }
-        .test-grid { display: flex; overflow-x: auto; gap: 20px; padding-bottom: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-        .test-grid::-webkit-scrollbar { height: 0px; } /* Hide scrollbar for cleaner look */
-        
-        .test-card { min-width: 280px; max-width: 300px; flex-shrink: 0; scroll-snap-align: start; background: var(--card-bg); border: 1px solid #F1F5F9; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.2s; }
-        .test-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-        .test-name { font-size: 16px; font-weight: 700; margin-bottom: 10px; line-height: 1.3; }
-        .test-tag { font-size: 11px; background: #FEF2F2; color: #DC2626; padding: 6px 10px; border-radius: 8px; display: inline-block; font-weight: 600; }
-        
-        .btn-add { background: #CCFBF1; color: var(--primary); border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 20px; width: 100%; transition: 0.2s; font-size: 14px; }
-        .btn-add:hover { background: var(--primary); color: white; }
-        .btn-added { background: #16A34A; color: white; } /* Green state when clicked */
-
-        /* Floating Cart Icon */
-        .floating-cart-btn { position: fixed; bottom: 30px; right: 20px; background: var(--text-dark); color: white; padding: 16px 28px; border-radius: 50px; font-weight: 700; font-size: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); cursor: pointer; z-index: 99; display: none; align-items: center; gap: 10px; transition: 0.3s; }
-        .floating-cart-btn:hover { transform: scale(1.05); }
-        
-        /* Cart Panel */
-        .cart-panel { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--border-light); box-shadow: 0 -10px 40px rgba(0,0,0,0.08); padding: 20px; z-index: 100; display: none; border-radius: 24px 24px 0 0; }
-        .cart-container { max-width: 800px; margin: 0 auto; }
-        .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 800; font-size: 20px; }
-        .cart-items { max-height: 40vh; overflow-y: auto; margin-bottom: 15px; padding-right: 5px; }
-        .cart-item { border: 1px solid var(--border-light); border-radius: 12px; padding: 15px; margin-bottom: 10px; background: #F8FAFC; }
-        .cart-item-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; color: var(--text-dark); }
-        .remove-btn { color: #EF4444; cursor: pointer; font-size: 13px; font-weight: 600; }
-        .lab-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; background: white; outline: none; font-weight: 500; }
-        .cart-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 15px; }
-        .btn-checkout { background: var(--primary); color: white; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; font-size: 16px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3); }
-    </style>
-</head>
-<body>
-
-    <nav class="navbar"><a href="/" class="logo">CareDrop</a><div style="font-weight: 600; font-size: 14px; color: #64748B;">Select Tests</div></nav>
-
-    <div class="container">
-        <!-- Upgraded Search Bar -->
-        <div class="search-container">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" class="search-box" placeholder="Search for CBC, Thyroid, Sugar..." onkeyup="filterTests()">
-        </div>
-
-        <div id="catalogContainer">
-            {% set current_category = namespace(value='') %}
-            {% for test in tests %}
-                {% if test.category != current_category.value %}
-                    {% if current_category.value != '' %} </div></div> {% endif %}
-                    <div class="category-section">
-                    <div class="category-title">{{ test.category }}</div>
-                    <div class="test-grid">
-                    {% set current_category.value = test.category %}
-                {% endif %}
-                
-                <div class="test-card" data-name="{{ test.name | lower }}">
-                    <div>
-                        <div class="test-name">{{ test.name }}</div>
-                        {% if test.fasting_requirement != 'None' and test.fasting_requirement != 'Non-Fasting' %}
-                            <div class="test-tag">⚠️ {{ test.fasting_requirement }}</div>
-                        {% endif %}
-                    </div>
-                    <!-- Button ID added so we can change its color when clicked -->
-                    <button class="btn-add" id="btn-{{ test.id }}" onclick="addToCart({{ test.id }}, '{{ test.name }}', this)">+ Add to Cart</button>
-                </div>
-            {% endfor %}
-            </div></div>
-        </div>
-    </div>
-
-    <!-- Floating Action Button -->
-    <div class="floating-cart-btn" id="floatingCartBtn" onclick="toggleCart()">
-        🛒 View Cart (<span id="floatCartCount">0</span>)
-    </div>
-
-    <!-- Slide-Up Cart Panel -->
-    <div class="cart-panel" id="cartPanel">
-        <div class="cart-container">
-            <div class="cart-header"><span>Your Selected Tests</span><span style="font-size: 14px; color: #64748B; cursor: pointer; font-weight:600;" onclick="toggleCart()">Close ✕</span></div>
-            <div class="cart-items" id="cartItemsList"></div>
-            <div class="cart-footer">
-                <div><div style="font-size: 13px; color: #64748B; font-weight:600;">Total Estimate</div><div style="font-size: 24px; font-weight: 800; color: var(--primary);">₹<span id="cartTotal">0</span></div></div>
-                <button class="btn-checkout" onclick="proceedToCheckout()">Confirm Details →</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const pricingData = {{ pricing | safe }};
-        let cart = [];
-
-        function filterTests() {
-            let input = document.getElementById('searchInput').value.toLowerCase();
-            let cards = document.getElementsByClassName('test-card');
-            for (let i = 0; i < cards.length; i++) {
-                if (cards[i].getAttribute('data-name').includes(input)) {
-                    cards[i].style.display = "flex";
-                } else {
-                    cards[i].style.display = "none";
-                }
-            }
-        }
-
-        function addToCart(testId, testName, btnElement) {
-            if(cart.find(item => item.id === testId)) {
-                btnElement.innerText = "Already in Cart";
-                return;
-            }
-            const availableLabs = pricingData.filter(p => p.test_id === testId);
-            if(availableLabs.length === 0) return alert("No labs currently offer this test.");
-            
-            availableLabs.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-            cart.push({ id: testId, name: testName, labs: availableLabs, selectedLabId: availableLabs[0].lab_id, currentPrice: availableLabs[0].price });
-            
-            // Smooth UI change instead of an alert popup
-            btnElement.classList.add("btn-added");
-            btnElement.innerText = "✅ Added to Cart";
-            
-            updateCartUI();
-        }
-
-        function removeFromCart(testId) {
-            cart = cart.filter(item => item.id !== testId);
-            // Reset button text
-            const btn = document.getElementById('btn-' + testId);
-            if(btn) { btn.classList.remove("btn-added"); btn.innerText = "+ Add to Cart"; }
-            updateCartUI();
-        }
-
-        function changeLab(testId, newLabId) {
-            const item = cart.find(i => i.id === testId);
-            const lab = item.labs.find(l => l.lab_id == newLabId);
-            item.selectedLabId = lab.lab_id; item.currentPrice = lab.price;
-            updateCartUI();
-        }
-
-        function toggleCart() {
-            const panel = document.getElementById('cartPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function updateCartUI() {
-            const floatBtn = document.getElementById('floatingCartBtn');
-            const panel = document.getElementById('cartPanel');
-            const list = document.getElementById('cartItemsList');
-            const total = document.getElementById('cartTotal');
-            
-            if(cart.length === 0) { floatBtn.style.display = 'none'; panel.style.display = 'none'; return; }
-            floatBtn.style.display = 'flex';
-            document.getElementById('floatCartCount').innerText = cart.length;
-            
-            let sum = 0; list.innerHTML = '';
-            cart.forEach(item => {
-                sum += parseFloat(item.currentPrice);
-                let optionsHtml = '';
-                item.labs.forEach(lab => {
-                    const isSelected = lab.lab_id == item.selectedLabId ? 'selected' : '';
-                    optionsHtml += `<option value="${lab.lab_id}" ${isSelected}>${lab.lab_name} - ₹${lab.price}</option>`;
+                const cards = document.querySelectorAll('.test-card');
+                cards.forEach(card => {
+                    const testName = card.dataset.name.toLowerCase();
+                    testsToAdd.forEach(keyword => {
+                        if(testName.includes(keyword)) {
+                            card.querySelector('.btn-add').click();
+                        }
+                    });
                 });
-                list.innerHTML += `<div class="cart-item"><div class="cart-item-title"><span>${item.name}</span><span class="remove-btn" onclick="removeFromCart(${item.id})">Remove</span></div>
-                <div style="font-size:12px; margin-bottom:6px; color:#64748B; font-weight:600;">Choose your preferred Lab:</div><select class="lab-select" onchange="changeLab(${item.id}, this.value)">${optionsHtml}</select></div>`;
-            });
-            total.innerText = sum.toFixed(2);
-        }
-
-        function proceedToCheckout() {
-            sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
-            window.location.href = '/checkout';
-        }
-    </script>
-</body>
-</html>
+                
+                // Open cart automatically
+                setTimeout(() => toggleCart(), 500);
+            }
+        });
