@@ -40,25 +40,25 @@
     <h2>Complete Your Booking</h2>
 
     <!-- ONE UNIFIED FORM -->
-    <form id="checkoutForm" onsubmit="placeOrder(event)">
+    <form id="checkoutForm">
         
         <!-- SECTION 1: Contact -->
         <div class="section-title">1. Contact Information</div>
         <div class="form-row">
-            <div class="form-group"><label>Booking Name *</label><input type="text" id="name" placeholder="E.g. John Doe" required></div>
-            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" pattern="[0-9]{10}" placeholder="10-digit number" required></div>
+            <div class="form-group"><label>Booking Name *</label><input type="text" id="name" placeholder="E.g. John Doe"></div>
+            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number"></div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For OTP & Digital Reports" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For OTP & Digital Reports"></div>
 
         <!-- SECTION 2: Patient -->
         <div class="section-title">2. Patient Details</div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of person providing the sample" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of person providing the sample"></div>
         
         <div class="form-row">
-            <div class="form-group"><label>Age *</label><input type="number" id="age" placeholder="Years" min="1" max="120" required></div>
+            <div class="form-group"><label>Age *</label><input type="number" id="age" placeholder="Years" min="1" max="120"></div>
             <div class="form-group">
                 <label>Gender *</label>
-                <select id="gender" required>
+                <select id="gender">
                     <option value="" disabled selected>Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -67,15 +67,15 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 15px;"><label>Full Home Address (Yamunanagar) *</label><input type="text" id="address" placeholder="House No, Street, Landmark" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Full Home Address (Yamunanagar) *</label><input type="text" id="address" placeholder="House No, Street, Landmark"></div>
 
         <!-- SECTION 3: Appointment -->
         <div class="section-title">3. Sample Collection Schedule</div>
         <div class="form-row">
-            <div class="form-group"><label>Collection Date *</label><input type="date" id="date" required></div>
+            <div class="form-group"><label>Collection Date *</label><input type="date" id="date"></div>
             <div class="form-group">
                 <label>Time Slot *</label>
-                <select id="timeSlot" required>
+                <select id="timeSlot">
                     <option value="6:00 AM - 8:00 AM">Morning (6:00 AM - 8:00 AM)</option>
                     <option value="9:00 AM - 12:00 PM">Late Morning (9:00 AM - 12:00 PM)</option>
                     <option value="4:00 PM - 7:00 PM">Evening (4:00 PM - 7:00 PM)</option>
@@ -90,11 +90,11 @@
         </div>
 
         <label class="consent-label">
-            <input type="checkbox" id="consentBox" required>
-            <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert aggregation service, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
+            <input type="checkbox" id="consentBox">
+            <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert collection service led by DMLT professionals, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
         </label>
         
-        <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
+        <button type="button" class="btn-submit" id="submitBtn" onclick="placeOrder()">Confirm Booking</button>
     </form>
 </div>
 
@@ -122,29 +122,47 @@
         }
     });
 
-    // Handle Native Form Submission
-    async function placeOrder(event) {
-        // This stops the browser from reloading the page
-        event.preventDefault(); 
+    // STRICT JAVASCRIPT VALIDATION
+    async function placeOrder() {
         
+        // 1. Gather all fields
+        const name = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const patientName = document.getElementById('patientName').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const gender = document.getElementById('gender').value;
+        const address = document.getElementById('address').value.trim();
+        const date = document.getElementById('date').value;
+        const timeSlot = document.getElementById('timeSlot').value;
+        const consent = document.getElementById('consentBox').checked;
+
+        // 2. The Iron-Clad Lock: If ANYTHING is missing, stop immediately.
+        if(!name || !phone || !email || !patientName || !age || !gender || !address || !date) {
+            alert("❌ Please fill out every single detail before confirming your booking.");
+            return; // Stops the function dead in its tracks
+        }
+        
+        if(!consent) {
+            alert("❌ You must check the consent box at the bottom to proceed.");
+            return; // Stops the function
+        }
+
+        // 3. If it passes validation, proceed to send to database
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
 
-        // Collect all data
-        const pName = document.getElementById('patientName').value;
-        const pAge = document.getElementById('age').value;
-        const pGender = document.getElementById('gender').value;
-        const fullPatientDetail = pName + " (" + pAge + " Yrs, " + pGender + ")";
+        const fullPatientDetail = patientName + " (" + age + " Yrs, " + gender + ")";
 
         const orderData = {
-            name: document.getElementById('name').value, 
-            phone: document.getElementById('phone').value, 
-            email: document.getElementById('email').value,
+            name: name, 
+            phone: phone, 
+            email: email,
             patient_name: fullPatientDetail, 
-            address: document.getElementById('address').value, 
-            date: document.getElementById('date').value, 
-            time_slot: document.getElementById('timeSlot').value, 
+            address: address, 
+            date: date, 
+            time_slot: timeSlot, 
             total: total, 
             cart: cart
         };
@@ -158,6 +176,7 @@
             const data = await res.json();
 
             if(data.success) {
+                // TRUE SUCCESS (Only happens if the database accepts the order)
                 document.getElementById('orderIdTag').innerText = "#" + data.order_id;
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
@@ -167,11 +186,9 @@
                 btn.disabled = false;
             }
         } catch(e) {
-            // Because email OTP isn't fully set up on the backend yet, the email sender might crash the API.
-            // If it crashes, we still want to show success for now so you can see it working!
-            document.getElementById('orderIdTag').innerText = "#" + Math.floor(Math.random() * 90000 + 10000);
-            document.getElementById('successModal').classList.remove('hidden');
-            sessionStorage.removeItem('caredrop_cart');
+            alert("❌ Network Error: Could not connect to the database. Please try again.");
+            btn.innerText = "Confirm Booking";
+            btn.disabled = false;
         }
     }
 </script>
