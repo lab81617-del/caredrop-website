@@ -2,7 +2,6 @@ import os
 import threading
 import smtplib
 import json
-import random
 from email.message import EmailMessage
 from flask import Flask, render_template, jsonify, request, session
 import psycopg2
@@ -14,14 +13,12 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 
-# --- DATABASE CONNECTION ---
 def get_db():
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
 def release_db(conn):
     conn.close()
 
-# --- BACKGROUND EMAIL ---
 def send_email_async(recipient, subject, body):
     gmail_pwd = os.environ.get("GMAIL_APP_PASSWORD")
     if not gmail_pwd: return
@@ -36,7 +33,6 @@ def send_email_async(recipient, subject, body):
         except Exception as e: print(e)
     threading.Thread(target=email_job).start()
 
-# --- ROUTES ---
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -53,7 +49,6 @@ def tests_catalog():
         """)
         tests_list = cursor.fetchall()
         
-        # THE FIX: We cast the price to a FLOAT so the website can read it!
         cursor.execute("""
             SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
             FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id
@@ -69,36 +64,14 @@ def tests_catalog():
 def checkout_page():
     return render_template('checkout.html')
 
-# --- API ROUTES (OTP & ORDER) ---
-@app.route('/api/send-otp', methods=['POST'])
-def send_otp():
-    email = request.json.get('email')
-    otp = str(random.randint(100000, 999999))
-    session['otp'] = otp
-    session['email'] = email
-    
-    body = f"Welcome to CareDrop. Your verification OTP is: {otp}\n\nDo not share this with anyone."
-    send_email_async(email, "CareDrop - Verify Your Email", body)
-    return jsonify({"success": True})
-
-@app.route('/api/verify-otp', methods=['POST'])
-def verify_otp():
-    data = request.json
-    if str(data.get('otp')) == str(session.get('otp')) and data.get('email') == session.get('email'):
-        session['verified'] = True
-        return jsonify({"success": True})
-    return jsonify({"success": False, "message": "Invalid OTP"})
-
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
-    if not session.get('verified'):
-        return jsonify({"success": False, "message": "Please verify email first."})
-        
     data = request.json
     conn = get_db()
     cursor = conn.cursor()
     
     try:
+        # 1. Register or find user
         cursor.execute("SELECT id FROM users WHERE email = %s", (data['email'],))
         user = cursor.fetchone()
         if user:
@@ -108,12 +81,14 @@ def place_order():
                            (data['name'], data['phone'], data['email']))
             user_id = cursor.fetchone()[0]
 
+        # 2. Create the Order
         cursor.execute("""
             INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount)
             VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
         """, (user_id, data['patient_name'], data['address'], data['date'], data['time_slot'], data['total']))
         order_id = cursor.fetchone()[0]
 
+        # 3. Add Tests to Order
         for item in data['cart']:
             cursor.execute("""
                 INSERT INTO order_items (order_id, test_id, lab_id, price)
@@ -122,6 +97,7 @@ def place_order():
             
         conn.commit()
         
+        # 4. Send Email
         msg = f"Your CareDrop Booking #{order_id} is confirmed!\n\nPatient: {data['patient_name']}\nDate: {data['date']} ({data['time_slot']})\nAmount to Pay on Collection: Rs. {data['total']}"
         send_email_async(data['email'], f"Booking Confirmed - #{order_id}", msg)
         
