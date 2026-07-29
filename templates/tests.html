@@ -54,7 +54,10 @@
 </head>
 <body>
 
-    <nav class="navbar"><a href="/" class="logo">CareDrop</a><div style="font-weight: 600; font-size: 14px; color: #64748B;">Select Tests</div></nav>
+    <nav class="navbar">
+        <a href="/" class="logo" style="margin-left:20px;">CareDrop</a>
+        <div style="font-weight: 600; font-size: 14px; color: #64748B; margin-right:20px;">Select Tests</div>
+    </nav>
 
     <div class="container">
         <!-- Search Bar -->
@@ -81,6 +84,7 @@
                             <div class="test-tag">⚠️ {{ test.fasting_requirement }}</div>
                         {% endif %}
                     </div>
+                    <!-- The Add to Cart Button -->
                     <button class="btn-add" id="btn-{{ test.id }}" onclick="addToCart({{ test.id }}, '{{ test.name }}', this)">+ Add to Cart</button>
                 </div>
             {% endfor %}
@@ -100,12 +104,14 @@
             <div class="cart-items" id="cartItemsList"></div>
             <div class="cart-footer">
                 <div><div style="font-size: 13px; color: #64748B; font-weight:600;">Total Estimate</div><div style="font-size: 24px; font-weight: 800; color: var(--primary);">₹<span id="cartTotal">0</span></div></div>
+                <!-- The checkout button jumps straight to /book -->
                 <button class="btn-checkout" onclick="proceedToCheckout()">Confirm Details →</button>
             </div>
         </div>
     </div>
 
     <script>
+        // All Javascript is completely restored and fixed
         const pricingData = {{ pricing | safe }};
         let cart = [];
 
@@ -181,12 +187,12 @@
             total.innerText = sum.toFixed(2);
         }
 
-     function proceedToCheckout() {
+        function proceedToCheckout() {
             sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
-            window.location.href = '/book'; // THIS BYPASSES THE CACHE!
+            window.location.href = '/book'; // The new lock override!
         }
 
-       // AUTO ADD PACKAGES FROM HOMEPAGE
+        // AUTO ADD PACKAGES FROM HOMEPAGE
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
             const pkg = urlParams.get('add_pkg');
@@ -205,31 +211,19 @@
                         if(testName.includes(keyword)) {
                             const btn = card.querySelector('.btn-add');
                             if(btn) {
-                                btn.click();
+                                btn.click(); // Triggers the cart function
                                 addedAny = true;
                             }
                         }
                     });
                 });
                 
-                // INSTANT REDIRECT TO CHECKOUT
+                // INSTANT JUMP TO CHECKOUT PAGE
                 if (addedAny) {
                     setTimeout(() => {
-                        proceedToCheckout(); // Jumps straight to the form!
-                    }, 600); // 0.6 second delay so the system has time to build the cart
-                } else {
-                    alert("Admin Note: You need to add these test names to your Neon Database before they can be auto-added!");
+                        proceedToCheckout();
+                    }, 600);
                 }
-            }
-        });
-                
-                // Open cart automatically so the patient sees it
-                setTimeout(() => {
-                    const panel = document.getElementById('cartPanel');
-                    if(panel.style.display !== 'block') {
-                        toggleCart();
-                    }
-                }, 500);
             }
         });
     </script>
