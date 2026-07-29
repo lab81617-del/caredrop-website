@@ -12,7 +12,7 @@
         .container { max-width: 700px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); }
         h2 { margin-bottom: 25px; font-weight: 800; border-bottom: 2px solid var(--border); padding-bottom: 15px; font-size: 24px; color: #334155; }
         
-        .section-title { font-size: 16px; font-weight: 700; color: var(--primary); margin: 25px 0 15px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .section-title { font-size: 14px; font-weight: 800; color: var(--primary); margin: 25px 0 15px 0; text-transform: uppercase; letter-spacing: 1px; }
         .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
         .form-group { flex: 1; min-width: 250px; }
         
@@ -28,6 +28,7 @@
         
         .btn-submit { width: 100%; padding: 18px; background: var(--primary); color: white; font-size: 18px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3); transition: 0.2s; }
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4); }
+        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; transform: none; box-shadow: none; }
         
         .success-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal-content { background: white; padding: 40px; border-radius: 24px; text-align: center; max-width: 450px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -38,18 +39,16 @@
 <div class="container">
     <h2>Complete Your Booking</h2>
 
-    <!-- FORM WRAPPER (This forces the browser to validate 'required' tags) -->
-    <form id="checkoutForm">
+    <!-- THE LOCK: onsubmit explicitly fires our validation script -->
+    <form id="checkoutForm" onsubmit="return placeOrder(event)">
         
-        <!-- SECTION 1 -->
         <div class="section-title">1. Contact Information</div>
         <div class="form-row">
             <div class="form-group"><label>Booking Name *</label><input type="text" id="name" placeholder="E.g. John Doe" required></div>
-            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" required></div>
+            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" pattern="[0-9]{10}" required></div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For OTP & Digital Reports" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For Digital Reports" required></div>
 
-        <!-- SECTION 2 -->
         <div class="section-title">2. Patient Details</div>
         <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of person providing the sample" required></div>
         
@@ -68,13 +67,13 @@
 
         <div class="form-group" style="margin-bottom: 15px;"><label>Full Home Address (Yamunanagar) *</label><input type="text" id="address" placeholder="House No, Street, Landmark" required></div>
 
-        <!-- SECTION 3 -->
         <div class="section-title">3. Sample Collection Schedule</div>
         <div class="form-row">
             <div class="form-group"><label>Collection Date *</label><input type="date" id="date" required></div>
             <div class="form-group">
                 <label>Time Slot *</label>
                 <select id="timeSlot" required>
+                    <option value="" disabled selected>Select Time</option>
                     <option value="6:00 AM - 8:00 AM">Morning (6:00 AM - 8:00 AM)</option>
                     <option value="9:00 AM - 12:00 PM">Late Morning (9:00 AM - 12:00 PM)</option>
                     <option value="4:00 PM - 7:00 PM">Evening (4:00 PM - 7:00 PM)</option>
@@ -82,19 +81,16 @@
             </div>
         </div>
 
-        <!-- SUMMARY -->
         <div class="summary-box">
             <h3 style="color: #166534; margin-bottom: 5px; font-size: 22px;">Total Amount: ₹<span id="displayTotal">0</span></h3>
             <p style="font-size: 14px; color: #15803D; font-weight: 600;">✅ Pay via Cash or UPI at your doorstep</p>
         </div>
 
-        <!-- CONSENT MUST BE CHECKED -->
         <label class="consent-label">
             <input type="checkbox" id="consentBox" required>
             <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert collection service led by DMLT professionals, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
         </label>
         
-        <!-- BUTTON TYPE SUBMIT -->
         <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
     </form>
 </div>
@@ -104,7 +100,8 @@
     <div class="modal-content">
         <h1 style="font-size: 60px; margin-bottom: 10px;">✅</h1>
         <h2 style="font-size: 26px; color: #0F172A; margin-bottom: 10px;">Booking Confirmed!</h2>
-        <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">Your order <b id="orderIdTag" style="color: var(--primary);"></b> has been received. Our certified DMLT rider will arrive at your location on time.</p>
+        <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">Your order <b id="orderIdTag" style="color: var(--primary);"></b> has been safely received.</p>
+        <p style="color: #475569; font-size: 14px; margin-bottom: 20px;">Our certified DMLT rider will arrive at your location on your selected date and time.</p>
         <a href="/" class="btn-submit" style="display: inline-block; text-decoration: none; font-size: 16px; padding: 14px;">Return to Home</a>
     </div>
 </div>
@@ -116,18 +113,31 @@
     let total = 0; cart.forEach(item => total += parseFloat(item.currentPrice));
     document.getElementById('displayTotal').innerText = total.toFixed(2);
 
-    // Auto-fill patient name
+    // Auto-fill patient name to save user time
     document.getElementById('name').addEventListener('input', (e) => {
         if(!document.getElementById('patientName').value || document.getElementById('patientName').value.length < e.target.value.length) {
             document.getElementById('patientName').value = e.target.value;
         }
     });
 
-    // The Ultimate Form Interceptor
-    document.getElementById('checkoutForm').addEventListener('submit', async function(event) {
-        event.preventDefault(); // Stop page from reloading
+    // The Double-Locked Submission
+    async function placeOrder(event) {
+        event.preventDefault(); // Stop the page from reloading
+        
+        const form = document.getElementById('checkoutForm');
+        
+        // LOCK 1: Check native browser rules (Required boxes, correct phone length, etc)
+        if (!form.checkValidity()) {
+            form.reportValidity(); // This makes the browser physically point at the empty box
+            return false;
+        }
+        
+        // LOCK 2: Manual Consent Check (Just in case the browser misses it)
+        if(!document.getElementById('consentBox').checked) {
+            alert("❌ You must check the consent box to confirm the booking.");
+            return false;
+        }
 
-        // If the code reaches here, the browser has already verified EVERY box is filled!
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
@@ -158,20 +168,23 @@
             const data = await res.json();
 
             if(data.success) {
+                // SUCCESS - Order is now in your Neon Database!
                 document.getElementById('orderIdTag').innerText = "#" + data.order_id;
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
             } else {
-                alert("Booking failed: " + data.message);
+                alert("❌ Booking failed: " + data.message);
                 btn.innerText = "Confirm Booking";
                 btn.disabled = false;
             }
         } catch(e) {
-            alert("❌ Network Error: Could not connect to the database. Please try again.");
+            alert("❌ Server connection error. Please try again.");
             btn.innerText = "Confirm Booking";
             btn.disabled = false;
         }
-    });
+        
+        return false;
+    }
 </script>
 
 </body>
