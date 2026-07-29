@@ -60,7 +60,7 @@ def tests_catalog():
         
     return render_template('tests.html', tests=tests_list, pricing=json.dumps(pricing_list))
 
-@app.route('/checkout')
+@app.route('/book')
 def checkout_page():
     return render_template('checkout.html')
 
