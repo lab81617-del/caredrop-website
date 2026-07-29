@@ -64,7 +64,6 @@ def tests_catalog():
 def checkout_page():
     return render_template('checkout.html')
 
-# --- NEW: ADMIN DASHBOARD ---
 @app.route('/admin')
 def admin_dashboard():
     conn = get_db()
@@ -101,6 +100,18 @@ def admin_dashboard():
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
     data = request.json
+    
+    # --- THE BACKEND BRICK WALL ---
+    # If the phone bypasses the frontend, the Python server catches it here and blocks it!
+    required_fields = ['name', 'phone', 'patient_name', 'address', 'date']
+    for field in required_fields:
+        if not data.get(field) or str(data.get(field)).strip() == "":
+            return jsonify({"success": False, "message": "Server Blocked: Please fill out all required details!"})
+    
+    if not data.get('cart') or len(data.get('cart')) == 0:
+        return jsonify({"success": False, "message": "Server Blocked: Your cart is empty!"})
+    # ------------------------------
+
     conn = get_db()
     cursor = conn.cursor()
     
