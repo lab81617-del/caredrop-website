@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Tests | CareDrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0D9488; --primary-hover: #0F766E;
+            --bg-main: #FAFAF9; --card-bg: #FFFFFF;
+            --text-dark: #1C1917; --text-muted: #78716C;
+            --border-light: #E7E5E4;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-dark); padding-bottom: 100px; }
+        
+        /* Navbar */
+        .navbar { background: var(--card-bg); padding: 15px 20px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+        .logo { font-size: 22px; font-weight: 800; color: var(--primary); text-decoration: none; }
+        
+        /* Compact Grid */
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        .category-title { font-size: 20px; font-weight: 700; margin: 30px 0 15px 0; border-bottom: 2px solid var(--border-light); padding-bottom: 10px; }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        
+        .test-card { background: var(--card-bg); border: 1px solid var(--border-light); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
+        .test-name { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .test-tag { font-size: 11px; background: #FEF2F2; color: #DC2626; padding: 4px 8px; border-radius: 4px; display: inline-block; font-weight: 600; }
+        .btn-add { background: var(--primary-light, #CCFBF1); color: var(--primary); border: none; padding: 8px; border-radius: 6px; font-weight: 700; cursor: pointer; margin-top: 15px; width: 100%; transition: 0.2s; }
+        .btn-add:hover { background: var(--primary); color: white; }
+
+        /* Floating Cart Panel */
+        .cart-panel { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--border-light); box-shadow: 0 -10px 40px rgba(0,0,0,0.08); padding: 20px; z-index: 100; display: none; }
+        .cart-container { max-width: 1000px; margin: 0 auto; }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 700; font-size: 18px; }
+        
+        .cart-items { max-height: 30vh; overflow-y: auto; margin-bottom: 15px; }
+        .cart-item { border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .cart-item-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .remove-btn { color: #DC2626; cursor: pointer; font-size: 12px; }
+        
+        .lab-select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 13px; background: #F8FAFC; outline: none; }
+        
+        /* Smart Upsell Banner */
+        .upsell-banner { background: linear-gradient(to right, #FFF7ED, #FFEDD5); border: 1px solid #F97316; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none; align-items: center; justify-content: space-between; }
+        .upsell-text { font-size: 13px; color: #9A3412; font-weight: 600; }
+        .btn-upgrade { background: #F97316; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 12px; }
+
+        .cart-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 15px; }
+        .total-price { font-size: 22px; font-weight: 800; color: var(--primary); }
+        .btn-checkout { background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">CareDrop</a>
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-muted);">Select Tests</div>
+    </nav>
+
+    <div class="container">
+        <!-- Render tests grouped by category via Jinja -->
+        {% set current_category = namespace(value='') %}
+        
+        {% for test in tests %}
+            {% if test.category != current_category.value %}
+                {% if current_category.value != '' %} </div> {% endif %}
+                <div class="category-title">{{ test.category }}</div>
+                <div class="test-grid">
+                {% set current_category.value = test.category %}
+            {% endif %}
+            
+            <div class="test-card">
+                <div>
+                    <div class="test-name">{{ test.name }}</div>
+                    {% if test.fasting_requirement != 'None' and test.fasting_requirement != 'Non-Fasting' %}
+                        <div class="test-tag">⚠️ {{ test.fasting_requirement }}</div>
+                    {% endif %}
+                </div>
+                <button class="btn-add" onclick="addToCart({{ test.id }}, '{{ test.name }}')">+ Add to Cart</button>
+            </div>
+        {% endfor %}
+        </div> <!-- Close last grid -->
+    </div>
+
+    <!-- Floating Smart Cart -->
+    <div class="cart-panel" id="cartPanel">
+        <div class="cart-container">
+            <div class="cart-header">
+                <span>Your Cart (<span id="cartCount">0</span>)</span>
+                <span style="font-size: 14px; color: var(--text-muted); cursor: pointer;" onclick="document.getElementById('cartPanel').style.display='none'">Close</span>
+            </div>
+
+            <!-- Smart Upsell Banner -->
+            <div class="upsell-banner" id="upsellBanner">
+                <div class="upsell-text">💡 Smart Savings: Upgrade to "Executive Full Body Shield" for just ₹999 and get CBC & LFT included!</div>
+                <button class="btn-upgrade">Switch & Save</button>
+            </div>
+
+            <div class="cart-items" id="cartItemsList">
+                <!-- Cart items injected here via JS -->
+            </div>
+
+            <div class="cart-footer">
+                <div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Total Estimate</div>
+                    <div class="total-price">₹<span id="cartTotal">0</span></div>
+                </div>
+                <button class="btn-checkout" onclick="alert('Checkout Page Coming Next!')">Proceed to Checkout →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inject Pricing Data from Python -->
+    <script>
+        const pricingData = {{ pricing | safe }};
+        let cart = [];
+
+        function addToCart(testId, testName) {
+            // Check if already in cart
+            if(cart.find(item => item.id === testId)) return alert("Test already added!");
+            
+            // Find labs that offer this test
+            const availableLabs = pricingData.filter(p => p.test_id === testId);
+            if(availableLabs.length === 0) return alert("No labs currently offer this test.");
+            
+            // Add to cart with the cheapest lab selected by default
+            availableLabs.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+            cart.push({
+                id: testId,
+                name: testName,
+                labs: availableLabs,
+                selectedLabId: availableLabs[0].lab_id,
+                currentPrice: availableLabs[0].price
+            });
+            
+            updateCartUI();
+        }
+
+        function removeFromCart(testId) {
+            cart = cart.filter(item => item.id !== testId);
+            updateCartUI();
+        }
+
+        function changeLab(testId, newLabId) {
+            const item = cart.find(i => i.id === testId);
+            const lab = item.labs.find(l => l.lab_id == newLabId);
+            item.selectedLabId = lab.lab_id;
+            item.currentPrice = lab.price;
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const panel = document.getElementById('cartPanel');
+            const list = document.getElementById('cartItemsList');
+            const count = document.getElementById('cartCount');
+            const total = document.getElementById('cartTotal');
+            const upsell = document.getElementById('upsellBanner');
+            
+            if(cart.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+            
+            panel.style.display = 'block';
+            count.innerText = cart.length;
+            
+            // AI Upsell Logic: Trigger if cart has 2 or more tests
+            if(cart.length >= 2) {
+                upsell.style.display = 'flex';
+            } else {
+                upsell.style.display = 'none';
+            }
+
+            let sum = 0;
+            list.innerHTML = '';
+            
+            cart.forEach(item => {
+                sum += parseFloat(item.currentPrice);
+                
+                // Build the lab dropdown
+                let optionsHtml = '';
+                item.labs.forEach(lab => {
+                    const isSelected = lab.lab_id == item.selectedLabId ? 'selected' : '';
+                    optionsHtml += `<option value="${lab.lab_id}" ${isSelected}>${lab.lab_name} (${lab.badge_type}) - ₹${lab.price} | Report: ${lab.tat}</option>`;
+                });
+
+                list.innerHTML += `
+                    <div class="cart-item">
+                        <div class="cart-item-title">
+                            <span>${item.name}</span>
+                            <span class="remove-btn" onclick="removeFromCart(${item.id})">Remove</span>
+                        </div>
+                        <select class="lab-select" onchange="changeLab(${item.id}, this.value)">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                `;
+            });
+            
+            total.innerText = sum.toFixed(2);
+        }
+    </script>
+</body>
+</html>
