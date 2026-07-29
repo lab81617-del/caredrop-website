@@ -39,8 +39,8 @@
 <div class="container">
     <h2>Complete Your Booking</h2>
 
-    <!-- THE LOCK: No onsubmit attribute, handled strictly by the button click -->
-    <form id="checkoutForm">
+    <!-- USE STANDARD ONSUBMIT EVENT -->
+    <form id="checkoutForm" onsubmit="submitOrder(event)">
         
         <div class="section-title">1. Contact Information</div>
         <div class="form-row">
@@ -91,8 +91,8 @@
             <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert collection service led by DMLT professionals, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
         </label>
         
-        <!-- Action Button -->
-        <button type="button" class="btn-submit" id="submitBtn" onclick="submitOrder()">Confirm Booking</button>
+        <!-- Native submit button -->
+        <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
     </form>
 </div>
 
@@ -114,45 +114,50 @@
     let total = 0; cart.forEach(item => total += parseFloat(item.currentPrice));
     document.getElementById('displayTotal').innerText = total.toFixed(2);
 
-    // Auto-fill patient name to save user time
     document.getElementById('name').addEventListener('input', (e) => {
         if(!document.getElementById('patientName').value || document.getElementById('patientName').value.length < e.target.value.length) {
             document.getElementById('patientName').value = e.target.value;
         }
     });
 
-    // The Double-Locked Submission
-    async function submitOrder() {
-        const form = document.getElementById('checkoutForm');
+    async function submitOrder(event) {
+        event.preventDefault(); // Stop standard reload
         
-        // LOCK 1: Check native browser rules (Required boxes)
-        if (!form.reportValidity()) {
-            return; // Stops the process instantly
+        // MANUAL DOUBLE-LOCK CHECK
+        const pName = document.getElementById('patientName').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const gender = document.getElementById('gender').value;
+        const bName = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const address = document.getElementById('address').value.trim();
+        const date = document.getElementById('date').value;
+        const timeSlot = document.getElementById('timeSlot').value;
+
+        if(!pName || !age || !gender || !bName || !phone || !email || !address || !date || !timeSlot) {
+            alert("❌ Please fill out all required fields before confirming.");
+            return; // Hard stop
         }
         
-        // LOCK 2: Manual Consent Check
         if(!document.getElementById('consentBox').checked) {
             alert("❌ You must check the consent box to confirm the booking.");
-            return; 
+            return; // Hard stop
         }
 
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
 
-        const pName = document.getElementById('patientName').value.trim();
-        const age = document.getElementById('age').value.trim();
-        const gender = document.getElementById('gender').value;
         const fullPatientDetail = pName + " (" + age + " Yrs, " + gender + ")";
 
         const orderData = {
-            name: document.getElementById('name').value.trim(), 
-            phone: document.getElementById('phone').value.trim(), 
-            email: document.getElementById('email').value.trim(),
+            name: bName, 
+            phone: phone, 
+            email: email,
             patient_name: fullPatientDetail, 
-            address: document.getElementById('address').value.trim(), 
-            date: document.getElementById('date').value, 
-            time_slot: document.getElementById('timeSlot').value, 
+            address: address, 
+            date: date, 
+            time_slot: timeSlot, 
             total: total, 
             cart: cart
         };
@@ -166,7 +171,7 @@
             const data = await res.json();
 
             if(data.success) {
-                // SUCCESS - Order is in Neon!
+                // SUCCESS
                 document.getElementById('orderIdTag').innerText = "#" + data.order_id;
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
