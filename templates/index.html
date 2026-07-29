@@ -26,9 +26,9 @@
         .hero p { font-size: 18px; color: #134E4A; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.5; }
         .btn-solid { background: var(--primary); color: white; padding: 16px 32px; border-radius: 50px; font-size: 16px; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3); display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         
-        /* Horizontal Packages Section */
+        /* Packages Slider */
         .section-title { font-size: 24px; font-weight: 800; margin-bottom: 25px; color: #334155; }
-        .packages-grid { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .packages-grid { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin-bottom: 30px; }
         .packages-grid::-webkit-scrollbar { height: 6px; }
         .packages-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
@@ -41,7 +41,13 @@
         .package-features li { margin-bottom: 6px; font-size: 13px; display: flex; align-items: center; gap: 6px; color: #475569; }
         .btn-package { display: block; text-align: center; background: #166534; color: white; padding: 10px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px; }
         
-        /* About Us - DMLT Focus */
+        /* RESTORED: Prescription Banner */
+        .rx-banner { background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 1px solid #FED7AA; border-radius: 24px; padding: 40px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; flex-wrap: wrap; gap: 20px; }
+        .rx-text h2 { font-size: 24px; color: #9A3412; margin-bottom: 10px; }
+        .rx-text p { color: #C2410C; font-size: 15px; font-weight: 500; }
+        .btn-whatsapp { background: #25D366; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+
+        /* About Us */
         .about-section { background: var(--card-bg); border-radius: 24px; padding: 40px; margin-bottom: 60px; border: 1px solid var(--border-light); display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
         .about-text { flex: 1; min-width: 300px; }
         .about-text h2 { font-size: 26px; font-weight: 800; margin-bottom: 15px; }
@@ -58,6 +64,7 @@
             .hero h1 { font-size: 32px; }
             .nav-buttons { gap: 5px; }
             .btn-outline { padding: 6px 12px; font-size: 12px; white-space: nowrap; }
+            .rx-banner { text-align: center; justify-content: center; }
             .about-section { padding: 25px; }
         }
     </style>
@@ -83,7 +90,6 @@
         <section class="packages-section">
             <h2 class="section-title">Special Health Packages</h2>
             <div class="packages-grid">
-                
                 <div class="package-card">
                     <div class="badge">60% OFF</div>
                     <h3>Executive Full Body Shield</h3>
@@ -122,11 +128,19 @@
                     </ul>
                     <a href="/tests" class="btn-package" style="background: #be123c;">Book Now</a>
                 </div>
-
             </div>
         </section>
 
-        <!-- Accurate About Us Section -->
+        <!-- RESTORED: Prescription Banner -->
+        <section class="rx-banner">
+            <div class="rx-text">
+                <h2>Have a Doctor's Prescription?</h2>
+                <p>Don't want to search? Just send us a photo of your doctor's slip and our expert DMLTs will create your cart for you.</p>
+            </div>
+            <a href="https://wa.me/919485978790" target="_blank" class="btn-whatsapp">📱 Upload via WhatsApp</a>
+        </section>
+
+        <!-- About Us Section -->
         <section class="about-section">
             <div class="about-text">
                 <h2>About IHC Diagnostics</h2>
