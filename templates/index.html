@@ -2,174 +2,200 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CareDrop | Premium Diagnostics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = { 
-            theme: { 
-                extend: { 
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
-                    colors: { 
-                        charcoal: { 800: '#2C3539', 900: '#1A2124' },
-                        teal: { 500: '#00ADB5', 600: '#008C93', 900: '#064448' },
-                        canvas: '#F4F7F6'
-                    }
-                } 
-            } 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDrop | Yamunanagar's Top Labs at Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Modern Consumer Palette (Calm, Trustworthy, Friendly) */
+        :root {
+            --primary: #0D9488; /* Healing Teal */
+            --primary-hover: #0F766E;
+            --primary-light: #CCFBF1; /* Soft Mint */
+            --bg-main: #FAFAF9; /* Warm off-white */
+            --card-bg: #FFFFFF;
+            --text-dark: #1C1917;
+            --text-muted: #78716C;
+            --border-light: #E7E5E4;
+            --accent-orange: #F97316;
         }
-    </script>
-    <style>.no-scrollbar::-webkit-scrollbar { display: none; }</style>
-</head>
-<body class="bg-canvas text-charcoal-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Notification Permission Script -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            if ("Notification" in window && Notification.permission !== "granted") {
-                Notification.requestPermission();
-            }
-        });
-    </script>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-dark); -webkit-font-smoothing: antialiased; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-    <!-- Brand Header -->
-    <header class="sticky top-0 z-50 bg-charcoal-900 text-white shadow-md border-b border-teal-500/20">
-        <div class="max-w-7xl mx-auto px-4 h-18 sm:h-20 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-3 py-4">
-                <div class="w-10 h-10 rounded-lg bg-teal-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/40">
-                    <i class="fa-solid fa-microscope text-lg"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-xl font-extrabold tracking-tight leading-none text-white">CareDrop</span>
-                    <span class="text-[9px] font-bold uppercase tracking-widest text-teal-500 mt-1">By IHC Diagnostics</span>
-                </div>
-            </a>
-            <div class="flex items-center space-x-3">
-                {% if user %}
-                <a href="/my-bookings" class="hidden sm:block text-xs font-bold text-teal-500 hover:text-white transition-colors">History</a>
-                {% endif %}
-                <a href="/cart" class="flex items-center justify-center px-5 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white transition-all shadow-md">
-                    <i class="fa-solid fa-cart-shopping text-sm mr-2"></i>
-                    <span class="text-sm font-bold">Cart</span>
-                    {% if cart_count > 0 %}
-                        <span class="ml-2 w-5 h-5 rounded-md bg-charcoal-900 text-teal-500 text-[10px] font-black flex items-center justify-center">{{ cart_count }}</span>
-                    {% endif %}
-                </a>
-            </div>
-        </div>
-    </header>
+        /* App-Like Navbar */
+        .navbar {
+            background-color: var(--card-bg);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; }
+        .brand { display: flex; flex-direction: column; }
+        .logo { font-size: 26px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .sub-logo { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .nav-buttons { display: flex; gap: 12px; }
+        .btn-outline {
+            border: 2px solid var(--border-light);
+            background: transparent;
+            color: var(--text-dark);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-    <!-- Hero Section -->
-    <section class="bg-charcoal-800 text-white px-4 py-12 sm:py-20 shadow-inner">
-        <div class="max-w-3xl mx-auto text-center">
-            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.2] mb-4">
-                Industrial Precision. <br>
-                <span class="text-teal-500">Clinical Accuracy.</span>
-            </h1>
-            <p class="text-sm text-slate-300 font-medium max-w-lg mx-auto mb-8">Schedule NABL-certified home sample collections with absolute transparency.</p>
-            <form action="/" method="GET" class="max-w-xl mx-auto">
-                <div class="flex items-center bg-charcoal-900 border border-teal-500/30 rounded-xl p-1.5 shadow-xl focus-within:border-teal-500 transition-all">
-                    <i class="fa-solid fa-magnifying-glass pl-4 text-teal-500"></i>
-                    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search diagnostics (e.g. CBC, Liver)..." 
-                           class="w-full bg-transparent px-3 py-3 text-sm text-white placeholder-slate-500 focus:outline-none font-medium">
-                    <button type="submit" class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors">Find</button>
-                </div>
-            </form>
-        </div>
-    </section>
-
-    <!-- Categories -->
-    <div class="bg-canvas border-b border-slate-200 sticky top-[72px] sm:top-[80px] z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3">
-            <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar">
-                <a href="/" class="px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if not request.args.get('cat') %}bg-charcoal-900 text-teal-500{% else %}bg-white text-slate-500 hover:bg-slate-100 border border-slate-200{% endif %}">All</a>
-                {% for cat in categories %}
-                <a href="/?cat={{ cat }}" class="px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap {% if request.args.get('cat') == cat %}bg-charcoal-900 text-teal-500{% else %}bg-white text-slate-500 hover:bg-slate-100 border border-slate-200{% endif %}">{{ cat }}</a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Test Grid -->
-    <main class="max-w-7xl mx-auto px-4 py-10 w-full flex-grow">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for test in tests %}
-            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-lg hover:border-teal-500/50 transition-all flex flex-col justify-between group">
-                <div>
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="px-2.5 py-1 rounded bg-teal-500/10 text-teal-900 text-[10px] font-bold uppercase tracking-wider">{{ test['category'] or 'General' }}</span>
-                        <span class="text-[11px] font-bold text-slate-400"><i class="fa-solid fa-stopwatch mr-1 text-teal-500"></i>{{ test['report_timing'] or '24 Hours' }}</span>
-                    </div>
-                    <h3 class="text-lg font-extrabold text-charcoal-900 leading-tight mb-2 group-hover:text-teal-600 transition-colors">{{ test['name'] or 'Test Package' }}</h3>
-                    <p class="text-sm text-slate-500 line-clamp-2 mb-6 font-medium">{{ test['description'] or 'Clinical diagnostic package.' }}</p>
-                    
-                    <div class="mb-6 p-3 rounded-lg bg-canvas border border-slate-200 flex items-center">
-                        <i class="fa-solid fa-utensils text-teal-500 mr-3 text-lg"></i>
-                        <div>
-                            <span class="block text-[10px] font-bold uppercase text-slate-400 tracking-wider">Preparation</span>
-                            <span class="text-sm font-bold text-charcoal-900">Fasting: {{ test['fasting_required'] or 'Not Required' }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <span class="text-2xl font-black text-charcoal-900">₹{{ test['price'] or '0' }}</span>
-                    <a href="/cart/add/{{ test['id'] }}" class="px-5 py-2.5 rounded-lg bg-charcoal-900 hover:bg-teal-500 text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-md">Add to Cart</a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </main>
-
-    <!-- Company Bio (Anchored at the bottom) -->
-    <section class="bg-charcoal-900 text-white py-16 px-4 border-t border-teal-500/20">
-        <div class="max-w-4xl mx-auto text-center space-y-4">
-            <div class="w-12 h-12 bg-teal-500 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-teal-500/30">
-                <i class="fa-solid fa-microscope text-xl"></i>
-            </div>
-            <h2 class="text-3xl font-extrabold tracking-tight">About CareDrop Diagnostics</h2>
-            <p class="text-slate-300 font-medium leading-relaxed max-w-2xl mx-auto">
-                CareDrop is a premier medical logistics platform engineered to bridge the gap between world-class pathology labs and patient homes. Backed by IHC Diagnostics, our mission is to eliminate waiting room anxiety through sterile, on-demand sample collections. We partner with NABL-accredited facilities to ensure your clinical data is accurate, secure, and delivered with unprecedented speed.
-            </p>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-charcoal-800 text-slate-400 py-6 text-center text-xs font-bold">
-        <p>&copy; 2026 CareDrop Medical Operations. Powered by IHC Diagnostics.</p>
-    </footer>
-
-    <!-- Floating Multi-WhatsApp Widget -->
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-        <!-- Hidden Support Menu -->
-        <div id="wa-menu" class="hidden bg-white border border-slate-200 rounded-xl shadow-2xl mb-3 overflow-hidden transition-all origin-bottom-right">
-            <div class="bg-charcoal-900 text-white px-4 py-3 text-xs font-bold uppercase tracking-wider border-b border-teal-500/30">
-                Support Channels
-            </div>
-            <!-- Department 1: General Support -->
-            <a href="https://wa.me/919999999991" target="_blank" class="flex items-center px-5 py-4 hover:bg-slate-50 transition-colors border-b border-slate-100">
-                <i class="fa-brands fa-whatsapp text-[#25D366] text-2xl mr-3"></i>
-                <div>
-                    <span class="block text-sm font-bold text-charcoal-900">General Support</span>
-                    <span class="block text-xs text-slate-500">Booking & general queries</span>
-                </div>
-            </a>
-            <!-- Department 2: Lab Reports -->
-            <a href="https://wa.me/919999999992" target="_blank" class="flex items-center px-5 py-4 hover:bg-slate-50 transition-colors">
-                <i class="fa-brands fa-whatsapp text-[#25D366] text-2xl mr-3"></i>
-                <div>
-                    <span class="block text-sm font-bold text-charcoal-900">Lab Reports</span>
-                    <span class="block text-xs text-slate-500">PDFs & result status</span>
-                </div>
-            </a>
-        </div>
+        /* Friendly Hero Section */
+        .hero {
+            background: var(--primary-light);
+            border-radius: 30px;
+            margin: 30px 20px;
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero h1 { font-size: 46px; font-weight: 800; color: #115E59; margin-bottom: 15px; line-height: 1.1; letter-spacing: -1px; }
+        .hero p { font-size: 18px; color: #134E4A; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.5; }
         
-        <!-- Toggle Button -->
-        <button onclick="document.getElementById('wa-menu').classList.toggle('hidden')" class="w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/40 flex items-center justify-center hover:scale-105 transition-transform">
-            <i class="fa-brands fa-whatsapp text-3xl"></i>
-        </button>
+        .main-cta-group { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        .btn-solid {
+            background: var(--primary);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-solid:hover { background: var(--primary-hover); transform: translateY(-3px); }
+
+        /* How It Works (Simple 3 Steps) */
+        .steps-section { margin: 60px 0; text-align: center; }
+        .section-title { font-size: 28px; font-weight: 800; margin-bottom: 40px; }
+        .steps-grid { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+        .step-card { flex: 1; min-width: 250px; background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-light); }
+        .step-icon { font-size: 40px; margin-bottom: 15px; background: var(--bg-main); width: 80px; height: 80px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .step-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .step-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+        /* Prescription Banner (High Conversion) */
+        .rx-banner {
+            background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+            border: 1px solid #FED7AA;
+            border-radius: 24px;
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 60px 0;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .rx-text h2 { font-size: 26px; color: #9A3412; margin-bottom: 10px; }
+        .rx-text p { color: #C2410C; font-size: 16px; max-width: 450px; }
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Footer */
+        footer { background: var(--card-bg); padding: 40px 0; text-align: center; margin-top: 50px; border-top: 1px solid var(--border-light); }
+        .footer-text { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
+        
+        @media (max-width: 768px) {
+            .hero { padding: 40px 20px; margin: 15px; }
+            .hero h1 { font-size: 36px; }
+            .nav-buttons { display: none; } /* Hide secondary buttons on mobile for clean look */
+            .rx-banner { text-align: center; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- App Navbar -->
+    <nav class="navbar">
+        <div class="container nav-content">
+            <div class="brand">
+                <div class="logo">CareDrop</div>
+                <div class="sub-logo">By IHC Diagnostics</div>
+            </div>
+            <div class="nav-buttons">
+                <a href="/login" class="btn-outline">My Bookings</a>
+                <a href="/tests" class="btn-outline" style="background: var(--text-dark); color: white; border-color: var(--text-dark);">Book Test</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Super Friendly Hero -->
+    <div class="container">
+        <section class="hero">
+            <h1>Yamunanagar's Best Labs.<br>Right at Your Doorstep.</h1>
+            <p>Compare prices, choose your favorite NABL accredited lab, and get your blood sample collected safely from home. No advance payment required.</p>
+            
+            <div class="main-cta-group">
+                <a href="/tests" class="btn-solid">🔍 Search Tests & Packages</a>
+            </div>
+        </section>
+
+        <!-- 3 Simple Steps -->
+        <section class="steps-section">
+            <h2 class="section-title">Healthcare Made Simple</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-icon">📱</div>
+                    <h3>1. Choose Your Tests</h3>
+                    <p>Select individual tests or smart packages. Compare prices across trusted local labs instantly.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon">🩸</div>
+                    <h3>2. Safe Home Collection</h3>
+                    <p>Our certified phlebotomists arrive at your requested time. Pay securely via Cash or UPI at your door.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon">📄</div>
+                    <h3>3. Get Digital Reports</h3>
+                    <p>Receive your highly accurate, lab-verified PDF reports directly to your phone and email.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prescription Upload Banner -->
+        <section class="rx-banner">
+            <div class="rx-text">
+                <h2>Have a Doctor's Prescription?</h2>
+                <p>Don't want to search? Just send us a photo of your doctor's slip and our experts will create your cart for you.</p>
+            </div>
+            <a href="https://wa.me/919485978790?text=Hi!%20I%20want%20to%20book%20a%20test%20from%20this%20prescription." target="_blank" class="btn-whatsapp">
+                📱 Upload via WhatsApp
+            </a>
+        </section>
     </div>
+
+    <!-- Minimal Footer -->
+    <footer>
+        <div class="container">
+            <p class="footer-text"><strong>CareDrop by Industrial Healthcare Diagnostics</strong></p>
+            <p class="footer-text">Agrasen Chowk, Yamunanagar | +91 94859 78790</p>
+        </div>
+    </footer>
 
 </body>
 </html>
