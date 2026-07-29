@@ -2,26 +2,25 @@ import os
 import threading
 import smtplib
 import json
+import random
 from email.message import EmailMessage
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session
 import psycopg2
-from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "caredrop-default-key")
+app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 
-# --- DATABASE POOLING ---
-try:
-    db_pool = psycopg2.pool.ThreadedConnectionPool(1, 20, dsn=os.environ.get("DATABASE_URL"))
-except Exception as e:
-    print(f"DB Error: {e}")
+# --- DATABASE CONNECTION (Fixed for Multi-Threading) ---
+def get_db():
+    # Creates a fresh, secure connection for every single request
+    return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
-def get_db(): return db_pool.getconn()
-def release_db(conn): db_pool.putconn(conn)
+def release_db(conn):
+    conn.close()
 
 # --- BACKGROUND EMAIL ---
 def send_email_async(recipient, subject, body):
@@ -47,27 +46,91 @@ def home():
 def tests_catalog():
     conn = get_db()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-    
-    # 1. Fetch all tests
-    cursor.execute("""
-        SELECT t.id, t.name, t.fasting_requirement, c.name as category 
-        FROM tests t JOIN test_categories c ON t.category_id = c.id
-        WHERE t.is_active = TRUE ORDER BY c.name, t.name
-    """)
-    tests_list = cursor.fetchall()
-
-    # 2. Fetch which labs offer which tests & their prices
-    cursor.execute("""
-        SELECT ltp.test_id, ltp.price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
-        FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id
-        WHERE l.is_active = TRUE
-    """)
-    pricing_list = cursor.fetchall()
-    
-    release_db(conn)
-    
-    # Pass data to the frontend (pricing is converted to JSON so Javascript can use it)
+    try:
+        cursor.execute("""
+            SELECT t.id, t.name, t.fasting_requirement, c.name as category 
+            FROM tests t JOIN test_categories c ON t.category_id = c.id
+            WHERE t.is_active = TRUE ORDER BY c.name, t.name
+        """)
+        tests_list = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT ltp.test_id, ltp.price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
+            FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id
+            WHERE l.is_active = TRUE
+        """)
+        pricing_list = cursor.fetchall()
+    finally:
+        release_db(conn)
+        
     return render_template('tests.html', tests=tests_list, pricing=json.dumps(pricing_list))
+
+@app.route('/checkout')
+def checkout_page():
+    return render_template('checkout.html')
+
+# --- API ROUTES (OTP & ORDER) ---
+@app.route('/api/send-otp', methods=['POST'])
+def send_otp():
+    email = request.json.get('email')
+    otp = str(random.randint(100000, 999999))
+    session['otp'] = otp
+    session['email'] = email
+    
+    body = f"Welcome to CareDrop. Your verification OTP is: {otp}\n\nDo not share this with anyone."
+    send_email_async(email, "CareDrop - Verify Your Email", body)
+    return jsonify({"success": True})
+
+@app.route('/api/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.json
+    if str(data.get('otp')) == str(session.get('otp')) and data.get('email') == session.get('email'):
+        session['verified'] = True
+        return jsonify({"success": True})
+    return jsonify({"success": False, "message": "Invalid OTP"})
+
+@app.route('/api/place-order', methods=['POST'])
+def place_order():
+    if not session.get('verified'):
+        return jsonify({"success": False, "message": "Please verify email first."})
+        
+    data = request.json
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = %s", (data['email'],))
+        user = cursor.fetchone()
+        if user:
+            user_id = user[0]
+        else:
+            cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", 
+                           (data['name'], data['phone'], data['email']))
+            user_id = cursor.fetchone()[0]
+
+        cursor.execute("""
+            INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+        """, (user_id, data['patient_name'], data['address'], data['date'], data['time_slot'], data['total']))
+        order_id = cursor.fetchone()[0]
+
+        for item in data['cart']:
+            cursor.execute("""
+                INSERT INTO order_items (order_id, test_id, lab_id, price)
+                VALUES (%s, %s, %s, %s)
+            """, (order_id, item['id'], item['selectedLabId'], item['currentPrice']))
+            
+        conn.commit()
+        
+        msg = f"Your CareDrop Booking #{order_id} is confirmed!\n\nPatient: {data['patient_name']}\nDate: {data['date']} ({data['time_slot']})\nAmount to Pay on Collection: Rs. {data['total']}"
+        send_email_async(data['email'], f"Booking Confirmed - #{order_id}", msg)
+        
+        return jsonify({"success": True, "order_id": order_id})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"success": False, "message": str(e)})
+    finally:
+        release_db(conn)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
