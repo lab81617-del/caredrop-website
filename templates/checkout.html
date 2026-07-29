@@ -26,9 +26,7 @@
         .consent-label input { width: 22px; height: 22px; margin-top: 2px; cursor: pointer; accent-color: var(--primary); }
         .consent-text { font-size: 13px; color: #475569; line-height: 1.5; font-weight: 500; }
         
-        .btn-submit { width: 100%; padding: 18px; background: var(--primary); color: white; font-size: 18px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3); transition: 0.2s; }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4); }
-        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-submit { width: 100%; padding: 18px; color: white; font-size: 18px; font-weight: 800; border: none; border-radius: 12px; transition: 0.2s; }
         
         .success-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal-content { background: white; padding: 40px; border-radius: 24px; text-align: center; max-width: 450px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -39,24 +37,23 @@
 <div class="container">
     <h2>Complete Your Booking</h2>
 
-    <!-- Completely renamed form to break the cache loop -->
-    <form id="secureBookingForm" onsubmit="processFinalBooking(event)">
+    <form id="secureBookingForm">
         
         <div class="section-title">1. Your Contact Details</div>
         <div class="form-row">
-            <div class="form-group"><label>Your Name *</label><input type="text" id="name" placeholder="E.g. John Doe" required></div>
-            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" pattern="[0-9]{10}" required></div>
+            <div class="form-group"><label>Your Name *</label><input type="text" id="name" placeholder="E.g. John Doe"></div>
+            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number"></div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For your digital reports" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For your digital reports"></div>
 
         <div class="section-title">2. Patient Details</div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of the person giving the sample" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of the person giving the sample"></div>
         
         <div class="form-row">
-            <div class="form-group"><label>Age *</label><input type="number" id="age" placeholder="Years" min="1" max="120" required></div>
+            <div class="form-group"><label>Age *</label><input type="number" id="age" placeholder="Years" min="1" max="120"></div>
             <div class="form-group">
                 <label>Gender *</label>
-                <select id="gender" required>
+                <select id="gender">
                     <option value="" disabled selected>Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -65,14 +62,14 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 15px;"><label>Full Home Address (Yamunanagar) *</label><input type="text" id="address" placeholder="House No, Street, Landmark" required></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Full Home Address (Yamunanagar) *</label><input type="text" id="address" placeholder="House No, Street, Landmark"></div>
 
         <div class="section-title">3. Sample Collection Schedule</div>
         <div class="form-row">
-            <div class="form-group"><label>Collection Date *</label><input type="date" id="date" required></div>
+            <div class="form-group"><label>Collection Date *</label><input type="date" id="date"></div>
             <div class="form-group">
                 <label>Time Slot *</label>
-                <select id="timeSlot" required>
+                <select id="timeSlot">
                     <option value="" disabled selected>Select Time</option>
                     <option value="6:00 AM - 8:00 AM">Morning (6:00 AM - 8:00 AM)</option>
                     <option value="9:00 AM - 12:00 PM">Late Morning (9:00 AM - 12:00 PM)</option>
@@ -87,11 +84,12 @@
         </div>
 
         <label class="consent-label">
-            <input type="checkbox" id="consentBox" required>
+            <input type="checkbox" id="consentBox">
             <span class="consent-text">I consent to CareDrop collecting my sample. I understand that my sample will be professionally collected and processed by my chosen NABL-accredited partner lab.</span>
         </label>
         
-        <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
+        <!-- THE BRICK WALL BUTTON (Disabled by default) -->
+        <button type="button" class="btn-submit" id="submitBtn" disabled style="background: #94A3B8; cursor: not-allowed;" onclick="processFinalBooking()">Fill All Details to Confirm</button>
     </form>
 </div>
 
@@ -102,29 +100,42 @@
         <h2 style="font-size: 26px; color: #0F172A; margin-bottom: 10px;">Booking Confirmed!</h2>
         <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">Your order <b id="orderIdTag" style="color: var(--primary);"></b> has been safely received.</p>
         <p style="color: #475569; font-size: 14px; margin-bottom: 20px;">Our certified health professional will arrive at your address on your selected date and time.</p>
-        <a href="/" class="btn-submit" style="display: inline-block; text-decoration: none; font-size: 16px; padding: 14px;">Return to Home</a>
+        <a href="/" class="btn-submit" style="display: inline-block; text-decoration: none; font-size: 16px; padding: 14px; background: var(--primary);">Return to Home</a>
     </div>
 </div>
 
 <script>
+    // 1. Load Cart Data
     const cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
     if(cart.length === 0) { alert("Cart is empty!"); window.location.href = '/tests'; }
     
     let total = 0; cart.forEach(item => total += parseFloat(item.currentPrice));
     document.getElementById('displayTotal').innerText = total.toFixed(2);
 
-    // Auto-fill patient name if booking for yourself
+    // 2. Load "Guest Memory" from previous visits
+    window.onload = () => {
+        if(localStorage.getItem('cd_name')) document.getElementById('name').value = localStorage.getItem('cd_name');
+        if(localStorage.getItem('cd_phone')) document.getElementById('phone').value = localStorage.getItem('cd_phone');
+        if(localStorage.getItem('cd_email')) document.getElementById('email').value = localStorage.getItem('cd_email');
+        if(localStorage.getItem('cd_address')) document.getElementById('address').value = localStorage.getItem('cd_address');
+        
+        // Auto-fill patient name
+        if(document.getElementById('name').value && !document.getElementById('patientName').value) {
+            document.getElementById('patientName').value = document.getElementById('name').value;
+        }
+        
+        validateFormLive(); // Check if button should be enabled on load
+    };
+
+    // Auto-copy Book Name to Patient Name while typing
     document.getElementById('name').addEventListener('input', (e) => {
-        if(!document.getElementById('patientName').value || document.getElementById('patientName').value.length < e.target.value.length) {
+        if(!document.getElementById('patientName').value || document.getElementById('patientName').value.length <= e.target.value.length) {
             document.getElementById('patientName').value = e.target.value;
         }
     });
 
-    // Renamed function: The browser CANNOT bypass this anymore.
-    async function processFinalBooking(event) {
-        event.preventDefault(); 
-        
-        // Final explicit check just to be absolutely certain
+    // 3. THE LIVE CHECKER (The Brick Wall Logic)
+    function validateFormLive() {
         const bName = document.getElementById('name').value.trim();
         const phone = document.getElementById('phone').value.trim();
         const email = document.getElementById('email').value.trim();
@@ -136,19 +147,49 @@
         const timeSlot = document.getElementById('timeSlot').value;
         const consent = document.getElementById('consentBox').checked;
 
-        if(!bName || !phone || !email || !pName || !age || !gender || !address || !date || !timeSlot) {
-            alert("Please fill out all required details before confirming.");
-            return; 
-        }
+        const btn = document.getElementById('submitBtn');
 
-        if(!consent) {
-            alert("Please accept the consent checkbox at the bottom to confirm your booking.");
-            return;
+        // Only activate if EVERY field has data
+        if(bName && phone && email && pName && age && gender && address && date && timeSlot && consent) {
+            btn.disabled = false;
+            btn.style.background = "var(--primary)";
+            btn.style.cursor = "pointer";
+            btn.innerText = "Confirm Booking";
+        } else {
+            btn.disabled = true;
+            btn.style.background = "#94A3B8";
+            btn.style.cursor = "not-allowed";
+            btn.innerText = "Fill All Details to Confirm";
         }
+    }
 
+    // Attach the live checker to every single input box
+    document.querySelectorAll('input, select').forEach(element => {
+        element.addEventListener('input', validateFormLive);
+        element.addEventListener('change', validateFormLive);
+    });
+
+    // 4. Final Submission
+    async function processFinalBooking() {
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
+        btn.style.cursor = "wait";
+
+        const pName = document.getElementById('patientName').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const gender = document.getElementById('gender').value;
+        
+        const bName = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const address = document.getElementById('address').value.trim();
+
+        // Save details to phone memory for next time
+        localStorage.setItem('cd_name', bName);
+        localStorage.setItem('cd_phone', phone);
+        localStorage.setItem('cd_email', email);
+        localStorage.setItem('cd_address', address);
 
         const fullPatientDetail = pName + " (" + age + " Yrs, " + gender + ")";
         const orderData = {
@@ -157,8 +198,8 @@
             email: email,
             patient_name: fullPatientDetail, 
             address: address, 
-            date: date, 
-            time_slot: timeSlot, 
+            date: document.getElementById('date').value, 
+            time_slot: document.getElementById('timeSlot').value, 
             total: total, 
             cart: cart
         };
@@ -177,13 +218,11 @@
                 sessionStorage.removeItem('caredrop_cart');
             } else {
                 alert("Booking failed: " + data.message);
-                btn.innerText = "Confirm Booking";
-                btn.disabled = false;
+                validateFormLive(); // Reset button
             }
         } catch(e) {
             alert("Network Error: Could not connect to the server.");
-            btn.innerText = "Confirm Booking";
-            btn.disabled = false;
+            validateFormLive(); // Reset button
         }
     }
 </script>
