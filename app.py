@@ -64,6 +64,40 @@ def tests_catalog():
 def checkout_page():
     return render_template('checkout.html')
 
+# --- NEW: ADMIN DASHBOARD ---
+@app.route('/admin')
+def admin_dashboard():
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("""
+            SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, u.phone, u.name as booked_by 
+            FROM orders o JOIN users u ON o.user_id = u.id 
+            ORDER BY o.id DESC
+        """)
+        orders = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT oi.order_id, t.name as test_name, l.name as lab_name, oi.price
+            FROM order_items oi
+            JOIN tests t ON oi.test_id = t.id
+            JOIN labs l ON oi.lab_id = l.id
+        """)
+        items = cursor.fetchall()
+        
+        items_map = {}
+        for item in items:
+            if item['order_id'] not in items_map:
+                items_map[item['order_id']] = []
+            items_map[item['order_id']].append(item)
+            
+        for order in orders:
+            order['items'] = items_map.get(order['id'], [])
+            
+    finally:
+        release_db(conn)
+    return render_template('admin.html', orders=orders)
+
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
     data = request.json
@@ -71,7 +105,6 @@ def place_order():
     cursor = conn.cursor()
     
     try:
-        # 1. Register or find user
         cursor.execute("SELECT id FROM users WHERE email = %s", (data['email'],))
         user = cursor.fetchone()
         if user:
@@ -81,14 +114,12 @@ def place_order():
                            (data['name'], data['phone'], data['email']))
             user_id = cursor.fetchone()[0]
 
-        # 2. Create the Order
         cursor.execute("""
             INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount)
             VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
         """, (user_id, data['patient_name'], data['address'], data['date'], data['time_slot'], data['total']))
         order_id = cursor.fetchone()[0]
 
-        # 3. Add Tests to Order
         for item in data['cart']:
             cursor.execute("""
                 INSERT INTO order_items (order_id, test_id, lab_id, price)
@@ -97,7 +128,6 @@ def place_order():
             
         conn.commit()
         
-        # 4. Send Email
         msg = f"Your CareDrop Booking #{order_id} is confirmed!\n\nPatient: {data['patient_name']}\nDate: {data['date']} ({data['time_slot']})\nAmount to Pay on Collection: Rs. {data['total']}"
         send_email_async(data['email'], f"Booking Confirmed - #{order_id}", msg)
         
