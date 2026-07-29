@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout | CareDrop</title>
+    <title>Complete Booking | CareDrop</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #0D9488; --bg-main: #F8FAFC; --card-bg: #FFFFFF; --text-dark: #0F172A; --border: #E2E8F0; }
@@ -39,13 +39,13 @@
 <div class="container">
     <h2>Complete Your Booking</h2>
 
-    <!-- USE STANDARD ONSUBMIT EVENT -->
+    <!-- STRICT HTML5 FORM: The browser will not allow the submitOrder function to run if any 'required' box is empty -->
     <form id="checkoutForm" onsubmit="submitOrder(event)">
         
         <div class="section-title">1. Contact Information</div>
         <div class="form-row">
             <div class="form-group"><label>Booking Name *</label><input type="text" id="name" placeholder="E.g. John Doe" required></div>
-            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" pattern="[0-9]{10}" required></div>
+            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" pattern="[0-9]{10}" required title="Please enter a valid 10 digit phone number"></div>
         </div>
         <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For Digital Reports" required></div>
 
@@ -87,11 +87,12 @@
         </div>
 
         <label class="consent-label">
+            <!-- Consent is REQUIRED by HTML5 -->
             <input type="checkbox" id="consentBox" required>
             <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert collection service led by DMLT professionals, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
         </label>
         
-        <!-- Native submit button -->
+        <!-- Button MUST be type="submit" for HTML locks to work -->
         <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
     </form>
 </div>
@@ -120,44 +121,27 @@
         }
     });
 
+    // This function ONLY runs if the browser confirms every single required box is filled
     async function submitOrder(event) {
         event.preventDefault(); // Stop standard reload
         
-        // MANUAL DOUBLE-LOCK CHECK
-        const pName = document.getElementById('patientName').value.trim();
-        const age = document.getElementById('age').value.trim();
-        const gender = document.getElementById('gender').value;
-        const bName = document.getElementById('name').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const address = document.getElementById('address').value.trim();
-        const date = document.getElementById('date').value;
-        const timeSlot = document.getElementById('timeSlot').value;
-
-        if(!pName || !age || !gender || !bName || !phone || !email || !address || !date || !timeSlot) {
-            alert("❌ Please fill out all required fields before confirming.");
-            return; // Hard stop
-        }
-        
-        if(!document.getElementById('consentBox').checked) {
-            alert("❌ You must check the consent box to confirm the booking.");
-            return; // Hard stop
-        }
-
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
 
+        const pName = document.getElementById('patientName').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const gender = document.getElementById('gender').value;
         const fullPatientDetail = pName + " (" + age + " Yrs, " + gender + ")";
 
         const orderData = {
-            name: bName, 
-            phone: phone, 
-            email: email,
+            name: document.getElementById('name').value.trim(), 
+            phone: document.getElementById('phone').value.trim(), 
+            email: document.getElementById('email').value.trim(),
             patient_name: fullPatientDetail, 
-            address: address, 
-            date: date, 
-            time_slot: timeSlot, 
+            address: document.getElementById('address').value.trim(), 
+            date: document.getElementById('date').value, 
+            time_slot: document.getElementById('timeSlot').value, 
             total: total, 
             cart: cart
         };
