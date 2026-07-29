@@ -22,7 +22,6 @@
         
         .summary-box { background: #F0FDF4; border: 1px solid #BBF7D0; padding: 20px; border-radius: 12px; margin: 25px 0; text-align: center; }
         
-        /* Consent Checkbox */
         .consent-label { display: flex; gap: 12px; align-items: flex-start; margin-top: 25px; margin-bottom: 25px; cursor: pointer; background: #F8FAFC; padding: 15px; border-radius: 10px; border: 1px solid var(--border); }
         .consent-label input { width: 22px; height: 22px; margin-top: 2px; cursor: pointer; accent-color: var(--primary); }
         .consent-text { font-size: 13px; color: #475569; line-height: 1.5; font-weight: 500; }
@@ -39,26 +38,26 @@
 <div class="container">
     <h2>Complete Your Booking</h2>
 
-    <!-- ONE UNIFIED FORM -->
+    <!-- FORM WRAPPER (This forces the browser to validate 'required' tags) -->
     <form id="checkoutForm">
         
-        <!-- SECTION 1: Contact -->
+        <!-- SECTION 1 -->
         <div class="section-title">1. Contact Information</div>
         <div class="form-row">
-            <div class="form-group"><label>Booking Name *</label><input type="text" id="name" placeholder="E.g. John Doe"></div>
-            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number"></div>
+            <div class="form-group"><label>Booking Name *</label><input type="text" id="name" placeholder="E.g. John Doe" required></div>
+            <div class="form-group"><label>Mobile Number *</label><input type="tel" id="phone" placeholder="10-digit number" required></div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For OTP & Digital Reports"></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Email Address *</label><input type="email" id="email" placeholder="For OTP & Digital Reports" required></div>
 
-        <!-- SECTION 2: Patient -->
+        <!-- SECTION 2 -->
         <div class="section-title">2. Patient Details</div>
-        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of person providing the sample"></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Patient Full Name *</label><input type="text" id="patientName" placeholder="Name of person providing the sample" required></div>
         
         <div class="form-row">
-            <div class="form-group"><label>Age *</label><input type="number" id="age" placeholder="Years" min="1" max="120"></div>
+            <div class="form-group"><label>Age *</label><input type="number" id="age" placeholder="Years" min="1" max="120" required></div>
             <div class="form-group">
                 <label>Gender *</label>
-                <select id="gender">
+                <select id="gender" required>
                     <option value="" disabled selected>Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -67,15 +66,15 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 15px;"><label>Full Home Address (Yamunanagar) *</label><input type="text" id="address" placeholder="House No, Street, Landmark"></div>
+        <div class="form-group" style="margin-bottom: 15px;"><label>Full Home Address (Yamunanagar) *</label><input type="text" id="address" placeholder="House No, Street, Landmark" required></div>
 
-        <!-- SECTION 3: Appointment -->
+        <!-- SECTION 3 -->
         <div class="section-title">3. Sample Collection Schedule</div>
         <div class="form-row">
-            <div class="form-group"><label>Collection Date *</label><input type="date" id="date"></div>
+            <div class="form-group"><label>Collection Date *</label><input type="date" id="date" required></div>
             <div class="form-group">
                 <label>Time Slot *</label>
-                <select id="timeSlot">
+                <select id="timeSlot" required>
                     <option value="6:00 AM - 8:00 AM">Morning (6:00 AM - 8:00 AM)</option>
                     <option value="9:00 AM - 12:00 PM">Late Morning (9:00 AM - 12:00 PM)</option>
                     <option value="4:00 PM - 7:00 PM">Evening (4:00 PM - 7:00 PM)</option>
@@ -83,18 +82,20 @@
             </div>
         </div>
 
-        <!-- SUMMARY & CONSENT -->
+        <!-- SUMMARY -->
         <div class="summary-box">
             <h3 style="color: #166534; margin-bottom: 5px; font-size: 22px;">Total Amount: ₹<span id="displayTotal">0</span></h3>
             <p style="font-size: 14px; color: #15803D; font-weight: 600;">✅ Pay via Cash or UPI at your doorstep</p>
         </div>
 
+        <!-- CONSENT MUST BE CHECKED -->
         <label class="consent-label">
-            <input type="checkbox" id="consentBox">
+            <input type="checkbox" id="consentBox" required>
             <span class="consent-text">I consent to IHC Diagnostics collecting my sample. As an expert collection service led by DMLT professionals, I understand my sample will be processed by my chosen NABL-accredited lab.</span>
         </label>
         
-        <button type="button" class="btn-submit" id="submitBtn" onclick="placeOrder()">Confirm Booking</button>
+        <!-- BUTTON TYPE SUBMIT -->
+        <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking</button>
     </form>
 </div>
 
@@ -115,54 +116,35 @@
     let total = 0; cart.forEach(item => total += parseFloat(item.currentPrice));
     document.getElementById('displayTotal').innerText = total.toFixed(2);
 
-    // Auto-fill patient name to save user time
+    // Auto-fill patient name
     document.getElementById('name').addEventListener('input', (e) => {
         if(!document.getElementById('patientName').value || document.getElementById('patientName').value.length < e.target.value.length) {
             document.getElementById('patientName').value = e.target.value;
         }
     });
 
-    // STRICT JAVASCRIPT VALIDATION
-    async function placeOrder() {
-        
-        // 1. Gather all fields
-        const name = document.getElementById('name').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const patientName = document.getElementById('patientName').value.trim();
-        const age = document.getElementById('age').value.trim();
-        const gender = document.getElementById('gender').value;
-        const address = document.getElementById('address').value.trim();
-        const date = document.getElementById('date').value;
-        const timeSlot = document.getElementById('timeSlot').value;
-        const consent = document.getElementById('consentBox').checked;
+    // The Ultimate Form Interceptor
+    document.getElementById('checkoutForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Stop page from reloading
 
-        // 2. The Iron-Clad Lock: If ANYTHING is missing, stop immediately.
-        if(!name || !phone || !email || !patientName || !age || !gender || !address || !date) {
-            alert("❌ Please fill out every single detail before confirming your booking.");
-            return; // Stops the function dead in its tracks
-        }
-        
-        if(!consent) {
-            alert("❌ You must check the consent box at the bottom to proceed.");
-            return; // Stops the function
-        }
-
-        // 3. If it passes validation, proceed to send to database
+        // If the code reaches here, the browser has already verified EVERY box is filled!
         const btn = document.getElementById('submitBtn');
         btn.innerText = "Processing...";
         btn.disabled = true;
 
+        const patientName = document.getElementById('patientName').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const gender = document.getElementById('gender').value;
         const fullPatientDetail = patientName + " (" + age + " Yrs, " + gender + ")";
 
         const orderData = {
-            name: name, 
-            phone: phone, 
-            email: email,
+            name: document.getElementById('name').value.trim(), 
+            phone: document.getElementById('phone').value.trim(), 
+            email: document.getElementById('email').value.trim(),
             patient_name: fullPatientDetail, 
-            address: address, 
-            date: date, 
-            time_slot: timeSlot, 
+            address: document.getElementById('address').value.trim(), 
+            date: document.getElementById('date').value, 
+            time_slot: document.getElementById('timeSlot').value, 
             total: total, 
             cart: cart
         };
@@ -176,7 +158,6 @@
             const data = await res.json();
 
             if(data.success) {
-                // TRUE SUCCESS (Only happens if the database accepts the order)
                 document.getElementById('orderIdTag').innerText = "#" + data.order_id;
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
@@ -190,7 +171,7 @@
             btn.innerText = "Confirm Booking";
             btn.disabled = false;
         }
-    }
+    });
 </script>
 
 </body>
