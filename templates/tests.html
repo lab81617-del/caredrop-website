@@ -181,9 +181,10 @@
             total.innerText = sum.toFixed(2);
         }
 
-        function proceedToCheckout() {
+       function proceedToCheckout() {
             sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
-            window.location.href = '/checkout';
+            // THE CACHE BUSTER: Forces the phone to download fresh code every time!
+            window.location.href = '/checkout?v=' + new Date().getTime();
         }
 
         // AUTO ADD PACKAGES FROM HOMEPAGE
