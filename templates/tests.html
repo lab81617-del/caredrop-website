@@ -187,7 +187,7 @@
             window.location.href = '/checkout?v=' + new Date().getTime();
         }
 
-        // AUTO ADD PACKAGES FROM HOMEPAGE
+       // AUTO ADD PACKAGES FROM HOMEPAGE
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
             const pkg = urlParams.get('add_pkg');
@@ -198,15 +198,31 @@
                 if(pkg === 'pcod') testsToAdd = ['fsh', 'testosterone', 'insulin', 'thyroid'];
 
                 const cards = document.querySelectorAll('.test-card');
+                let addedAny = false;
+
                 cards.forEach(card => {
                     const testName = card.dataset.name.toLowerCase();
                     testsToAdd.forEach(keyword => {
                         if(testName.includes(keyword)) {
                             const btn = card.querySelector('.btn-add');
-                            if(btn) btn.click();
+                            if(btn) {
+                                btn.click();
+                                addedAny = true;
+                            }
                         }
                     });
                 });
+                
+                // INSTANT REDIRECT TO CHECKOUT
+                if (addedAny) {
+                    setTimeout(() => {
+                        proceedToCheckout(); // Jumps straight to the form!
+                    }, 600); // 0.6 second delay so the system has time to build the cart
+                } else {
+                    alert("Admin Note: You need to add these test names to your Neon Database before they can be auto-added!");
+                }
+            }
+        });
                 
                 // Open cart automatically so the patient sees it
                 setTimeout(() => {
