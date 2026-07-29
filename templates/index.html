@@ -6,125 +6,43 @@
     <title>CareDrop | Yamunanagar's Top Labs at Home</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Modern Consumer Palette (Calm, Trustworthy, Friendly) */
-        :root {
-            --primary: #0D9488; /* Healing Teal */
-            --primary-hover: #0F766E;
-            --primary-light: #CCFBF1; /* Soft Mint */
-            --bg-main: #FAFAF9; /* Warm off-white */
-            --card-bg: #FFFFFF;
-            --text-dark: #1C1917;
-            --text-muted: #78716C;
-            --border-light: #E7E5E4;
-            --accent-orange: #F97316;
-        }
-
+        :root { --primary: #0D9488; --primary-hover: #0F766E; --primary-light: #CCFBF1; --bg-main: #FAFAF9; --card-bg: #FFFFFF; --text-dark: #1C1917; --text-muted: #78716C; --border-light: #E7E5E4; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-dark); -webkit-font-smoothing: antialiased; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-
-        /* App-Like Navbar */
-        .navbar {
-            background-color: var(--card-bg);
-            padding: 15px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
+        
+        /* Help Bar */
+        .help-bar { background: #FFF7ED; color: #C2410C; text-align: center; padding: 8px; font-size: 13px; font-weight: 600; }
+        
+        .navbar { background-color: var(--card-bg); padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .nav-content { display: flex; justify-content: space-between; align-items: center; }
         .brand { display: flex; flex-direction: column; }
         .logo { font-size: 26px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
         .sub-logo { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .nav-buttons { display: flex; gap: 12px; }
-        .btn-outline {
-            border: 2px solid var(--border-light);
-            background: transparent;
-            color: var(--text-dark);
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 14px;
-            text-decoration: none;
-            transition: 0.2s;
-        }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-
-        /* Friendly Hero Section */
-        .hero {
-            background: var(--primary-light);
-            border-radius: 30px;
-            margin: 30px 20px;
-            padding: 60px 40px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
+        .btn-outline { border: 2px solid var(--border-light); background: transparent; color: var(--text-dark); padding: 10px 20px; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; }
+        
+        .hero { background: var(--primary-light); border-radius: 30px; margin: 30px 20px; padding: 60px 40px; text-align: center; }
         .hero h1 { font-size: 46px; font-weight: 800; color: #115E59; margin-bottom: 15px; line-height: 1.1; letter-spacing: -1px; }
         .hero p { font-size: 18px; color: #134E4A; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.5; }
+        .btn-solid { background: var(--primary); color: white; padding: 16px 32px; border-radius: 50px; font-size: 16px; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3); display: inline-flex; align-items: center; gap: 8px; }
         
-        .main-cta-group { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
-        .btn-solid {
-            background: var(--primary);
-            color: white;
-            padding: 16px 32px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 700;
-            text-decoration: none;
-            box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-solid:hover { background: var(--primary-hover); transform: translateY(-3px); }
-
-        /* How It Works (Simple 3 Steps) */
         .steps-section { margin: 60px 0; text-align: center; }
         .section-title { font-size: 28px; font-weight: 800; margin-bottom: 40px; }
         .steps-grid { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
         .step-card { flex: 1; min-width: 250px; background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-light); }
         .step-icon { font-size: 40px; margin-bottom: 15px; background: var(--bg-main); width: 80px; height: 80px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
-        .step-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-        .step-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
-
-        /* Prescription Banner (High Conversion) */
-        .rx-banner {
-            background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
-            border: 1px solid #FED7AA;
-            border-radius: 24px;
-            padding: 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 60px 0;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
+        
+        .rx-banner { background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 1px solid #FED7AA; border-radius: 24px; padding: 40px; display: flex; justify-content: space-between; align-items: center; margin: 60px 0; flex-wrap: wrap; gap: 20px; }
         .rx-text h2 { font-size: 26px; color: #9A3412; margin-bottom: 10px; }
-        .rx-text p { color: #C2410C; font-size: 16px; max-width: 450px; }
-        .btn-whatsapp {
-            background: #25D366;
-            color: white;
-            padding: 14px 28px;
-            border-radius: 50px;
-            font-weight: 700;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Footer */
+        .btn-whatsapp { background: #25D366; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+        
         footer { background: var(--card-bg); padding: 40px 0; text-align: center; margin-top: 50px; border-top: 1px solid var(--border-light); }
-        .footer-text { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
         
         @media (max-width: 768px) {
             .hero { padding: 40px 20px; margin: 15px; }
             .hero h1 { font-size: 32px; }
             .rx-banner { text-align: center; justify-content: center; }
-            /* Mobile Navbar Fixes */
             .nav-buttons { gap: 5px; }
             .btn-outline { padding: 6px 12px; font-size: 12px; white-space: nowrap; }
             .logo { font-size: 22px; }
@@ -133,73 +51,37 @@
     </style>
 </head>
 <body>
-
-    <!-- App Navbar -->
+    <div class="help-bar">📞 Help & Support: +91 94859 78790 | ihcdiagnostics.ynr@gmail.com</div>
     <nav class="navbar">
         <div class="container nav-content">
-            <div class="brand">
-                <div class="logo">CareDrop</div>
-                <div class="sub-logo">By IHC Diagnostics</div>
-            </div>
+            <div class="brand"><div class="logo">CareDrop</div><div class="sub-logo">By IHC Diagnostics</div></div>
             <div class="nav-buttons">
                 <a href="/login" class="btn-outline">My Bookings</a>
-                <a href="/tests" class="btn-outline" style="background: var(--text-dark); color: white; border-color: var(--text-dark);">Book Test</a>
+                <a href="/tests" class="btn-outline" style="background: var(--text-dark); color: white;">Book Test</a>
             </div>
         </div>
     </nav>
-
-    <!-- Super Friendly Hero -->
     <div class="container">
         <section class="hero">
             <h1>Yamunanagar's Best Labs.<br>Right at Your Doorstep.</h1>
-            <p>Compare prices, choose your favorite NABL accredited lab, and get your blood sample collected safely from home. No advance payment required.</p>
-            
-            <div class="main-cta-group">
-                <a href="/tests" class="btn-solid">🔍 Search Tests & Packages</a>
-            </div>
+            <p>Compare prices, choose your favorite NABL accredited lab, and get your blood sample collected safely from home.</p>
+            <a href="/tests" class="btn-solid">🔍 Search Tests & Packages</a>
         </section>
-
-        <!-- 3 Simple Steps -->
         <section class="steps-section">
             <h2 class="section-title">Healthcare Made Simple</h2>
             <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-icon">📱</div>
-                    <h3>1. Choose Your Tests</h3>
-                    <p>Select individual tests or smart packages. Compare prices across trusted local labs instantly.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-icon">🩸</div>
-                    <h3>2. Safe Home Collection</h3>
-                    <p>Our certified phlebotomists arrive at your requested time. Pay securely via Cash or UPI at your door.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-icon">📄</div>
-                    <h3>3. Get Digital Reports</h3>
-                    <p>Receive your highly accurate, lab-verified PDF reports directly to your phone and email.</p>
-                </div>
+                <div class="step-card"><div class="step-icon">📱</div><h3>1. Choose Your Tests</h3><p>Compare prices across trusted local labs instantly.</p></div>
+                <div class="step-card"><div class="step-icon">🩸</div><h3>2. Safe Home Collection</h3><p>Pay securely via Cash or UPI at your door.</p></div>
+                <div class="step-card"><div class="step-icon">📄</div><h3>3. Get Digital Reports</h3><p>Receive lab-verified PDF reports directly to your phone.</p></div>
             </div>
         </section>
-
-        <!-- Prescription Upload Banner -->
         <section class="rx-banner">
-            <div class="rx-text">
-                <h2>Have a Doctor's Prescription?</h2>
-                <p>Don't want to search? Just send us a photo of your doctor's slip and our experts will create your cart for you.</p>
-            </div>
-            <a href="https://wa.me/919485978790?text=Hi!%20I%20want%20to%20book%20a%20test%20from%20this%20prescription." target="_blank" class="btn-whatsapp">
-                📱 Upload via WhatsApp
-            </a>
+            <div class="rx-text"><h2>Have a Doctor's Prescription?</h2><p>Send us a photo of your doctor's slip and our experts will create your cart for you.</p></div>
+            <a href="https://wa.me/919485978790" target="_blank" class="btn-whatsapp">📱 Upload via WhatsApp</a>
         </section>
     </div>
-
-    <!-- Minimal Footer -->
     <footer>
-        <div class="container">
-            <p class="footer-text"><strong>CareDrop by Industrial Healthcare Diagnostics</strong></p>
-            <p class="footer-text">Agrasen Chowk, Yamunanagar | +91 94859 78790</p>
-        </div>
+        <div class="container"><p><strong>CareDrop by Industrial Healthcare Diagnostics</strong><br>Agrasen Chowk, Yamunanagar</p></div>
     </footer>
-
 </body>
 </html>
