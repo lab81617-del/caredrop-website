@@ -11,7 +11,6 @@
         body { background-color: var(--bg-main); color: var(--text-dark); -webkit-font-smoothing: antialiased; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
         
-        /* Navbar */
         .navbar { background-color: var(--card-bg); padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .nav-content { display: flex; justify-content: space-between; align-items: center; }
         .brand { display: flex; flex-direction: column; }
@@ -20,13 +19,11 @@
         .nav-buttons { display: flex; gap: 12px; }
         .btn-outline { border: 2px solid var(--border-light); background: transparent; color: var(--text-dark); padding: 10px 20px; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; }
         
-        /* Hero */
         .hero { background: var(--primary-light); border-radius: 30px; margin: 30px 0; padding: 60px 40px; text-align: center; }
         .hero h1 { font-size: 46px; font-weight: 800; color: #115E59; margin-bottom: 15px; line-height: 1.1; letter-spacing: -1px; }
         .hero p { font-size: 18px; color: #134E4A; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.5; }
         .btn-solid { background: var(--primary); color: white; padding: 16px 32px; border-radius: 50px; font-size: 16px; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3); display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         
-        /* Packages Slider */
         .section-title { font-size: 24px; font-weight: 800; margin-bottom: 25px; color: #334155; }
         .packages-grid { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin-bottom: 30px; }
         .packages-grid::-webkit-scrollbar { height: 6px; }
@@ -41,19 +38,16 @@
         .package-features li { margin-bottom: 6px; font-size: 13px; display: flex; align-items: center; gap: 6px; color: #475569; }
         .btn-package { display: block; text-align: center; background: #166534; color: white; padding: 10px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px; }
         
-        /* Prescription Banner */
         .rx-banner { background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 1px solid #FED7AA; border-radius: 24px; padding: 40px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; flex-wrap: wrap; gap: 20px; }
         .rx-text h2 { font-size: 24px; color: #9A3412; margin-bottom: 10px; }
         .rx-text p { color: #C2410C; font-size: 15px; font-weight: 500; }
         .btn-whatsapp { background: #25D366; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
 
-        /* About Us */
         .about-section { background: var(--card-bg); border-radius: 24px; padding: 40px; margin-bottom: 60px; border: 1px solid var(--border-light); display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
         .about-text { flex: 1; min-width: 300px; }
         .about-text h2 { font-size: 26px; font-weight: 800; margin-bottom: 15px; }
         .about-text p { font-size: 15px; color: var(--text-muted); line-height: 1.6; margin-bottom: 15px; }
         
-        /* Footer */
         footer { background: #0F172A; color: white; padding: 50px 20px; text-align: center; margin-top: 50px; }
         .footer-grid { display: flex; justify-content: space-around; max-width: 1000px; margin: 0 auto; flex-wrap: wrap; gap: 30px; }
         .footer-col h4 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; }
@@ -82,11 +76,11 @@
     <div class="container">
         <section class="hero">
             <h1>Yamunanagar's Best Labs.<br>Right at Your Doorstep.</h1>
-            <p>Compare prices, choose your favorite NABL accredited lab, and get your blood sample collected safely by certified health professionals.</p>
+            <!-- UPDATED COPY -->
+            <p>Compare prices, choose your favorite NABL-accredited or trusted local lab, and get your blood sample collected safely by certified health professionals.</p>
             <a href="/tests" class="btn-solid">🔍 Search Tests & Packages</a>
         </section>
 
-        <!-- Horizontal Scroll Special Offers -->
         <section class="packages-section">
             <h2 class="section-title">Special Health Packages</h2>
             <div class="packages-grid">
@@ -133,7 +127,6 @@
             </div>
         </section>
 
-        <!-- Prescription Banner -->
         <section class="rx-banner">
             <div class="rx-text">
                 <h2>Have a Doctor's Prescription?</h2>
@@ -142,17 +135,16 @@
             <a href="https://wa.me/919485978790" target="_blank" class="btn-whatsapp">📱 Upload via WhatsApp</a>
         </section>
 
-        <!-- Accurate About Us Section -->
         <section class="about-section">
             <div class="about-text">
                 <h2>About IHC Diagnostics</h2>
                 <p>Founded in April 2026 by certified laboratory professionals <strong>Kartikay Bhardwaj, Aman Sahni, and Ankush</strong>, IHC Diagnostics was built with a single vision: to make lab testing transparent, highly accurate, and completely hassle-free.</p>
-                <p>We operate as a specialized <strong>Home Collection & Aggregation Platform</strong>. Because our founders are trained medical technicians, we guarantee painless, hygienic, and scientifically accurate sample collection. We collect the sample safely from your home and deliver it to Yamunanagar's highest-rated, NABL-accredited laboratories for processing—ensuring you get unbiased, world-class reports right to your phone.</p>
+                <!-- UPDATED COPY -->
+                <p>We operate as a specialized <strong>Home Collection & Aggregation Platform</strong>. Because our founders are trained medical technicians, we guarantee painless, hygienic, and scientifically accurate sample collection. We collect the sample safely from your home and deliver it to Yamunanagar's highest-rated laboratories for processing—ensuring you get unbiased, world-class reports right to your phone.</p>
             </div>
         </section>
     </div>
     
-    <!-- Footer -->
     <footer>
         <div class="footer-grid">
             <div class="footer-col">
