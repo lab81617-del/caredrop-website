@@ -3,50 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop Admin Portal</title>
+    <title>Admin Dashboard | CareDrop</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; }
-        .header { background: #0D9488; color: white; padding: 20px 30px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .order-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 5px solid #0D9488; }
-        .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px; }
-        .patient-details { display: flex; gap: 40px; margin-bottom: 15px; }
-        .detail-box span { display: block; font-size: 12px; color: #64748B; text-transform: uppercase; font-weight: 700; margin-bottom: 3px;}
-        .detail-box strong { font-size: 15px; }
-        .test-list { background: #F8FAFC; padding: 10px 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
-        .test-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; }
-        .total { text-align: right; font-size: 18px; font-weight: 800; color: #0D9488; margin-top: 10px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; }
+        .header h1 { margin: 0; color: #0F172A; font-size: 24px; font-weight: 800; }
+        
+        .card { background: white; padding: 0; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 18px 25px; border-bottom: 1px solid #F1F5F9; }
+        th { background: #F8FAFC; font-weight: 700; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        td { color: #0F172A; font-size: 15px; }
+        tr:last-child td { border-bottom: none; }
+        
+        .badge { background: #CCFBF1; color: #0F766E; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; display: inline-block; margin-bottom: 5px; }
+        .btn-logout { background: #EF4444; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>IHC Admin Dashboard</h2>
-        <div>Live Order Feed</div>
+    <div class="container">
+        <div class="header">
+            <h1>CareDrop Live Orders</h1>
+            <div>
+                <a href="/" style="text-decoration: none; color: #0D9488; font-weight: 700; margin-right: 20px;">&larr; Back to Website</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Patient Details</th>
+                        <th>Collection Schedule</th>
+                        <th>Tests & Lab Selected</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td style="font-weight: 800; color: #0D9488; font-size: 18px;">#{{ order.id }}</td>
+                        <td>
+                            <div style="font-weight: 700; margin-bottom: 4px;">{{ order.patient_name }}</div>
+                            <div style="font-size: 13px; color: #64748B;">Booked by: {{ order.booked_by }}</div>
+                            <div style="font-size: 13px; color: #64748B;">📞 {{ order.phone }}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; margin-bottom: 4px;">{{ order.collection_date }}</div>
+                            <div style="font-size: 13px; color: #0F766E; font-weight: 600; margin-bottom: 4px;">{{ order.time_slot }}</div>
+                            <div style="font-size: 13px; color: #64748B;">📍 {{ order.address }}</div>
+                        </td>
+                        <td>
+                            {% for item in order.items %}
+                                <div class="badge">{{ item.test_name }} ({{ item.lab_name }})</div><br>
+                            {% endfor %}
+                        </td>
+                        <td style="font-weight: 800; font-size: 18px;">₹{{ order.total_amount }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #94A3B8; font-weight: 600;">No orders have been placed yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    {% for order in orders %}
-    <div class="order-card">
-        <div class="order-header">
-            <h3>Order #{{ order.id }}</h3>
-            <span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">Action Required</span>
-        </div>
-        <div class="patient-details">
-            <div class="detail-box"><span>Patient Name</span><strong>{{ order.patient_name }}</strong></div>
-            <div class="detail-box"><span>Phone Number</span><strong>{{ order.phone }}</strong></div>
-            <div class="detail-box"><span>Collection Slot</span><strong>{{ order.collection_date }} | {{ order.time_slot }}</strong></div>
-            <div class="detail-box"><span>Address</span><strong>{{ order.address }}</strong></div>
-        </div>
-        <div class="test-list">
-            <div style="font-size: 12px; color: #64748B; font-weight: 700; margin-bottom: 8px;">TESTS TO COLLECT:</div>
-            {% for item in order.items %}
-                <div class="test-item">
-                    <span>🧪 {{ item.test_name }} <em style="color:#94A3B8;">(Send to: {{ item.lab_name }})</em></span>
-                    <strong>₹{{ item.price }}</strong>
-                </div>
-            {% endfor %}
-            <div class="total">Total to Collect: ₹{{ order.total_amount }}</div>
-        </div>
-    </div>
-    {% endfor %}
 </body>
 </html>
