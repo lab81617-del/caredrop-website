@@ -102,9 +102,8 @@ def admin_dashboard():
         conn = get_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        # 1. Fetch Orders
         cursor.execute("""
-            SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, u.phone, u.name as booked_by 
+            SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, u.name as booked_by 
             FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC
         """)
         orders = cursor.fetchall()
@@ -122,21 +121,19 @@ def admin_dashboard():
         for order in orders:
             order['test_list'] = items_map.get(order['id'], [])
 
-        # 2. Fetch Active Labs & Categories for the Add Test Form
         cursor.execute("SELECT id, name FROM labs WHERE is_active = TRUE ORDER BY name")
         labs = cursor.fetchall()
         
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
 
-        # 3. Fetch Current Inventory to display in the table
         cursor.execute("""
-            SELECT t.name as test_name, c.name as category_name, l.name as lab_name, ltp.price
+            SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, ltp.price
             FROM lab_test_pricing ltp
             JOIN tests t ON ltp.test_id = t.id
             JOIN labs l ON ltp.lab_id = l.id
             JOIN test_categories c ON t.category_id = c.id
-            ORDER BY t.id DESC LIMIT 100
+            ORDER BY t.id DESC LIMIT 200
         """)
         inventory = cursor.fetchall()
             
@@ -146,34 +143,70 @@ def admin_dashboard():
     except Exception as e:
         return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p></div>"
 
+# --- NEW: ADD LAB ---
+@app.route('/admin/add-lab', methods=['POST'])
+def admin_add_lab():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    lab_name = request.form.get('lab_name').strip()
+    if lab_name:
+        try:
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO labs (name, is_active) VALUES (%s, TRUE)", (lab_name,))
+            conn.commit()
+            release_db(conn)
+        except Exception: pass
+    return redirect(url_for('admin_dashboard'))
+
+# --- NEW: UPDATE ORDER STATUS ---
+@app.route('/admin/update-order', methods=['POST'])
+def admin_update_order():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    order_id = request.form.get('order_id')
+    status = request.form.get('status')
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (status, order_id))
+        conn.commit()
+        release_db(conn)
+    except Exception: pass
+    return redirect(url_for('admin_dashboard'))
+
+# --- NEW: DELETE TEST PRICING ---
+@app.route('/admin/delete-inventory/<int:test_id>/<int:lab_id>', methods=['POST'])
+def delete_inventory(test_id, lab_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
+        conn.commit()
+        release_db(conn)
+    except Exception: pass
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/add-test', methods=['POST'])
 def admin_add_test():
-    if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
-
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
     test_name = request.form.get('test_name').strip()
     category_id = request.form.get('category_id')
     fasting = request.form.get('fasting')
     price = request.form.get('price')
     lab_ids = request.form.getlist('lab_ids') 
 
-    if not lab_ids:
-        return "<h2 style='color:red; font-family:sans-serif;'>Error: You must check at least one Lab box!</h2>", 400
+    if not lab_ids: return "<h2 style='color:red; font-family:sans-serif;'>Error: Check at least one Lab!</h2>", 400
 
     try:
         conn = get_db()
         cursor = conn.cursor()
-
         cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (test_name,))
         existing_test = cursor.fetchone()
         
         if existing_test:
             test_id = existing_test[0]
         else:
-            cursor.execute("""
-                INSERT INTO tests (name, category_id, fasting_requirement, is_active)
-                VALUES (%s, %s, %s, TRUE) RETURNING id
-            """, (test_name, category_id, fasting))
+            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting))
             test_id = cursor.fetchone()[0]
 
         for lab_id in lab_ids:
@@ -182,70 +215,50 @@ def admin_add_test():
                 cursor.execute("UPDATE lab_test_pricing SET price = %s WHERE test_id = %s AND lab_id = %s", (price, test_id, lab_id))
             else:
                 cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, tat) VALUES (%s, %s, %s, '24 Hours')", (test_id, lab_id, price))
-
         conn.commit()
         release_db(conn)
         return redirect(url_for('admin_dashboard'))
-        
-    except Exception as e:
-        return f"Error adding test: {str(e)}", 500
+    except Exception as e: return f"Error adding test: {str(e)}", 500
 
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
     data = request.json
-    if not data:
-        return jsonify({"success": False, "message": "No data received by server."}), 400
-
-    name = str(data.get('name', '')).strip()
-    phone = str(data.get('phone', '')).strip()
-    email = str(data.get('email', '')).strip()
-    patient_name = str(data.get('patient_name', '')).strip()
-    address = str(data.get('address', '')).strip()
-    date = str(data.get('date', '')).strip()
+    if not data: return jsonify({"success": False, "message": "No data received."}), 400
+    
+    name, phone, email = str(data.get('name','')).strip(), str(data.get('phone','')).strip(), str(data.get('email','')).strip()
+    patient_name, address, date = str(data.get('patient_name','')).strip(), str(data.get('address','')).strip(), str(data.get('date','')).strip()
     cart = data.get('cart', [])
 
-    if not name or not phone or not email or not patient_name or not address or not date:
-        return jsonify({"success": False, "message": "Rejected by server: Missing mandatory text fields."})
-
-    if not cart or len(cart) == 0:
-        return jsonify({"success": False, "message": "Rejected by server: Cart is empty."})
+    if not name or not phone or not patient_name or not address or not date or not cart:
+        return jsonify({"success": False, "message": "Missing fields or cart empty."})
 
     conn = get_db()
     cursor = conn.cursor()
-    
     try:
         cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
-        if user:
-            user_id = user[0]
+        if user: user_id = user[0]
         else:
-            cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", 
-                           (name, phone, email))
+            cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email))
             user_id = cursor.fetchone()[0]
 
         cursor.execute("""
-            INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount)
-            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+            INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status)
+            VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id
         """, (user_id, patient_name, address, date, data.get('time_slot', 'Morning'), data.get('total', 0)))
         order_id = cursor.fetchone()[0]
 
         for item in cart:
-            cursor.execute("""
-                INSERT INTO order_items (order_id, test_id, lab_id, price)
-                VALUES (%s, %s, %s, %s)
-            """, (order_id, item['id'], item['selectedLabId'], item['currentPrice']))
+            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", 
+                           (order_id, item['id'], item['selectedLabId'], item['currentPrice']))
             
         conn.commit()
-        
-        msg = f"Your CareDrop Booking #{order_id} is confirmed!\n\nPatient: {patient_name}\nDate: {date}\nAmount to Pay on Collection: Rs. {data.get('total', 0)}"
+        msg = f"Your CareDrop Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nAmount: Rs. {data.get('total', 0)}"
         send_email_async(email, f"Booking Confirmed - #{order_id}", msg)
-        
         return jsonify({"success": True, "order_id": order_id})
     except Exception as e:
         conn.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
-    finally:
-        release_db(conn)
+    finally: release_db(conn)
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+if __name__ == '__main__': app.run(debug=True, port=5000)
