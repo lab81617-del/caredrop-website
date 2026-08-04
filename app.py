@@ -13,7 +13,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 
-# THE MASTER PASSWORD
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
 
 def get_db():
@@ -67,7 +66,6 @@ def tests_catalog():
 def checkout_page():
     return render_template('checkout.html')
 
-# --- THE SECURITY GATEWAY ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     error = None
@@ -78,7 +76,6 @@ def admin_login():
         else:
             error = "Access Denied: Incorrect Password."
             
-    # The visual login screen built directly in Python
     return f'''
     <html>
         <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -98,13 +95,14 @@ def admin_login():
 
 @app.route('/admin')
 def admin_dashboard():
-    # THE BOUNCER: If you aren't logged in, it physically throws you out to the login page.
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
-    conn = get_db()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    # Added a TRY/EXCEPT block to catch database errors explicitly
     try:
+        conn = get_db()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
         cursor.execute("""
             SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, u.phone, u.name as booked_by 
             FROM orders o JOIN users u ON o.user_id = u.id 
@@ -129,9 +127,12 @@ def admin_dashboard():
         for order in orders:
             order['items'] = items_map.get(order['id'], [])
             
-    finally:
         release_db(conn)
-    return render_template('admin.html', orders=orders)
+        return render_template('admin.html', orders=orders)
+    
+    except Exception as e:
+        # If the database crashes, it prints the EXACT error on screen
+        return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p><p>Check if your 'users', 'orders', and 'order_items' tables are properly linked in Neon.</p></div>"
 
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
