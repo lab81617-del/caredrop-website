@@ -102,6 +102,228 @@ def admin_dashboard():
         conn = get_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
+        # 1. Fetch Orders
+        cursor.execute("""
+            SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, u.phone, u.name as booked_by 
+            FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC
+        """)
+        orders = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT oi.order_id, t.name as test_name, l.name as lab_name, oi.price
+            FROM order_items oi JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id
+        """)
+        db_items = cursor.fetchall()
+        items_map = {}
+        for row in db_items:
+            if row['order_id'] not in items_map: items_map[row['order_id']] = []
+            items_map[row['order_id']].append(row)
+            
+        for order in orders:
+            order['test_list'] = items_map.get(order['id'], [])
+
+        # 2. Fetch Active Labs & Categories for the Add Test Form
+        cursor.execute("SELECT id, name FROM labs WHERE is_active = TRUE ORDER BY name")
+        labs = cursor.fetchall()
+        
+        cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
+        categories = cursor.fetchall()
+
+        # 3. Fetch Current Inventory to display in the table
+        cursor.execute("""
+            SELECT t.name as test_name, c.name as category_name, l.name as lab_name, ltp.price
+            FROM lab_test_pricing ltp
+            JOIN tests t ON ltp.test_id = t.id
+            JOIN labs l ON ltp.lab_id = l.id
+            JOIN test_categories c ON t.category_id = c.id
+            ORDER BY t.id DESC LIMIT 100
+        """)
+        inventory = cursor.fetchall()
+            
+        release_db(conn)
+        return render_template('admin.html', orders=orders, labs=labs, categories=categories, inventory=inventory)
+    
+    except Exception as e:
+        return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p></div>"
+
+# --- THE MISSING ENGINE: ADD TEST ROUTE ---
+@app.route('/admin/add-test', methods=['POST'])
+def admin_add_test():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
+    test_name = request.form.get('test_name').strip()
+    category_id = request.form.get('category_id')
+    fasting = request.form.get('fasting')
+    price = request.form.get('price')
+    # This grabs all checkboxes that were ticked!
+    lab_ids = request.form.getlist('lab_ids') 
+
+    if not lab_ids:
+        return "<h2 style='color:red; font-family:sans-serif;'>Error: You must check at least one Lab box!</h2>", 400
+
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Check if the test name already exists in the master catalog
+        cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (test_name,))
+        existing_test = cursor.fetchone()
+        
+        if existing_test:
+            test_id = existing_test[0]
+        else:
+            cursor.execute("""
+                INSERT INTO tests (name, category_id, fasting_requirement, is_active)
+                VALUES (%s, %s, %s, TRUE) RETURNING id
+            """, (test_name, category_id, fasting))
+            test_id = cursor.fetchone()[0]
+
+        # Add the pricing for every lab that was checked
+        for lab_id in lab_ids:
+            # Check if this exact lab already has a price for this test
+            cursor.execute("SELECT id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
+            if cursor.fetchone():
+                # If they do, update the price
+                cursor.execute("UPDATE lab_test_pricing SET price = %s WHERE test_id = %s AND lab_id = %s", (price, test_id, lab_id))
+            else:
+                # If they don't, insert the new price
+                cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, tat) VALUES (%s, %s, %s, '24 Hours')", (test_id, lab_id, price))
+
+        conn.commit()
+        release_db(conn)
+        # Redirect back to the admin dashboard instantly
+        return redirect(url_for('admin_dashboard'))
+        
+    except Exception as e:
+        return f"Error adding test: {str(e)}", 500
+
+@app.route('/api/place-order', methods=['POST'])
+def place_order():
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "message": "No data received by server."}), 400
+
+    name = str(data.get('name', '')).strip()
+    phone = str(data.get('phone', '')).strip()
+    email = str(data.get('email', '')).strip()
+    patient_name = str(data.get('patient_name', '')).strip()
+    address = str(data.get('address', '')).strip()
+    date = str(data.get('date', '')).strip()
+    cart = data.get('cart', [])
+
+    if not name or not phone or not email or not patient_name or not address or not date:
+        return jsonify({"success": False, "message": "Rejected by server: Missing mandatory text fields."})
+
+    if not cart or len(cart) == 0:
+        return jsonify({"success": False, "message": "Rejected by server: Cart is empty."})
+
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        if user:
+            user_id = user[0]
+        else:
+            cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", 
+                           (name, phone, email))
+            user_id = cursor.fetchone()[0]
+
+        cursor.execute("""
+            INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+        """, (user_id, patient_name, address, date, data.get('time_slot', 'Morning'), data.get('total', 0)))
+        order_id = cursor.fetchone()[0]
+
+        for item in cart:
+            cursor.execute("""
+                INSERT INTO order_items (order_id, test_id, lab_id, price)
+                VALUES (%s, %s, %s, %s)
+            """, (order_id, item['id'], item['selectedLabId'], item['currentPrice']))
+            
+        conn.commit()
+        
+        msg = f"Your CareDrop Booking #{order_id} is confirmed!\n\nPatient: {patient_name}\nDate: {date}\nAmount to Pay on Collection: Rs. {data.get('total', 0)}"
+        send_email_async(email, f"Booking Confirmed - #{order_id}", msg)
+        
+        return jsonify({"success": True, "order_id": order_id})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        release_db(conn)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/tests')
+def tests_catalog():
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("""
+            SELECT t.id, t.name, t.fasting_requirement, c.name as category 
+            FROM tests t JOIN test_categories c ON t.category_id = c.id
+            WHERE t.is_active = TRUE ORDER BY c.name, t.name
+        """)
+        tests_list = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
+            FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id
+            WHERE l.is_active = TRUE
+        """)
+        pricing_list = cursor.fetchall()
+    finally:
+        release_db(conn)
+        
+    return render_template('tests.html', tests=tests_list, pricing=json.dumps(pricing_list))
+
+@app.route('/book')
+def checkout_page():
+    return render_template('checkout.html')
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        if request.form.get('password') == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            error = "Access Denied: Incorrect Password."
+            
+    return f'''
+    <html>
+        <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="background:#F1F5F9; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; padding:20px;">
+            <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); text-align:center; width:100%; max-width:350px;">
+                <h2 style="color:#0D9488; margin-bottom:5px;">CareDrop Admin</h2>
+                <p style="color:#64748B; font-size:14px; margin-bottom:25px;">Authorized Personnel Only</p>
+                <form method="POST">
+                    <input type="password" name="password" placeholder="Enter Master Password" required style="width:100%; padding:14px; margin-bottom:15px; border:1px solid #CBD5E1; border-radius:8px; box-sizing:border-box; outline:none; font-size:16px;">
+                    <button type="submit" style="width:100%; background:#0F172A; color:white; padding:14px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Login to Dashboard</button>
+                </form>
+                <div style="color:#DC2626; font-size:14px; margin-top:15px; font-weight:bold;">{error if error else ''}</div>
+            </div>
+        </body>
+    </html>
+    '''
+
+@app.route('/admin')
+def admin_dashboard():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
+    try:
+        conn = get_db()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
         cursor.execute("""
             SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, u.phone, u.name as booked_by 
             FROM orders o JOIN users u ON o.user_id = u.id 
