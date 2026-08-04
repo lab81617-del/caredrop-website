@@ -3,7 +3,7 @@ import threading
 import smtplib
 import json
 from email.message import EmailMessage
-from flask import Flask, render_template, jsonify, request, session
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
@@ -12,6 +12,9 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
+
+# THE MASTER PASSWORD
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
 
 def get_db():
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
@@ -64,8 +67,41 @@ def tests_catalog():
 def checkout_page():
     return render_template('checkout.html')
 
+# --- THE SECURITY GATEWAY ---
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        if request.form.get('password') == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            error = "Access Denied: Incorrect Password."
+            
+    # The visual login screen built directly in Python
+    return f'''
+    <html>
+        <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="background:#F1F5F9; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; padding:20px;">
+            <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); text-align:center; width:100%; max-width:350px;">
+                <h2 style="color:#0D9488; margin-bottom:5px;">CareDrop Admin</h2>
+                <p style="color:#64748B; font-size:14px; margin-bottom:25px;">Authorized Personnel Only</p>
+                <form method="POST">
+                    <input type="password" name="password" placeholder="Enter Master Password" required style="width:100%; padding:14px; margin-bottom:15px; border:1px solid #CBD5E1; border-radius:8px; box-sizing:border-box; outline:none; font-size:16px;">
+                    <button type="submit" style="width:100%; background:#0F172A; color:white; padding:14px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Login to Dashboard</button>
+                </form>
+                <div style="color:#DC2626; font-size:14px; margin-top:15px; font-weight:bold;">{error if error else ''}</div>
+            </div>
+        </body>
+    </html>
+    '''
+
 @app.route('/admin')
 def admin_dashboard():
+    # THE BOUNCER: If you aren't logged in, it physically throws you out to the login page.
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
     conn = get_db()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
@@ -103,7 +139,6 @@ def place_order():
     if not data:
         return jsonify({"success": False, "message": "No data received by server."}), 400
 
-    # STRICT SERVER-SIDE SANITIZATION
     name = str(data.get('name', '')).strip()
     phone = str(data.get('phone', '')).strip()
     email = str(data.get('email', '')).strip()
