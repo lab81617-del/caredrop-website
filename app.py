@@ -121,7 +121,8 @@ def admin_dashboard():
         for order in orders:
             order['test_list'] = items_map.get(order['id'], [])
 
-        cursor.execute("SELECT id, name FROM labs WHERE is_active = TRUE ORDER BY name")
+        # FETCH UNIQUE LABS ONLY (Fixes the repeat bug)
+        cursor.execute("SELECT DISTINCT ON (LOWER(name)) id, name FROM labs WHERE is_active = TRUE ORDER BY LOWER(name), id")
         labs = cursor.fetchall()
         
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
@@ -143,7 +144,6 @@ def admin_dashboard():
     except Exception as e:
         return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p></div>"
 
-# --- NEW: ADD LAB ---
 @app.route('/admin/add-lab', methods=['POST'])
 def admin_add_lab():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -158,7 +158,6 @@ def admin_add_lab():
         except Exception: pass
     return redirect(url_for('admin_dashboard'))
 
-# --- NEW: UPDATE ORDER STATUS ---
 @app.route('/admin/update-order', methods=['POST'])
 def admin_update_order():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -173,7 +172,6 @@ def admin_update_order():
     except Exception: pass
     return redirect(url_for('admin_dashboard'))
 
-# --- NEW: DELETE TEST PRICING ---
 @app.route('/admin/delete-inventory/<int:test_id>/<int:lab_id>', methods=['POST'])
 def delete_inventory(test_id, lab_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
