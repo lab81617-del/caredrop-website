@@ -98,7 +98,6 @@ def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
-    # Added a TRY/EXCEPT block to catch database errors explicitly
     try:
         conn = get_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -116,23 +115,23 @@ def admin_dashboard():
             JOIN tests t ON oi.test_id = t.id
             JOIN labs l ON oi.lab_id = l.id
         """)
-        items = cursor.fetchall()
+        db_items = cursor.fetchall()
         
         items_map = {}
-        for item in items:
-            if item['order_id'] not in items_map:
-                items_map[item['order_id']] = []
-            items_map[item['order_id']].append(item)
+        for row in db_items:
+            if row['order_id'] not in items_map:
+                items_map[row['order_id']] = []
+            items_map[row['order_id']].append(row)
             
         for order in orders:
-            order['items'] = items_map.get(order['id'], [])
+            # RENAMED to 'test_list' to avoid Python's dict.items() collision!
+            order['test_list'] = items_map.get(order['id'], [])
             
         release_db(conn)
         return render_template('admin.html', orders=orders)
     
     except Exception as e:
-        # If the database crashes, it prints the EXACT error on screen
-        return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p><p>Check if your 'users', 'orders', and 'order_items' tables are properly linked in Neon.</p></div>"
+        return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p></div>"
 
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
