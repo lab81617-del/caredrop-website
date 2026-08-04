@@ -31,11 +31,17 @@
         
         /* Forms */
         .form-container { padding: 30px; }
-        .form-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
+        .form-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
         .input-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #475569; }
         .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
         .input-group input:focus, .input-group select:focus { border-color: #0D9488; }
+        
+        /* Custom Checkboxes */
+        .checkbox-grid { display: flex; flex-wrap: wrap; gap: 15px; }
+        .lab-checkbox { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px 18px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
+        .lab-checkbox:hover { border-color: #0D9488; }
+        .lab-checkbox input { width: 18px; height: 18px; accent-color: #0D9488; cursor: pointer; }
         
         .btn-save { background: #0F172A; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 15px; }
     </style>
@@ -49,7 +55,7 @@
         
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('orders')">📦 Live Orders</button>
-            <button class="tab-btn" onclick="switchTab('inventory')">🧪 Manage Inventory</button>
+            <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">🧪 Manage Inventory</button>
         </div>
         
         <!-- LIVE ORDERS TAB -->
@@ -94,20 +100,23 @@
         
         <!-- MANAGE INVENTORY TAB -->
         <div id="inventory" class="tab-content">
+            
+            <!-- ADD TEST FORM -->
             <div class="card form-container">
-                <div class="form-title">Add New Test & Pricing</div>
+                <div class="form-title">Add New Test to Catalog</div>
+                
                 <form action="/admin/add-test" method="POST">
                     <div class="form-grid">
                         <div class="input-group">
                             <label>Test Name</label>
-                            <input type="text" name="test_name" placeholder="e.g. Complete Blood Count (CBC)" required>
+                            <input type="text" name="test_name" placeholder="e.g. Platelet Count" required>
                         </div>
                         <div class="input-group">
                             <label>Category</label>
                             <select name="category_id" required>
-                                <option value="1">Routine Tests</option>
-                                <option value="2">Vital Organs</option>
-                                <option value="3">Specialized</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="input-group">
@@ -119,28 +128,58 @@
                         </div>
                     </div>
                     
-                    <div class="form-title" style="border: none; margin-top: 10px; margin-bottom: 10px; font-size: 15px; color: #0F766E;">Assign to Partner Lab</div>
+                    <div class="input-group" style="margin-bottom: 20px;">
+                        <label>Select Partner Labs (Check all that apply)</label>
+                        <div class="checkbox-grid">
+                            {% for lab in labs %}
+                            <label class="lab-checkbox">
+                                <input type="checkbox" name="lab_ids" value="{{ lab.id }}">
+                                <span>{{ lab.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
                     
-                    <div class="form-grid">
+                    <div class="form-grid" style="align-items: flex-end;">
                         <div class="input-group">
-                            <label>Select Lab</label>
-                            <select name="lab_id" required>
-                                <option value="1">Rudraksh Laboratory</option>
-                                <!-- We will pull these dynamically from the database later -->
-                            </select>
+                            <label>Price for Selected Labs (₹)</label>
+                            <input type="number" name="price" placeholder="e.g. 150" required>
                         </div>
                         <div class="input-group">
-                            <label>Price (₹)</label>
-                            <input type="number" name="price" placeholder="e.g. 350" required>
-                        </div>
-                        <div class="input-group" style="display: flex; align-items: flex-end;">
                             <button type="submit" class="btn-save" style="width: 100%;">+ Save to Catalog</button>
                         </div>
                     </div>
                 </form>
             </div>
-        </div>
 
+            <!-- CURRENT INVENTORY VIEWER -->
+            <div class="card">
+                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">Current Catalog & Prices</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test Name</th>
+                            <th>Category</th>
+                            <th>Lab Name</th>
+                            <th>Current Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inventory %}
+                        <tr>
+                            <td style="font-weight: 700;">{{ item.test_name }}</td>
+                            <td style="font-size: 13px; color: #64748B;">{{ item.category_name }}</td>
+                            <td><span class="badge">{{ item.lab_name }}</span></td>
+                            <td style="font-weight: 800; color: #0D9488;">₹{{ item.price }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" style="text-align: center; padding: 40px; color: #94A3B8;">Your catalog is currently empty.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
     </div>
 
     <script>
@@ -149,7 +188,18 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
+            
+            // Save tab state so it stays on Inventory when you refresh
+            localStorage.setItem('caredrop_admin_tab', tabId);
         }
+
+        // Auto-load last open tab
+        window.onload = () => {
+            const savedTab = localStorage.getItem('caredrop_admin_tab');
+            if(savedTab === 'inventory') {
+                document.getElementById('inventoryTabBtn').click();
+            }
+        };
     </script>
 </body>
 </html>
