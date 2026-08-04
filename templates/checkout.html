@@ -30,9 +30,6 @@
         
         .success-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal-content { background: white; padding: 40px; border-radius: 24px; text-align: center; max-width: 450px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        
-        /* THIS IS THE MISSING LINE THAT BROKE IT: */
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -70,7 +67,7 @@
         <div class="section-title">3. Sample Collection Schedule</div>
         <div class="form-row">
             <div class="form-group"><label>Collection Date *</label><input type="date" id="date"></div>
-            <div class="form-group">
+            <div class="form-group" id="timeSlotContainer">
                 <label>Time Slot *</label>
                 <select id="timeSlot">
                     <option value="" disabled selected>Select Time</option>
@@ -93,10 +90,6 @@
         
         <button type="button" class="btn-submit" id="submitBtn" disabled style="background: #94A3B8; cursor: not-allowed;" onclick="processFinalBooking()">Fill All Details to Confirm</button>
     </form>
-    
-    <div style="text-align: center; font-size: 11px; font-weight: 700; color: #94A3B8; margin-top: 25px; letter-spacing: 1px;">
-        CAREDROP SYSTEM v2.0 (STRICT MODE)
-    </div>
 </div>
 
 <!-- Success Modal -->
@@ -118,6 +111,33 @@
     document.getElementById('displayTotal').innerText = total.toFixed(2);
 
     window.onload = () => {
+        // 1. BLOCK PAST DATES
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').setAttribute('min', today);
+
+        // 2. CHECK FOR FASTING TESTS & LOCK TIME SLOT
+        const needsFasting = cart.some(item => 
+            item.name.toLowerCase().includes('fasting') || 
+            item.name.toLowerCase().includes('lipid') || 
+            item.name.toLowerCase().includes('sugar') || 
+            item.name.toLowerCase().includes('glucose') ||
+            item.name.toLowerCase().includes('fbs')
+        );
+
+        if (needsFasting) {
+            const timeSlot = document.getElementById('timeSlot');
+            timeSlot.innerHTML = '<option value="6:00 AM - 8:00 AM" selected>Morning (6:00 AM - 8:00 AM)</option>';
+            
+            const notice = document.createElement('div');
+            notice.style.color = '#DC2626';
+            notice.style.fontSize = '12px';
+            notice.style.fontWeight = '700';
+            notice.style.marginTop = '8px';
+            notice.innerText = '⚠️ Fasting test detected. Collection locked to Morning slot.';
+            document.getElementById('timeSlotContainer').appendChild(notice);
+        }
+
+        // 3. LOAD GUEST MEMORY
         if(localStorage.getItem('cd_name')) document.getElementById('name').value = localStorage.getItem('cd_name');
         if(localStorage.getItem('cd_phone')) document.getElementById('phone').value = localStorage.getItem('cd_phone');
         if(localStorage.getItem('cd_email')) document.getElementById('email').value = localStorage.getItem('cd_email');
@@ -216,7 +236,7 @@
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
             } else {
-                alert("Server Blocked Request: " + data.message);
+                alert("Server Error: " + data.message);
                 validateFormLive(); 
             }
         } catch(e) {
