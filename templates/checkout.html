@@ -85,12 +85,16 @@
 
         <label class="consent-label">
             <input type="checkbox" id="consentBox">
-            <!-- UPDATED COPY -->
             <span class="consent-text">I consent to CareDrop collecting my sample. I understand that my sample will be professionally collected and processed by my chosen partner lab.</span>
         </label>
         
         <button type="button" class="btn-submit" id="submitBtn" disabled style="background: #94A3B8; cursor: not-allowed;" onclick="processFinalBooking()">Fill All Details to Confirm</button>
     </form>
+    
+    <!-- PROOF STAMP -->
+    <div style="text-align: center; font-size: 11px; font-weight: 700; color: #94A3B8; margin-top: 25px; letter-spacing: 1px;">
+        CAREDROP SYSTEM v2.0 (STRICT MODE)
+    </div>
 </div>
 
 <!-- Success Modal -->
@@ -176,6 +180,8 @@
         const phone = document.getElementById('phone').value.trim();
         const email = document.getElementById('email').value.trim();
         const address = document.getElementById('address').value.trim();
+        const date = document.getElementById('date').value;
+        const timeSlot = document.getElementById('timeSlot').value;
 
         localStorage.setItem('cd_name', bName);
         localStorage.setItem('cd_phone', phone);
@@ -189,8 +195,8 @@
             email: email,
             patient_name: fullPatientDetail, 
             address: address, 
-            date: document.getElementById('date').value, 
-            time_slot: document.getElementById('timeSlot').value, 
+            date: date, 
+            time_slot: timeSlot, 
             total: total, 
             cart: cart
         };
@@ -208,8 +214,7 @@
                 document.getElementById('successModal').classList.remove('hidden');
                 sessionStorage.removeItem('caredrop_cart');
             } else {
-                // If backend blocks it, show the error!
-                alert(data.message);
+                alert("Server Blocked Request: " + data.message);
                 validateFormLive(); 
             }
         } catch(e) {
@@ -218,6 +223,5 @@
         }
     }
 </script>
-
 </body>
 </html>
