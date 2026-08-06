@@ -51,7 +51,6 @@ def tests_catalog():
         """)
         tests_list = cursor.fetchall()
         
-        # Only show pricing for active labs!
         cursor.execute("""
             SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
             FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id
@@ -66,6 +65,39 @@ def tests_catalog():
 @app.route('/book')
 def checkout_page():
     return render_template('checkout.html')
+
+# --- PATIENT BOOKINGS LOOKUP PAGE ---
+@app.route('/my-bookings')
+def my_bookings():
+    phone = request.args.get('phone', '').strip()
+    orders = []
+    if phone:
+        conn = get_db()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        try:
+            cursor.execute("""
+                SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone 
+                FROM orders o JOIN users u ON o.user_id = u.id 
+                WHERE u.phone = %s ORDER BY o.id DESC
+            """, (phone,))
+            orders = cursor.fetchall()
+            
+            cursor.execute("""
+                SELECT oi.order_id, t.name as test_name, l.name as lab_name, oi.price
+                FROM order_items oi JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id
+            """)
+            db_items = cursor.fetchall()
+            items_map = {}
+            for row in db_items:
+                if row['order_id'] not in items_map: items_map[row['order_id']] = []
+                items_map[row['order_id']].append(row)
+                
+            for order in orders:
+                order['test_list'] = items_map.get(order['id'], [])
+        finally:
+            release_db(conn)
+            
+    return render_template('my_bookings.html', orders=orders, searched_phone=phone)
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -122,11 +154,9 @@ def admin_dashboard():
         for order in orders:
             order['test_list'] = items_map.get(order['id'], [])
 
-        # Fetch ALL labs (active and inactive) for the lab management section
         cursor.execute("SELECT id, name, is_active FROM labs ORDER BY name")
         all_labs = cursor.fetchall()
 
-        # Fetch unique active labs for the add test checkboxes
         cursor.execute("SELECT DISTINCT ON (LOWER(name)) id, name FROM labs WHERE is_active = TRUE ORDER BY LOWER(name), id")
         active_labs = cursor.fetchall()
         
@@ -149,7 +179,6 @@ def admin_dashboard():
     except Exception as e:
         return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p></div>"
 
-# --- ADD LAB ---
 @app.route('/admin/add-lab', methods=['POST'])
 def admin_add_lab():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -164,7 +193,21 @@ def admin_add_lab():
         except Exception: pass
     return redirect(url_for('admin_dashboard'))
 
-# --- TOGGLE LAB STATUS (Enable/Disable) ---
+# --- NEW: DELETE LAB ROUTE ---
+@app.route('/admin/delete-lab/<int:lab_id>', methods=['POST'])
+def delete_lab(lab_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        # Delete pricing links first so it doesn't crash on foreign keys
+        cursor.execute("DELETE FROM lab_test_pricing WHERE lab_id = %s", (lab_id,))
+        cursor.execute("DELETE FROM labs WHERE id = %s", (lab_id,))
+        conn.commit()
+        release_db(conn)
+    except Exception: pass
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/toggle-lab/<int:lab_id>', methods=['POST'])
 def toggle_lab(lab_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -271,11 +314,9 @@ def place_order():
             
         conn.commit()
         
-        # 1. Email the Patient
         patient_msg = f"Your CareDrop Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nAmount to Pay: Rs. {data.get('total', 0)}"
         send_email_async(email, f"Booking Confirmed - #{order_id}", patient_msg)
         
-        # 2. Email the Admin (YOU) so your phone alerts instantly!
         admin_msg = f"🚨 NEW BOOKING #{order_id}!\n\nBooked By: {name} ({phone})\nPatient: {patient_name}\nAddress: {address}\nDate: {date} ({data.get('time_slot')})\nTotal: Rs. {data.get('total', 0)}"
         send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 New Order #{order_id} - Rs. {data.get('total', 0)}", admin_msg)
 
