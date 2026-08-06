@@ -51,6 +51,7 @@ def tests_catalog():
         """)
         tests_list = cursor.fetchall()
         
+        # Only show pricing for active labs!
         cursor.execute("""
             SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type
             FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id
@@ -121,9 +122,13 @@ def admin_dashboard():
         for order in orders:
             order['test_list'] = items_map.get(order['id'], [])
 
-        # FETCH UNIQUE LABS ONLY (Fixes the repeat bug)
+        # Fetch ALL labs (active and inactive) for the lab management section
+        cursor.execute("SELECT id, name, is_active FROM labs ORDER BY name")
+        all_labs = cursor.fetchall()
+
+        # Fetch unique active labs for the add test checkboxes
         cursor.execute("SELECT DISTINCT ON (LOWER(name)) id, name FROM labs WHERE is_active = TRUE ORDER BY LOWER(name), id")
-        labs = cursor.fetchall()
+        active_labs = cursor.fetchall()
         
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
@@ -139,11 +144,12 @@ def admin_dashboard():
         inventory = cursor.fetchall()
             
         release_db(conn)
-        return render_template('admin.html', orders=orders, labs=labs, categories=categories, inventory=inventory)
+        return render_template('admin.html', orders=orders, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory)
     
     except Exception as e:
         return f"<div style='padding:40px; font-family:sans-serif;'><h2>Database Error</h2><p style='color:red;'>{str(e)}</p></div>"
 
+# --- ADD LAB ---
 @app.route('/admin/add-lab', methods=['POST'])
 def admin_add_lab():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -156,6 +162,19 @@ def admin_add_lab():
             conn.commit()
             release_db(conn)
         except Exception: pass
+    return redirect(url_for('admin_dashboard'))
+
+# --- TOGGLE LAB STATUS (Enable/Disable) ---
+@app.route('/admin/toggle-lab/<int:lab_id>', methods=['POST'])
+def toggle_lab(lab_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE labs SET is_active = NOT is_active WHERE id = %s", (lab_id,))
+        conn.commit()
+        release_db(conn)
+    except Exception: pass
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/update-order', methods=['POST'])
@@ -251,8 +270,15 @@ def place_order():
                            (order_id, item['id'], item['selectedLabId'], item['currentPrice']))
             
         conn.commit()
-        msg = f"Your CareDrop Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nAmount: Rs. {data.get('total', 0)}"
-        send_email_async(email, f"Booking Confirmed - #{order_id}", msg)
+        
+        # 1. Email the Patient
+        patient_msg = f"Your CareDrop Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nAmount to Pay: Rs. {data.get('total', 0)}"
+        send_email_async(email, f"Booking Confirmed - #{order_id}", patient_msg)
+        
+        # 2. Email the Admin (YOU) so your phone alerts instantly!
+        admin_msg = f"🚨 NEW BOOKING #{order_id}!\n\nBooked By: {name} ({phone})\nPatient: {patient_name}\nAddress: {address}\nDate: {date} ({data.get('time_slot')})\nTotal: Rs. {data.get('total', 0)}"
+        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 New Order #{order_id} - Rs. {data.get('total', 0)}", admin_msg)
+
         return jsonify({"success": True, "order_id": order_id})
     except Exception as e:
         conn.rollback()
