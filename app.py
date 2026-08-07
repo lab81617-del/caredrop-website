@@ -31,27 +31,27 @@ def auto_migrate_db():
         conn = get_db()
         cursor = conn.cursor()
         
-        # SAFELY clean up previous iteration tables without breaking the transaction
         cursor.execute("DROP TABLE IF EXISTS smart_packages CASCADE")
         cursor.execute("DROP TABLE IF EXISTS packages CASCADE")
         
-        # 1. CORE PACKAGES TABLE
         cursor.execute("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
-        # 2. PACKAGE-TEST MAPPING
         cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
-        # 3. SPECIAL OFFERS TABLE (Linked to Packages)
         cursor.execute("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
         
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
+        
+        # Prevents ID collisions between tests and packages
+        cursor.execute("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
+        cursor.execute("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
+        
         conn.commit()
     except Exception as e: 
         print("Auto-Migrate Error:", e)
         if conn: conn.rollback()
-    finally: 
-        release_db(conn)
+    finally: release_db(conn)
 
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
@@ -163,7 +163,14 @@ def my_bookings():
             cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s AND o.id = %s", (email, order_id_input))
             orders = cursor.fetchall()
             if orders:
-                cursor.execute("SELECT oi.order_id, COALESCE(t.name, 'Health Package') as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id WHERE oi.order_id = %s", (order_id_input,))
+                cursor.execute("""
+                    SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, oi.price 
+                    FROM order_items oi 
+                    LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test'
+                    LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package'
+                    JOIN labs l ON oi.lab_id = l.id 
+                    WHERE oi.order_id = %s
+                """, (order_id_input,))
                 db_items = cursor.fetchall()
                 for order in orders: order['test_list'] = db_items
         except Exception as e: pass
@@ -212,7 +219,13 @@ def admin_dashboard():
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
-        cursor.execute("SELECT oi.order_id, COALESCE(t.name, 'Health Package') as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id")
+        cursor.execute("""
+            SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, oi.price 
+            FROM order_items oi 
+            LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test'
+            LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package'
+            JOIN labs l ON oi.lab_id = l.id
+        """)
         db_items = cursor.fetchall()
         items_map = {}
         for row in db_items:
@@ -225,12 +238,10 @@ def admin_dashboard():
         active_labs = cursor.fetchall()
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
-        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, ltp.price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.id DESC LIMIT 200")
+        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, ltp.price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         inventory = cursor.fetchall()
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
-        
-        # PULL PACKAGES AND OFFERS
         cursor.execute("""
             SELECT hp.id, hp.title, hp.price as original_price, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
@@ -294,6 +305,18 @@ def admin_add_test():
             cursor.execute("SELECT id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
             if cursor.fetchone(): cursor.execute("UPDATE lab_test_pricing SET price = %s WHERE test_id = %s AND lab_id = %s", (price, test_id, lab_id))
             else: cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, tat) VALUES (%s, %s, %s, '24 Hours')", (test_id, lab_id, price))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete-inventory/<int:test_id>/<int:lab_id>', methods=['POST'])
+def delete_inventory(test_id, lab_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
         conn.commit()
     except: pass
     finally: release_db(conn)
@@ -424,8 +447,10 @@ def place_order():
             cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
         order_id = cursor.fetchone()[0]
         for item in cart: 
+            is_pkg = 'PKG_' in str(item['id'])
             clean_id = str(item['id']).replace('PKG_','')
-            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice']))
+            item_type = 'package' if is_pkg else 'test'
+            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price, item_type) VALUES (%s, %s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice'], item_type))
         conn.commit()
         send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
         send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {patient_name}\nAddress: {address}\nDate: {date}")
