@@ -364,4 +364,61 @@ def add_package():
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/adm
+@app.route('/admin/delete-package/<int:pkg_id>', methods=['POST'])
+def delete_package(pkg_id):
+    if session.get('admin_logged_in'):
+        conn = None
+        try:
+            conn = get_db(); cursor = conn.cursor()
+            cursor.execute("DELETE FROM smart_packages WHERE id = %s", (pkg_id,))
+            conn.commit()
+        except: pass
+        finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/api/place-order', methods=['POST'])
+def place_order():
+    name = request.form.get('name', '').strip()
+    phone = request.form.get('phone', '').strip()
+    email = request.form.get('email', '').strip()
+    patient_name = request.form.get('patient_name', '').strip()
+    address = request.form.get('address', '').strip()
+    date = request.form.get('date', '').strip()
+    cart_json = request.form.get('cart', '[]')
+    cart = json.loads(cart_json)
+    
+    if not session.get(f'verified_{email}'): return jsonify({"success": False, "message": "Email not verified. Please complete OTP verification."})
+    prescription = request.files.get('prescription')
+    if not all([name, phone, patient_name, address, date]): return jsonify({"success": False, "message": "Missing required patient fields."})
+    if not cart and not (prescription and prescription.filename): return jsonify({"success": False, "message": "Please add tests to your cart or upload a prescription."})
+    
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        user_id = user[0] if user else (cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email)) or cursor.fetchone()[0])
+        
+        if prescription and prescription.filename:
+            file_data = prescription.read()
+            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
+        else:
+            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
+            
+        order_id = cursor.fetchone()[0]
+        
+        for item in cart: 
+            clean_id = str(item['id']).replace('PKG_','')
+            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice']))
+        conn.commit()
+        
+        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
+        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {patient_name}\nAddress: {address}\nDate: {date}")
+        
+        return jsonify({"success": True, "order_id": order_id})
+    except Exception as e: 
+        if conn: conn.rollback()
+        return jsonify({"success": False, "message": str(e)})
+    finally: release_db(conn)
+
+if __name__ == '__main__': app.run(debug=True, port=5000)
