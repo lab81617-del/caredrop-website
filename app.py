@@ -26,18 +26,12 @@ def get_db(): return psycopg2.connect(os.environ.get("DATABASE_URL"))
 def release_db(conn): 
     if conn: conn.close()
 
-# --- AUTO-MIGRATOR: FIXES DATABASE AUTOMATICALLY ---
 def auto_migrate_db():
     conn = None
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS packages (
-                id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, badge VARCHAR(50), 
-                discounted_price NUMERIC NOT NULL, original_price NUMERIC, features TEXT NOT NULL
-            )
-        """)
+        cursor.execute("CREATE TABLE IF NOT EXISTS packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, badge VARCHAR(50), discounted_price NUMERIC NOT NULL, original_price NUMERIC, features TEXT NOT NULL)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
@@ -60,7 +54,7 @@ def send_email_async(recipient, subject, body):
         except Exception as e: print(e)
     threading.Thread(target=email_job).start()
 
-# --- OTP ROUTES ---
+# --- NEW: LIVE DIAGNOSTIC OTP SENDER ---
 @app.route('/api/send-otp', methods=['POST'])
 def send_otp():
     email = request.json.get('email', '').strip()
@@ -68,11 +62,26 @@ def send_otp():
     
     otp = str(random.randint(1000, 9999))
     session[f'otp_{email}'] = otp
-    
     msg = f"Your CareDrop Verification Code is: {otp}\n\nPlease use this 4-digit code to complete your request securely."
-    send_email_async(email, f"CareDrop OTP: {otp}", msg)
     
-    return jsonify({"success": True, "message": "OTP sent to your email."})
+    gmail_pwd = os.environ.get("GMAIL_APP_PASSWORD")
+    if not gmail_pwd:
+        return jsonify({"success": False, "message": "CRITICAL ERROR: GMAIL_APP_PASSWORD is missing in Render."})
+        
+    try:
+        # Running directly (not async) so we can catch the exact error
+        em = EmailMessage()
+        em['Subject'] = f"CareDrop OTP: {otp}"
+        em['From'] = "ihcdiagnostics.ynr@gmail.com"
+        em['To'] = email
+        em.set_content(msg)
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login("ihcdiagnostics.ynr@gmail.com", gmail_pwd)
+            server.send_message(em)
+        return jsonify({"success": True, "message": "OTP sent to your email."})
+    except Exception as e:
+        # THIS WILL PRINT THE EXACT ERROR ON YOUR SCREEN
+        return jsonify({"success": False, "message": f"EMAIL CRASHED: {str(e)}"})
 
 @app.route('/api/verify-otp', methods=['POST'])
 def verify_otp():
@@ -85,7 +94,7 @@ def verify_otp():
 
 @app.route('/')
 def home():
-    auto_migrate_db() # Fixes DB if missing columns
+    auto_migrate_db()
     conn = None
     packages = []
     try:
@@ -105,7 +114,6 @@ def tests_catalog():
     try:
         conn = get_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        # ONLY FETCH TESTS THAT HAVE AN ACTIVE LAB AND PRICE
         cursor.execute("""
             SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category 
             FROM tests t 
@@ -355,7 +363,6 @@ def delete_package(pkg_id):
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-# --- REWRITTEN TO ACCEPT FILES (MULTIPART FORM) ---
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
     name = request.form.get('name', '').strip()
