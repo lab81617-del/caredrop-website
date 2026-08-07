@@ -39,7 +39,6 @@ def auto_migrate_db():
     except Exception as e: print("Auto-Migrate Error:", e)
     finally: release_db(conn)
 
-# --- THE BREVO API: THIS SNEAKS PAST RENDER'S FIREWALL ---
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
     if not api_key: return "Missing BREVO_API_KEY"
@@ -157,7 +156,17 @@ def my_bookings():
             """, (email, order_id_input))
             orders = cursor.fetchall()
             if orders:
-                cursor.execute("SELECT oi.order_id, t.name as test_name, l.name as lab_name, oi.price FROM order_items oi JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id WHERE oi.order_id = %s", (order_id_input,))
+                # Fallback JOIN for packages vs regular tests
+                cursor.execute("""
+                    SELECT oi.order_id, 
+                           COALESCE(t.name, p.title, 'Special Package') as test_name, 
+                           l.name as lab_name, oi.price 
+                    FROM order_items oi 
+                    LEFT JOIN tests t ON oi.test_id = t.id 
+                    LEFT JOIN packages p ON oi.test_id = p.id
+                    JOIN labs l ON oi.lab_id = l.id 
+                    WHERE oi.order_id = %s
+                """, (order_id_input,))
                 db_items = cursor.fetchall()
                 for order in orders: order['test_list'] = db_items
         except Exception as e: pass
@@ -214,7 +223,17 @@ def admin_dashboard():
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
-        cursor.execute("SELECT oi.order_id, t.name as test_name, l.name as lab_name, oi.price FROM order_items oi JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id")
+        
+        # Updated query to handle both regular tests and packages correctly in admin view
+        cursor.execute("""
+            SELECT oi.order_id, 
+                   COALESCE(t.name, p.title, 'Special Package') as test_name, 
+                   l.name as lab_name, oi.price 
+            FROM order_items oi 
+            LEFT JOIN tests t ON oi.test_id = t.id 
+            LEFT JOIN packages p ON oi.test_id = p.id
+            JOIN labs l ON oi.lab_id = l.id
+        """)
         db_items = cursor.fetchall()
         items_map = {}
         for row in db_items:
@@ -398,8 +417,10 @@ def place_order():
             
         order_id = cursor.fetchone()[0]
         
+        # --- THE FIX: We force the ID to act like text (str) before trying to clean it up ---
         for item in cart: 
-            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, item['id'].replace('PKG_',''), item['selectedLabId'], item['currentPrice']))
+            clean_id = str(item['id']).replace('PKG_','')
+            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice']))
         conn.commit()
         
         send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
