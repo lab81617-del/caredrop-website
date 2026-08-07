@@ -13,9 +13,9 @@
         .nav-links a { text-decoration: none; color: #475569; font-weight: 700; font-size: 14px; }
         .btn-nav { background: #0F172A; color: white !important; padding: 8px 14px; border-radius: 8px; }
 
-        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         
-        .search-box { width: 100%; padding: 16px 20px; border: 1px solid #CBD5E1; border-radius: 12px; font-size: 16px; outline: none; margin-bottom: 25px; box-sizing: border-box; font-family: inherit; }
+        .search-box { width: 100%; padding: 16px 20px; border: 1px solid #CBD5E1; border-radius: 12px; font-size: 16px; outline: none; margin-bottom: 25px; box-sizing: border-box; font-family: inherit; background: white; transition: 0.2s; }
         .search-box:focus { border-color: #0D9488; box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); }
 
         /* THE SPLIT CATALOG TABS */
@@ -26,19 +26,26 @@
         .catalog-view { display: none; }
         .catalog-view.active { display: block; }
 
-        /* TEST STYLES */
+        /* REFINED TEST CARD STYLES */
         .category-group { margin-bottom: 40px; }
-        .category-title { font-size: 18px; font-weight: 800; color: #475569; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px; }
-        .test-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; border: 1px solid white; transition: 0.2s; }
-        .test-card:hover { border-color: #0D9488; }
-        .test-name { font-size: 16px; font-weight: 800; margin-bottom: 5px; }
-        .test-meta { font-size: 12px; color: #64748B; font-weight: 600; }
-        .btn-add { background: #E0F2FE; color: #0284C7; padding: 10px 16px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; transition: 0.2s; }
-        .btn-add:hover { background: #0284C7; color: white; }
+        .category-title { font-size: 18px; font-weight: 800; color: #1E293B; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        .test-card { display: flex; flex-direction: column; padding: 20px; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 15px; background: white; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .test-card:hover { border-color: #0D9488; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1); }
+        .test-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 15px; }
+        .test-name { font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 4px; }
+        .test-meta { font-size: 13px; color: #64748B; font-weight: 600; display: flex; gap: 10px; align-items: center; }
+        .test-fasting { background: #FFF7ED; color: #B45309; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        
+        .lab-options { display: flex; flex-direction: column; gap: 10px; }
+        .lab-option-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #F8FAFC; border-radius: 8px; border: 1px solid #F1F5F9; }
+        .lab-option-name { font-size: 14px; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 8px; }
+        .btn-add { background: #0D9488; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .btn-add:hover { background: #0F766E; }
 
         /* PACKAGE STYLES */
         .pkg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .pkg-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-top: 4px solid #0D9488; position: relative; display: flex; flex-direction: column; }
+        .pkg-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-top: 4px solid #0D9488; position: relative; display: flex; flex-direction: column; border-bottom: 1px solid #E2E8F0; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0;}
         .pkg-title { font-size: 18px; font-weight: 800; color: #0D9488; margin-bottom: 5px; }
         .pkg-lab { font-size: 12px; font-weight: 700; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-block; padding: 4px 10px; border-radius: 6px; }
         .pkg-price { font-size: 24px; font-weight: 800; margin-bottom: 15px; }
@@ -61,8 +68,9 @@
         .modal-btn-secondary { background: #F1F5F9; color: #64748B; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 14px; }
 
         @media (max-width: 600px) {
-            .test-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .lab-option-row { flex-direction: column; align-items: flex-start; gap: 10px; }
             .btn-add { width: 100%; }
+            .test-header { flex-direction: column; }
         }
     </style>
 </head>
@@ -77,12 +85,12 @@
         <!-- THE SPLIT CATALOG CONTROLS -->
         <div class="catalog-tabs">
             <button id="btn-tests" class="tab-btn active" onclick="switchCatalog('tests')">Individual Tests</button>
-            <button id="btn-packages" class="tab-btn" onclick="switchCatalog('packages')">Smart Packages</button>
+            <button id="btn-packages" class="tab-btn" onclick="switchCatalog('packages')">All Packages</button>
         </div>
 
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search for CBC, Thyroid, Sugar..." onkeyup="filterTests()">
 
-        <!-- INDIVIDUAL TESTS VIEW -->
+        <!-- INDIVIDUAL TESTS VIEW (REFINED UI) -->
         <div id="view-tests" class="catalog-view active">
             {% set current_category = '' %}
             {% for test in tests %}
@@ -94,15 +102,16 @@
                 {% endif %}
                 
                 <div class="test-card" data-name="{{ test.name | lower }}">
-                    <div>
-                        <div class="test-name">{{ test.name }}</div>
-                        <div class="test-meta">
-                            {% if test.fasting_requirement != 'None' %} 🍽️ {{ test.fasting_requirement }} | {% endif %}
-                            Select a lab below to add to cart:
+                    <div class="test-header">
+                        <div>
+                            <div class="test-name">{{ test.name }}</div>
+                            <div class="test-meta">
+                                {% if test.fasting_requirement != 'None' %} <span class="test-fasting">🍽️ {{ test.fasting_requirement }}</span> {% endif %}
+                            </div>
                         </div>
                     </div>
                     
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <div class="lab-options">
                         <script>
                             var pData = {{ pricing | safe }};
                             var testId = {{ test.id }};
@@ -111,7 +120,12 @@
                                 document.write('<span style="font-size:12px; color:#EF4444; font-weight:700;">Price not assigned yet</span>');
                             }
                             matches.forEach(m => {
-                                document.write(`<button class="btn-add" onclick="triggerRecommendationEngine('${testId}', '${"{{ test.name }}"}', '${m.lab_id}', '${m.lab_name}', '${m.price}')">+ ₹${m.price} (${m.lab_name})</button>`);
+                                document.write(`
+                                    <div class="lab-option-row">
+                                        <div class="lab-option-name">🔬 ${m.lab_name}</div>
+                                        <button class="btn-add" onclick="triggerRecommendationEngine('${testId}', '${"{{ test.name }}"}', '${m.lab_id}', '${m.lab_name}', '${m.price}')">+ ₹${m.price} Add</button>
+                                    </div>
+                                `);
                             });
                         </script>
                     </div>
@@ -120,7 +134,7 @@
             {% if tests|length > 0 %} </div> {% endif %}
         </div>
 
-        <!-- SMART PACKAGES VIEW -->
+        <!-- PACKAGES VIEW -->
         <div id="view-packages" class="catalog-view">
             <div class="pkg-grid">
                 {% for pkg in raw_packages %}
@@ -138,14 +152,14 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    <p style="text-align: center; color: #64748B; font-weight: 600; width: 100%;">No smart packages created yet.</p>
+                    <p style="text-align: center; color: #64748B; font-weight: 600; width: 100%;">No packages available yet.</p>
                 {% endfor %}
             </div>
         </div>
 
     </div>
 
-    <!-- THE RECOMMENDATION ENGINE MODAL -->
+    <!-- THE STRICT VALUE RECOMMENDATION MODAL -->
     <div id="upsellModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-icon">🎁</div>
@@ -171,14 +185,12 @@
     </div>
 
     <script>
-        // CORE VARIABLES
         let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
         let packagesData = {{ packages | safe }};
-        let pendingTestForCart = null; // Holds the test if they decline the offer
+        let pendingTestForCart = null; 
 
         updateCartUI();
 
-        // 1. SPLIT CATALOG TAB LOGIC
         function switchCatalog(view) {
             document.querySelectorAll('.catalog-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -186,57 +198,46 @@
             document.getElementById('view-' + view).classList.add('active');
             document.getElementById('btn-' + view).classList.add('active');
             
-            // Toggle Search Bar visibility
             document.getElementById('searchInput').style.display = (view === 'tests') ? 'block' : 'none';
         }
 
-        // 2. SEARCH FILTER
         function filterTests() {
             let input = document.getElementById('searchInput').value.toLowerCase();
             let cards = document.querySelectorAll('.test-card');
             
             cards.forEach(card => {
                 let text = card.getAttribute('data-name');
-                if (text.includes(input)) {
-                    card.style.display = "flex";
-                } else {
-                    card.style.display = "none";
-                }
+                card.style.display = text.includes(input) ? "flex" : "none";
             });
             
-            // Hide empty category headers
             document.querySelectorAll('.category-group').forEach(group => {
                 let visibleCards = group.querySelectorAll('.test-card[style="display: flex;"]');
-                let allCards = group.querySelectorAll('.test-card');
-                
-                // If there is no search input, show all. If search input exists and no visible cards, hide group.
-                if (input === '') {
-                    group.style.display = "block";
-                } else {
-                    group.style.display = visibleCards.length > 0 ? "block" : "none";
-                }
+                group.style.display = (input === '' || visibleCards.length > 0) ? "block" : "none";
             });
         }
 
-        // 3. THE RECOMMENDATION ENGINE
+        // STRICT BUSINESS LOGIC: Only show if package is LESS THAN OR EQUAL to test price
         function triggerRecommendationEngine(testId, testName, labId, labName, price) {
             let matchedPkg = null;
             let numericTestId = parseInt(testId);
             let numericLabId = parseInt(labId);
+            let testPrice = parseFloat(price);
 
-            // Scan database for a package that contains this test AND belongs to the same lab
             for (let pkg of packagesData) {
                 if (pkg.test_ids && pkg.test_ids.includes(numericTestId) && pkg.lab_id === numericLabId) {
-                    matchedPkg = pkg;
-                    break;
+                    let pkgPrice = parseFloat(pkg.discounted_price);
+                    
+                    // ONLY popup if the package is mathematically a better deal
+                    if (pkgPrice <= testPrice) {
+                        matchedPkg = pkg;
+                        break;
+                    }
                 }
             }
 
             if (matchedPkg) {
-                // Save the test in case they say "No Thanks"
                 pendingTestForCart = {id: testId, name: testName, selectedLabId: labId, labName: labName, currentPrice: price};
                 
-                // Populate the Popup
                 document.getElementById('upsellTestName').innerText = testName;
                 document.getElementById('upsellPkgName').innerText = matchedPkg.title;
                 document.getElementById('upsellPrice').innerText = matchedPkg.discounted_price;
@@ -244,14 +245,11 @@
                 document.getElementById('upsellPkgLabId').value = matchedPkg.lab_id;
                 document.getElementById('upsellPkgLabName').value = matchedPkg.lab_name;
                 
-                // Format features nicely
                 let featureHtml = matchedPkg.features.split(',').map(f => `<div>✅ ${f.trim()}</div>`).join('');
                 document.getElementById('upsellFeatures').innerHTML = featureHtml;
                 
-                // Show Popup
                 document.getElementById('upsellModal').style.display = 'flex';
             } else {
-                // No package found, just add normally
                 forceAddToCart(testId, testName, labId, labName, price);
             }
         }
@@ -276,7 +274,6 @@
             pendingTestForCart = null;
         }
 
-        // 4. CART LOGIC
         function forceAddToCart(id, name, labId, labName, price) {
             const exists = cart.find(item => item.id === id && item.selectedLabId == labId);
             if (!exists) {
@@ -284,7 +281,6 @@
                 sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
                 updateCartUI();
                 
-                // Visual feedback
                 let floatBtn = document.getElementById('cartFloat');
                 floatBtn.style.transform = 'scale(1.1)';
                 setTimeout(() => floatBtn.style.transform = 'scale(1)', 200);
