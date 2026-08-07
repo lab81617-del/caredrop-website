@@ -6,27 +6,28 @@
     <title>CareDrop | Yamunanagar's Best Labs at Home</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; margin: 0; color: #0F172A; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; margin: 0; color: #0F172A; display: flex; flex-direction: column; min-height: 100vh; }
         .navbar { display: flex; justify-content: space-between; padding: 20px 5%; background: white; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; }
         .nav-links { display: flex; gap: 20px; align-items: center; }
         .nav-links a { text-decoration: none; color: #475569; font-weight: 700; }
         .btn-nav { background: #0F172A; color: white !important; padding: 10px 20px; border-radius: 8px; }
         
-        .hero { text-align: center; padding: 80px 20px; background: #E0F2FE; border-radius: 24px; margin: 20px 5%; }
+        .hero { text-align: center; padding: 60px 20px; background: #E0F2FE; border-radius: 24px; margin: 20px 5%; }
         .hero h1 { font-size: 42px; font-weight: 800; color: #0F766E; margin-bottom: 20px; }
         .hero p { font-size: 18px; color: #475569; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.6; }
-        .btn-hero { background: #0D9488; color: white; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: 700; text-decoration: none; display: inline-block; transition: 0.2s; }
+        .btn-hero { background: #0D9488; color: white; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: 700; text-decoration: none; display: inline-block; transition: 0.2s; border: none; cursor: pointer; }
         .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.2); }
         
-        .section { padding: 40px 5%; }
+        .section { padding: 40px 5%; flex-grow: 1; }
         .section h2 { font-size: 28px; font-weight: 800; margin-bottom: 20px; color: #1E293B; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
         
         .pkg-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-top: 4px solid #0D9488; position: relative; transition: 0.2s; display: flex; flex-direction: column; }
         .pkg-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.06); }
         .pkg-badge { position: absolute; top: -12px; right: 20px; background: #EC4899; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; }
-        .pkg-title { font-size: 20px; font-weight: 800; color: #0D9488; margin-bottom: 10px; }
+        .pkg-title { font-size: 20px; font-weight: 800; color: #0D9488; margin-bottom: 5px; }
+        .pkg-lab { font-size: 13px; font-weight: 700; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-block; padding: 4px 10px; border-radius: 6px; }
         .pkg-price { font-size: 28px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .pkg-old { font-size: 16px; color: #94A3B8; text-decoration: line-through; font-weight: 600; }
         
@@ -56,26 +57,31 @@
     <div style="background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 2px dashed #22C55E;">
         <h2 style="color: #166534; margin-top: 0; font-size: 24px; font-weight: 800;">Have a Doctor's Prescription?</h2>
         <p style="color: #15803D; margin-bottom: 25px; font-weight: 600; font-size: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">Skip the manual search. Upload a photo of your prescription directly, and our support team will contact you to confirm the lowest cost and timing.</p>
-        <a href="/book?direct=true" class="btn-hero" style="background: #15803D; padding: 14px 28px;">📄 Upload Prescription Now</a>
+        <!-- FIX: Wipes the cart cleanly before jumping to checkout -->
+        <button onclick="directPrescription()" class="btn-hero" style="background: #15803D; padding: 14px 28px;">📄 Upload Prescription Now</button>
     </div>
 
     <div class="section">
         <h2>Special Health Packages</h2>
         <div class="grid">
             {% for pkg in packages %}
-            <div class="pkg-card">
-                {% if pkg.badge %}<div class="pkg-badge">{{ pkg.badge }}</div>{% endif %}
-                <div class="pkg-title">{{ pkg.title }}</div>
-                <div class="pkg-price">₹{{ pkg.discounted_price }} <span class="pkg-old">₹{{ pkg.original_price }}</span></div>
-                <ul class="pkg-features">
-                    {% for feature in (pkg.features or '').split(',') %}
-                        {% if feature.strip() %}
-                        <li>✅ {{ feature.strip() }}</li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-                <button class="pkg-btn" onclick="bookPackage({{ pkg.id }}, '{{ pkg.title }}', {{ pkg.discounted_price }})">Book This Package</button>
-            </div>
+                <!-- FIX: Safety block hides any broken blank packages -->
+                {% if pkg.title %}
+                <div class="pkg-card">
+                    {% if pkg.badge %}<div class="pkg-badge">{{ pkg.badge }}</div>{% endif %}
+                    <div class="pkg-title">{{ pkg.title }}</div>
+                    <div class="pkg-lab">🔬 By {{ pkg.lab_name or 'CareDrop Verified' }}</div>
+                    <div class="pkg-price">₹{{ pkg.discounted_price }} <span class="pkg-old">₹{{ pkg.original_price }}</span></div>
+                    <ul class="pkg-features">
+                        {% for feature in (pkg.features or '').split(',') %}
+                            {% if feature.strip() %}
+                            <li>✅ {{ feature.strip() }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                    <button class="pkg-btn" onclick="bookPackage({{ pkg.id }}, '{{ pkg.title }}', {{ pkg.discounted_price }}, '{{ pkg.lab_name or \'CareDrop\' }}')">Book This Package</button>
+                </div>
+                {% endif %}
             {% else %}
             <div style="background: white; padding: 40px; border-radius: 16px; text-align: center; color: #64748B; font-weight: 600;">
                 No special packages are currently active. Click "Search Tests" to build your own!
@@ -99,8 +105,25 @@
         </div>
     </div>
 
+    <!-- MOBILE FRIENDLY CUSTOMER SUPPORT FOOTER -->
+    <footer style="background: #0F172A; color: white; padding: 40px 5%; margin-top: auto; text-align: center;">
+        <h3 style="color: #0D9488; margin-top: 0; font-size: 22px; font-weight: 800; margin-bottom: 20px;">CareDrop <span style="font-size: 14px; font-weight: 400; color: #94A3B8; letter-spacing: 1px; display: block; margin-top: 5px;">BY IHC DIAGNOSTICS</span></h3>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; color: #CBD5E1; font-size: 15px; max-width: 400px; margin-left: auto; margin-right: auto; text-align: left; background: #1E293B; padding: 20px; border-radius: 12px;">
+            <div style="display: flex; gap: 10px;"><span>📍</span> <span><b>Address:</b> 123 Health Street, Model Town, Yamunanagar, Haryana 135001</span></div>
+            <div style="display: flex; gap: 10px;"><span>📞</span> <span><b>Support:</b> +91 98765 43210</span></div>
+            <div style="display: flex; gap: 10px;"><span>✉️</span> <span><b>Email:</b> ihcdiagnostics.ynr@gmail.com</span></div>
+        </div>
+        <p style="color: #475569; font-size: 13px; margin: 0; font-weight: 600;">© 2026 CareDrop Labs. All rights reserved.</p>
+    </footer>
+
     <script>
-        function bookPackage(pkgId, title, price) {
+        // THIS FIXES THE "LFT" AUTO-SELECT BUG
+        function directPrescription() {
+            sessionStorage.removeItem('caredrop_cart'); // Destroys the cart memory completely
+            window.location.href = '/book?direct=true'; // Jumps to checkout
+        }
+
+        function bookPackage(pkgId, title, price, labName) {
             let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
             const exists = cart.find(item => item.id === 'PKG_' + pkgId);
             if (!exists) {
@@ -108,7 +131,7 @@
                     id: 'PKG_' + pkgId,
                     name: title,
                     selectedLabId: 1, 
-                    labName: "CareDrop Special Package",
+                    labName: labName,
                     currentPrice: price
                 });
                 sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
