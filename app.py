@@ -30,14 +30,25 @@ def auto_migrate_db():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS smart_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, badge VARCHAR(50), discount_percent NUMERIC NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, is_homepage BOOLEAN DEFAULT TRUE)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES smart_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
+        # Clean up previous iteration tables
+        try: cursor.execute("DROP TABLE smart_packages CASCADE")
+        except: pass
+        try: cursor.execute("DROP TABLE packages CASCADE")
+        except: pass
+        
+        # 1. CORE PACKAGES TABLE
+        cursor.execute("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
+        # 2. PACKAGE-TEST MAPPING
+        cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
+        # 3. SPECIAL OFFERS TABLE (Linked to Packages)
+        cursor.execute("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
+        
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
         conn.commit()
-    except Exception as e: pass
+    except Exception as e: print("Auto-Migrate Error:", e)
     finally: release_db(conn)
 
 def send_email_api(recipient, subject, text_body):
@@ -84,19 +95,18 @@ def home():
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
-            SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.id as lab_id, l.name as lab_name,
+            SELECT hp.id, hp.title, hp.price as original_price, l.id as lab_id, l.name as lab_name,
                    COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
                    string_agg(t.name, ', ') as features,
-                   COALESCE(SUM(ltp.price), 0) as original_price,
-                   ROUND(COALESCE(SUM(ltp.price), 0) * (1 - (p.discount_percent / 100.0))) as discounted_price
-            FROM smart_packages p
-            JOIN labs l ON p.lab_id = l.id
-            LEFT JOIN package_tests pt ON p.id = pt.package_id
+                   so.id as offer_id, so.discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
+                   ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) as discounted_price
+            FROM health_packages hp
+            JOIN labs l ON hp.lab_id = l.id
+            LEFT JOIN package_tests pt ON hp.id = pt.package_id
             LEFT JOIN tests t ON pt.test_id = t.id
-            LEFT JOIN lab_test_pricing ltp ON t.id = ltp.test_id AND ltp.lab_id = p.lab_id
-            WHERE p.is_homepage = TRUE
-            GROUP BY p.id, l.id, l.name
-            ORDER BY p.id DESC
+            LEFT JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
+            GROUP BY hp.id, l.id, l.name, so.id, so.discount_percent, so.badge, so.end_date
+            ORDER BY hp.id DESC
         """)
         packages = cursor.fetchall()
     except Exception as e: pass
@@ -116,18 +126,18 @@ def tests_catalog():
         cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
         pricing_list = cursor.fetchall()
         cursor.execute("""
-            SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.id as lab_id, l.name as lab_name,
+            SELECT hp.id, hp.title, hp.price as original_price, l.id as lab_id, l.name as lab_name,
                    COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
                    string_agg(t.name, ', ') as features,
-                   COALESCE(SUM(ltp.price), 0) as original_price,
-                   ROUND(COALESCE(SUM(ltp.price), 0) * (1 - (p.discount_percent / 100.0))) as discounted_price
-            FROM smart_packages p
-            JOIN labs l ON p.lab_id = l.id
-            LEFT JOIN package_tests pt ON p.id = pt.package_id
+                   so.id as offer_id, so.discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
+                   ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) as discounted_price
+            FROM health_packages hp
+            JOIN labs l ON hp.lab_id = l.id
+            LEFT JOIN package_tests pt ON hp.id = pt.package_id
             LEFT JOIN tests t ON pt.test_id = t.id
-            LEFT JOIN lab_test_pricing ltp ON t.id = ltp.test_id AND ltp.lab_id = p.lab_id
-            GROUP BY p.id, l.id, l.name
-            ORDER BY p.id DESC
+            LEFT JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
+            GROUP BY hp.id, l.id, l.name, so.id, so.discount_percent, so.badge, so.end_date
+            ORDER BY hp.id DESC
         """)
         packages_list = cursor.fetchall()
     except Exception as e: pass
@@ -217,18 +227,20 @@ def admin_dashboard():
         inventory = cursor.fetchall()
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
+        
+        # PULL PACKAGES AND OFFERS
         cursor.execute("""
-            SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.name as lab_name,
+            SELECT hp.id, hp.title, hp.price as original_price, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
-                   COALESCE(SUM(ltp.price), 0) as original_price,
-                   ROUND(COALESCE(SUM(ltp.price), 0) * (1 - (p.discount_percent / 100.0))) as discounted_price
-            FROM smart_packages p
-            JOIN labs l ON p.lab_id = l.id
-            LEFT JOIN package_tests pt ON p.id = pt.package_id
+                   so.id as offer_id, so.discount_percent, so.badge, TO_CHAR(so.end_date, 'YYYY-MM-DD') as end_date,
+                   ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) as discounted_price
+            FROM health_packages hp
+            JOIN labs l ON hp.lab_id = l.id
+            LEFT JOIN package_tests pt ON hp.id = pt.package_id
             LEFT JOIN tests t ON pt.test_id = t.id
-            LEFT JOIN lab_test_pricing ltp ON t.id = ltp.test_id AND ltp.lab_id = p.lab_id
-            GROUP BY p.id, l.name
-            ORDER BY p.id DESC
+            LEFT JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
+            GROUP BY hp.id, l.name, so.id, so.discount_percent, so.badge, so.end_date
+            ORDER BY hp.id DESC
         """)
         packages = cursor.fetchall()
     except Exception as e: raise e 
@@ -285,18 +297,6 @@ def admin_add_test():
     finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/delete-inventory/<int:test_id>/<int:lab_id>', methods=['POST'])
-def delete_inventory(test_id, lab_id):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    conn = None
-    try:
-        conn = get_db(); cursor = conn.cursor()
-        cursor.execute("DELETE FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
-        conn.commit()
-    except: pass
-    finally: release_db(conn)
-    return redirect(url_for('admin_dashboard'))
-
 @app.route('/admin/add-lab', methods=['POST'])
 def add_lab():
     if session.get('admin_logged_in') and request.form.get('lab_name').strip():
@@ -334,19 +334,17 @@ def delete_lab(lab_id):
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/add-package', methods=['POST'])
-def add_package():
+@app.route('/admin/add-health-package', methods=['POST'])
+def add_health_package():
     if session.get('admin_logged_in'):
         conn = None
         try:
             conn = get_db(); cursor = conn.cursor()
             title = request.form.get('title').strip()
-            badge = request.form.get('badge').strip()
-            discount = request.form.get('discount_percent')
             lab_id = request.form.get('lab_id')
-            is_homepage = True if request.form.get('is_homepage') else False
+            price = request.form.get('price')
             test_ids = request.form.getlist('test_ids')
-            cursor.execute("INSERT INTO smart_packages (title, badge, discount_percent, lab_id, is_homepage) VALUES (%s, %s, %s, %s, %s) RETURNING id", (title, badge, discount, lab_id, is_homepage))
+            cursor.execute("INSERT INTO health_packages (title, lab_id, price) VALUES (%s, %s, %s) RETURNING id", (title, lab_id, price))
             pkg_id = cursor.fetchone()[0]
             for tid in test_ids: cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
             conn.commit()
@@ -354,13 +352,42 @@ def add_package():
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/delete-package/<int:pkg_id>', methods=['POST'])
-def delete_package(pkg_id):
+@app.route('/admin/delete-health-package/<int:pkg_id>', methods=['POST'])
+def delete_health_package(pkg_id):
     if session.get('admin_logged_in'):
         conn = None
         try:
             conn = get_db(); cursor = conn.cursor()
-            cursor.execute("DELETE FROM smart_packages WHERE id = %s", (pkg_id,))
+            cursor.execute("DELETE FROM health_packages WHERE id = %s", (pkg_id,))
+            conn.commit()
+        except: pass
+        finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add-special-offer', methods=['POST'])
+def add_special_offer():
+    if session.get('admin_logged_in'):
+        conn = None
+        try:
+            conn = get_db(); cursor = conn.cursor()
+            pkg_id = request.form.get('package_id')
+            discount = request.form.get('discount_percent')
+            badge = request.form.get('badge').strip()
+            end_date = request.form.get('end_date')
+            cursor.execute("DELETE FROM special_offers WHERE package_id = %s", (pkg_id,))
+            cursor.execute("INSERT INTO special_offers (package_id, discount_percent, badge, end_date) VALUES (%s, %s, %s, %s)", (pkg_id, discount, badge, end_date))
+            conn.commit()
+        except Exception as e: pass
+        finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete-offer/<int:offer_id>', methods=['POST'])
+def delete_offer(offer_id):
+    if session.get('admin_logged_in'):
+        conn = None
+        try:
+            conn = get_db(); cursor = conn.cursor()
+            cursor.execute("DELETE FROM special_offers WHERE id = %s", (offer_id,))
             conn.commit()
         except: pass
         finally: release_db(conn)
