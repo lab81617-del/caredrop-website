@@ -8,12 +8,11 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; }
         .container { max-width: 1200px; margin: 0 auto; }
-        
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0D9488; }
         
-        .tabs { display: flex; gap: 15px; margin-bottom: 20px; }
-        .tab-btn { background: white; border: 1px solid #E2E8F0; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; color: #64748B; transition: 0.2s; font-size: 15px; }
+        .tabs { display: flex; gap: 15px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .tab-btn { background: white; border: 1px solid #E2E8F0; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; color: #64748B; transition: 0.2s; font-size: 15px; white-space: nowrap; }
         .tab-btn.active { background: #0D9488; color: white; border-color: #0D9488; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -23,7 +22,6 @@
         th, td { padding: 18px 25px; border-bottom: 1px solid #F1F5F9; }
         th { background: #F8FAFC; font-weight: 700; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
         tr:last-child td { border-bottom: none; }
-        
         .badge { background: #CCFBF1; color: #0F766E; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; display: inline-block; margin-bottom: 5px; }
         
         .form-container { padding: 30px; }
@@ -52,6 +50,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('orders')">📦 Live Orders</button>
             <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">🧪 Manage Inventory & Labs</button>
+            <button id="packagesTabBtn" class="tab-btn" onclick="switchTab('packages')">🎁 Manage Packages & Offers</button>
         </div>
         
         <!-- LIVE ORDERS TAB -->
@@ -108,10 +107,8 @@
         
         <!-- MANAGE INVENTORY & LABS TAB -->
         <div id="inventory" class="tab-content">
-            
-            <!-- LAB MANAGER TABLE -->
             <div class="card" style="margin-bottom: 30px;">
-                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">🏥 Partner Lab Manager (Enable / Disable / Delete)</div>
+                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">🏥 Partner Lab Manager</div>
                 <div style="padding: 0 25px 25px 25px;">
                     <form action="/admin/add-lab" method="POST" style="display: flex; gap: 15px; margin-bottom: 20px; margin-top: 15px;">
                         <input type="text" name="lab_name" placeholder="Enter new partner lab name..." required style="flex: 1; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 14px; outline:none;">
@@ -138,13 +135,8 @@
                                 </td>
                                 <td style="display: flex; gap: 10px; align-items: center;">
                                     <form action="/admin/toggle-lab/{{ lab.id }}" method="POST" style="margin:0;">
-                                        {% if lab.is_active %}
-                                            <button type="submit" class="btn-toggle-inactive">Hide</button>
-                                        {% else %}
-                                            <button type="submit" class="btn-toggle-active">Activate</button>
-                                        {% endif %}
+                                        {% if lab.is_active %}<button type="submit" class="btn-toggle-inactive">Hide</button>{% else %}<button type="submit" class="btn-toggle-active">Activate</button>{% endif %}
                                     </form>
-                                    <!-- DELETE LAB BUTTON -->
                                     <form action="/admin/delete-lab/{{ lab.id }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this lab completely?');">
                                         <button type="submit" class="btn-delete">🗑️ Delete</button>
                                     </form>
@@ -156,7 +148,6 @@
                 </div>
             </div>
 
-            <!-- ADD TEST FORM -->
             <div class="card form-container">
                 <div class="form-title">🧪 Add New Test & Assign Pricing</div>
                 <form action="/admin/add-test" method="POST">
@@ -203,7 +194,6 @@
                 </form>
             </div>
 
-            <!-- CURRENT INVENTORY VIEWER -->
             <div class="card">
                 <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">Current Catalog & Prices</div>
                 <table>
@@ -230,12 +220,87 @@
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" style="text-align: center; padding: 40px; color: #94A3B8;">Your catalog is currently empty.</td></tr>
+                        <tr><td colspan="5" style="text-align: center; padding: 40px; color: #94A3B8;">Your catalog is empty.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+        
+        <!-- NEW TAB: MANAGE PACKAGES -->
+        <div id="packages" class="tab-content">
+            <!-- ADD PACKAGE FORM -->
+            <div class="card form-container">
+                <div class="form-title">🎁 Add New Special Health Package</div>
+                <form action="/admin/add-package" method="POST">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Package Title</label>
+                            <input type="text" name="title" placeholder="e.g. Executive Full Body Shield" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Discount Badge Text (Optional)</label>
+                            <input type="text" name="badge" placeholder="e.g. 60% OFF or Popular">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Final Discounted Price (₹)</label>
+                            <input type="number" name="discounted_price" placeholder="e.g. 999" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Original Crossed-Out Price (₹)</label>
+                            <input type="number" name="original_price" placeholder="e.g. 2500" required>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 20px;">
+                        <label>Tests Included (Separate with commas)</label>
+                        <input type="text" name="features" placeholder="e.g. CBC, Liver Function Test, Lipid Profile" required>
+                    </div>
+                    <button type="submit" class="btn-save" style="width: 100%;">+ Publish Package to Homepage</button>
+                </form>
+            </div>
+
+            <!-- LIVE PACKAGES TABLE -->
+            <div class="card">
+                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">Live Homepage Packages</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Package Name</th>
+                            <th>Pricing</th>
+                            <th>Tests Included</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pkg in packages %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 800; color: #0F766E; font-size: 16px;">{{ pkg.title }}</div>
+                                {% if pkg.badge %}<span class="badge" style="background:#FCE7F3; color:#BE185D;">{{ pkg.badge }}</span>{% endif %}
+                            </td>
+                            <td>
+                                <div style="font-weight: 800; font-size: 18px;">₹{{ pkg.discounted_price }}</div>
+                                <div style="text-decoration: line-through; color: #94A3B8; font-size: 13px;">₹{{ pkg.original_price }}</div>
+                            </td>
+                            <td style="font-size: 13px; line-height: 1.5; color: #475569;">
+                                {{ pkg.features }}
+                            </td>
+                            <td>
+                                <form action="/admin/delete-package/{{ pkg.id }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this package?');">
+                                    <button type="submit" class="btn-delete">🗑️ Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" style="text-align: center; padding: 40px; color: #94A3B8;">No packages live on the homepage yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -243,13 +308,19 @@
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
+            
+            // Highlight the clicked button
+            if(tabId === 'orders') document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            if(tabId === 'inventory') document.getElementById('inventoryTabBtn').classList.add('active');
+            if(tabId === 'packages') document.getElementById('packagesTabBtn').classList.add('active');
+            
             localStorage.setItem('caredrop_admin_tab', tabId);
         }
 
         window.onload = () => {
             const savedTab = localStorage.getItem('caredrop_admin_tab');
             if(savedTab === 'inventory') document.getElementById('inventoryTabBtn').click();
+            else if(savedTab === 'packages') document.getElementById('packagesTabBtn').click();
         };
     </script>
 </body>
