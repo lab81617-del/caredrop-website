@@ -30,28 +30,9 @@ def auto_migrate_db():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        # DELETING THE OLD DUMMY SYSTEM
         cursor.execute("DROP TABLE IF EXISTS packages CASCADE") 
-        
-        # BUILDING THE NEW RELATIONAL SMART SYSTEM
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS smart_packages (
-                id SERIAL PRIMARY KEY, 
-                title VARCHAR(255) NOT NULL, 
-                badge VARCHAR(50), 
-                discount_percent NUMERIC NOT NULL, 
-                lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE,
-                is_homepage BOOLEAN DEFAULT TRUE
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS package_tests (
-                package_id INTEGER REFERENCES smart_packages(id) ON DELETE CASCADE, 
-                test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE,
-                PRIMARY KEY (package_id, test_id)
-            )
-        """)
-        
+        cursor.execute("CREATE TABLE IF NOT EXISTS smart_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, badge VARCHAR(50), discount_percent NUMERIC NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, is_homepage BOOLEAN DEFAULT TRUE)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES smart_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
@@ -104,9 +85,9 @@ def home():
     try:
         conn = get_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        # FETCH SMART PACKAGES WITH CALCULATED PRICING
         cursor.execute("""
-            SELECT p.id, p.title, p.badge, p.discount_percent, l.name as lab_name,
+            SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.id as lab_id, l.name as lab_name,
+                   COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
                    string_agg(t.name, ', ') as features,
                    COALESCE(SUM(ltp.price), 0) as original_price,
                    ROUND(COALESCE(SUM(ltp.price), 0) * (1 - (p.discount_percent / 100.0))) as discounted_price
@@ -116,7 +97,7 @@ def home():
             LEFT JOIN tests t ON pt.test_id = t.id
             LEFT JOIN lab_test_pricing ltp ON t.id = ltp.test_id AND ltp.lab_id = p.lab_id
             WHERE p.is_homepage = TRUE
-            GROUP BY p.id, l.name
+            GROUP BY p.id, l.id, l.name
             ORDER BY p.id DESC
         """)
         packages = cursor.fetchall()
@@ -135,11 +116,28 @@ def tests_catalog():
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
         tests_list = cursor.fetchall()
+        
         cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
         pricing_list = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.id as lab_id, l.name as lab_name,
+                   COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
+                   string_agg(t.name, ', ') as features,
+                   COALESCE(SUM(ltp.price), 0) as original_price,
+                   ROUND(COALESCE(SUM(ltp.price), 0) * (1 - (p.discount_percent / 100.0))) as discounted_price
+            FROM smart_packages p
+            JOIN labs l ON p.lab_id = l.id
+            LEFT JOIN package_tests pt ON p.id = pt.package_id
+            LEFT JOIN tests t ON pt.test_id = t.id
+            LEFT JOIN lab_test_pricing ltp ON t.id = ltp.test_id AND ltp.lab_id = p.lab_id
+            GROUP BY p.id, l.id, l.name
+            ORDER BY p.id DESC
+        """)
+        packages_list = cursor.fetchall()
     except Exception as e: pass
     finally: release_db(conn)
-    return render_template('tests.html', tests=tests_list, pricing=json.dumps(pricing_list))
+    return render_template('tests.html', tests=tests_list, pricing=json.dumps(pricing_list), packages=json.dumps(packages_list), raw_packages=packages_list)
 
 @app.route('/book')
 def checkout_page(): return render_template('checkout.html')
@@ -223,11 +221,9 @@ def admin_dashboard():
         cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, ltp.price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.id DESC LIMIT 200")
         inventory = cursor.fetchall()
         
-        # PULL ALL TESTS FOR THE PACKAGE BUILDER
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
         
-        # FETCH LIVE PACKAGES
         cursor.execute("""
             SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
@@ -358,11 +354,9 @@ def add_package():
             is_homepage = True if request.form.get('is_homepage') else False
             test_ids = request.form.getlist('test_ids')
             
-            # INSERT SMART PACKAGE
             cursor.execute("INSERT INTO smart_packages (title, badge, discount_percent, lab_id, is_homepage) VALUES (%s, %s, %s, %s, %s) RETURNING id", (title, badge, discount, lab_id, is_homepage))
             pkg_id = cursor.fetchone()[0]
             
-            # MAP THE TESTS TO THE PACKAGE
             for tid in test_ids:
                 cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
             conn.commit()
@@ -370,61 +364,4 @@ def add_package():
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/delete-package/<int:pkg_id>', methods=['POST'])
-def delete_package(pkg_id):
-    if session.get('admin_logged_in'):
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            cursor.execute("DELETE FROM smart_packages WHERE id = %s", (pkg_id,))
-            conn.commit()
-        except: pass
-        finally: release_db(conn)
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/api/place-order', methods=['POST'])
-def place_order():
-    name = request.form.get('name', '').strip()
-    phone = request.form.get('phone', '').strip()
-    email = request.form.get('email', '').strip()
-    patient_name = request.form.get('patient_name', '').strip()
-    address = request.form.get('address', '').strip()
-    date = request.form.get('date', '').strip()
-    cart_json = request.form.get('cart', '[]')
-    cart = json.loads(cart_json)
-    
-    if not session.get(f'verified_{email}'): return jsonify({"success": False, "message": "Email not verified. Please complete OTP verification."})
-    prescription = request.files.get('prescription')
-    if not all([name, phone, patient_name, address, date]): return jsonify({"success": False, "message": "Missing required patient fields."})
-    if not cart and not (prescription and prescription.filename): return jsonify({"success": False, "message": "Please add tests to your cart or upload a prescription."})
-    
-    conn = None
-    try:
-        conn = get_db(); cursor = conn.cursor()
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-        user_id = user[0] if user else (cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email)) or cursor.fetchone()[0])
-        
-        if prescription and prescription.filename:
-            file_data = prescription.read()
-            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
-        else:
-            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
-            
-        order_id = cursor.fetchone()[0]
-        
-        for item in cart: 
-            clean_id = str(item['id']).replace('PKG_','')
-            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice']))
-        conn.commit()
-        
-        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
-        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {patient_name}\nAddress: {address}\nDate: {date}")
-        
-        return jsonify({"success": True, "order_id": order_id})
-    except Exception as e: 
-        if conn: conn.rollback()
-        return jsonify({"success": False, "message": str(e)})
-    finally: release_db(conn)
-
-if __name__ == '__main__': app.run(debug=True, port=5000)
+@app.route('/adm
