@@ -4,20 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; }
+        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; }
         .container { max-width: 800px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0D9488; }
-        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid #E2E8F0; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #475569; }
-        .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
-        .otp-box { background: #F0FDF4; padding: 15px; border-radius: 8px; border: 1px solid #BBF7D0; margin-bottom: 20px; }
-        .btn-action { background: #0F172A; color: white; padding: 14px 24px; border: none; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
-        .btn-otp { background: #0D9488; color: white; padding: 10px 15px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px; width: 100%; }
-        .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #F1F5F9; }
+        .input-group label { display: block; font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #334155; }
+        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-family: inherit; font-weight: 600; }
+        .input-group input:focus, .input-group select:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
+        .otp-box { background: #F0FDF4; padding: 20px; border-radius: 12px; border: 1px solid #BBF7D0; margin-bottom: 20px; }
+        .btn-action { background: #0F172A; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; }
+        .btn-action:hover { background: #0D9488; }
+        .btn-otp { background: #0D9488; color: white; padding: 12px 18px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px; width: 100%; font-family: inherit; font-size: 14px; }
+        .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px dashed #CBD5E1; }
         @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -25,21 +27,21 @@
     <div class="container">
         <div class="header">
             <h1>Secure Checkout</h1>
-            <a href="/tests" style="text-decoration: none; color: #64748B; font-weight: 700;">&larr; Back to Catalog</a>
+            <a href="/tests" style="text-decoration: none; color: #64748B; font-weight: 800; font-size: 14px;">&larr; Back to Catalog</a>
         </div>
 
         <div class="card">
-            <h2 style="margin-top: 0; font-size: 18px;">1. Order Summary</h2>
+            <h2 style="margin-top: 0; font-size: 20px; font-weight: 800; border-bottom: 2px solid #F1F5F9; padding-bottom: 15px;">1. Order Summary</h2>
             <div id="checkoutItems"></div>
-            <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; margin-top: 20px; color: #0D9488;" id="totalContainer">
+            <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; margin-top: 20px; color: #0D9488;" id="totalContainer">
                 <span>Total Amount:</span>
                 <span id="checkoutTotal">₹0</span>
             </div>
-            <p style="font-size: 13px; color: #64748B; text-align: right;" id="paymentNote">Pay via Cash/UPI on collection.</p>
+            <p style="font-size: 14px; color: #64748B; text-align: right; font-weight: 700;" id="paymentNote">Pay via Cash/UPI on collection.</p>
         </div>
 
         <div class="card">
-            <h2 style="margin-top: 0; font-size: 18px;">2. Email Verification (Required)</h2>
+            <h2 style="margin-top: 0; font-size: 20px; font-weight: 800; border-bottom: 2px solid #F1F5F9; padding-bottom: 15px;">2. Email Verification (Required)</h2>
             <div class="otp-box" id="otpSection">
                 <div class="input-group" style="margin-bottom: 10px;">
                     <label>Email Address</label>
@@ -55,11 +57,11 @@
                     <button type="button" class="btn-otp" style="background: #0F172A;" onclick="verifyOTP()">Verify Email</button>
                 </div>
             </div>
-            <div id="emailVerifiedMsg" style="display: none; color: #166534; font-weight: 700; background: #DCFCE7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <div id="emailVerifiedMsg" style="display: none; color: #166534; font-weight: 800; background: #DCFCE7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #86EFAC;">
                 ✅ Email Verified Successfully.
             </div>
 
-            <h2 style="font-size: 18px;">3. Patient & Address Details</h2>
+            <h2 style="font-size: 20px; font-weight: 800; border-bottom: 2px solid #F1F5F9; padding-bottom: 15px;">3. Patient & Address Details</h2>
             <form id="orderForm">
                 <div class="form-grid">
                     <div class="input-group">
@@ -94,9 +96,9 @@
                     <input type="text" id="address" placeholder="House No, Area, Landmark" required>
                 </div>
                 
-                <div class="input-group" style="margin-bottom: 30px; background: #F8FAFC; padding: 15px; border-radius: 8px; border: 1px dashed #CBD5E1;" id="uploadBox">
-                    <label>Upload Doctor's Prescription <span id="uploadRequiredText">(Optional)</span></label>
-                    <input type="file" id="prescription" accept="image/*,.pdf" style="border: none; padding: 0;">
+                <div class="input-group" style="margin-bottom: 30px; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 2px dashed #CBD5E1;" id="uploadBox">
+                    <label style="font-size: 16px;">Upload Doctor's Prescription <span id="uploadRequiredText" style="color: #64748B; font-size: 13px;">(Optional)</span></label>
+                    <input type="file" id="prescription" accept="image/*,.pdf" style="border: none; padding: 0; background: transparent;">
                 </div>
 
                 <button type="submit" class="btn-action" id="submitBtn">Confirm Booking & Pay Later</button>
@@ -112,23 +114,21 @@
         const urlParams = new URLSearchParams(window.location.search);
         const isDirectUpload = urlParams.get('direct');
 
-        // Render Cart or Prescription Banner
         const container = document.getElementById('checkoutItems');
         if(cart.length === 0) {
             if (isDirectUpload) {
-                container.innerHTML = '<div style="background: #F0FDF4; color: #166534; padding: 15px; border-radius: 8px; font-weight: 700; border: 1px dashed #22C55E; text-align: center;">📄 Direct Prescription Upload Mode<br><span style="font-size: 13px; font-weight: 600;">Please attach your prescription below. Our support team will contact you shortly to confirm total costs and timings.</span></div>';
+                container.innerHTML = '<div style="background: #F0FDF4; color: #166534; padding: 20px; border-radius: 8px; font-weight: 800; border: 2px dashed #22C55E; text-align: center; font-size: 16px;">📄 Direct Prescription Upload Mode<br><span style="font-size: 14px; font-weight: 600; color: #15803D;">Please attach your prescription below. Our support team will contact you shortly to confirm total costs and timings.</span></div>';
                 document.getElementById('totalContainer').style.display = 'none';
                 document.getElementById('paymentNote').style.display = 'none';
                 
-                // Highlight the upload box
                 const uploadBox = document.getElementById('uploadBox');
                 uploadBox.style.background = '#FEF2F2';
                 uploadBox.style.borderColor = '#EF4444';
                 document.getElementById('uploadRequiredText').innerText = "(REQUIRED)";
-                document.getElementById('uploadRequiredText').style.color = '#EF4444';
+                document.getElementById('uploadRequiredText').style.color = '#DC2626';
                 
             } else {
-                container.innerHTML = '<p style="color:#64748B;">Your cart is empty. Go back to the catalog to add tests, or upload a prescription below.</p>';
+                container.innerHTML = '<p style="color:#64748B; font-weight: 700;">Your cart is empty. Go back to the catalog to add tests, or upload a prescription below.</p>';
                 document.getElementById('totalContainer').style.display = 'none';
             }
         } else {
@@ -136,17 +136,15 @@
                 total += parseFloat(item.currentPrice);
                 container.innerHTML += `
                     <div class="cart-item">
-                        <div><div style="font-weight:700;">${item.name}</div><div style="font-size:12px; color:#64748B;">${item.labName}</div></div>
-                        <div style="font-weight:800; color:#0D9488;">₹${item.currentPrice}</div>
+                        <div><div style="font-weight:800; font-size: 16px;">${item.name}</div><div style="font-size:13px; font-weight: 700; color:#64748B;">🔬 By ${item.labName}</div></div>
+                        <div style="font-weight:800; font-size: 18px; color:#0D9488;">₹${item.currentPrice}</div>
                     </div>`;
             });
             document.getElementById('checkoutTotal').innerText = `₹${total}`;
         }
 
-        // Set Date minimum to today
         document.getElementById('date').min = new Date().toISOString().split("T")[0];
 
-        // OTP Logic
         function sendOTP() {
             const email = document.getElementById('email').value;
             if(!email) return alert("Enter an email first.");
@@ -189,7 +187,6 @@
             });
         }
 
-        // Final Submit Logic
         document.getElementById('orderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
