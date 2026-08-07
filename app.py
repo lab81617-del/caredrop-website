@@ -3,6 +3,7 @@ import threading
 import smtplib
 import json
 import io
+import random
 import traceback
 from email.message import EmailMessage
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, send_file
@@ -16,15 +17,34 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
 
-# --- LIVE CRASH REPORTER ---
 @app.errorhandler(Exception)
 def handle_exception(e):
     error_trace = traceback.format_exc()
-    return f"<h2>CareDrop System Diagnostics</h2><pre style='color:red; background:#F8FAFC; padding:20px; border:1px solid #CBD5E1; border-radius:8px; white-space: pre-wrap;'>{error_trace}</pre>", 500
+    return f"<h2>CareDrop System Diagnostics</h2><pre style='color:red; background:#F8FAFC; padding:20px; border:1px solid #CBD5E1; border-radius:8px;'>{error_trace}</pre>", 500
 
 def get_db(): return psycopg2.connect(os.environ.get("DATABASE_URL"))
 def release_db(conn): 
     if conn: conn.close()
+
+# --- AUTO-MIGRATOR: FIXES DATABASE AUTOMATICALLY ---
+def auto_migrate_db():
+    conn = None
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS packages (
+                id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, badge VARCHAR(50), 
+                discounted_price NUMERIC NOT NULL, original_price NUMERIC, features TEXT NOT NULL
+            )
+        """)
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
+        conn.commit()
+    except Exception as e: print("Auto-Migrate Error:", e)
+    finally: release_db(conn)
 
 def send_email_async(recipient, subject, body):
     gmail_pwd = os.environ.get("GMAIL_APP_PASSWORD")
@@ -40,8 +60,32 @@ def send_email_async(recipient, subject, body):
         except Exception as e: print(e)
     threading.Thread(target=email_job).start()
 
+# --- OTP ROUTES ---
+@app.route('/api/send-otp', methods=['POST'])
+def send_otp():
+    email = request.json.get('email', '').strip()
+    if not email: return jsonify({"success": False, "message": "Email is required."})
+    
+    otp = str(random.randint(1000, 9999))
+    session[f'otp_{email}'] = otp
+    
+    msg = f"Your CareDrop Verification Code is: {otp}\n\nPlease use this 4-digit code to complete your request securely."
+    send_email_async(email, f"CareDrop OTP: {otp}", msg)
+    
+    return jsonify({"success": True, "message": "OTP sent to your email."})
+
+@app.route('/api/verify-otp', methods=['POST'])
+def verify_otp():
+    email = request.json.get('email', '').strip()
+    otp = request.json.get('otp', '').strip()
+    if session.get(f'otp_{email}') == otp:
+        session[f'verified_{email}'] = True
+        return jsonify({"success": True, "message": "Email verified successfully."})
+    return jsonify({"success": False, "message": "Invalid or expired OTP."})
+
 @app.route('/')
 def home():
+    auto_migrate_db() # Fixes DB if missing columns
     conn = None
     packages = []
     try:
@@ -49,10 +93,8 @@ def home():
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT * FROM packages ORDER BY id ASC")
         packages = cursor.fetchall()
-    except Exception as e: 
-        print("DB Error:", e)
-    finally: 
-        release_db(conn)
+    except Exception as e: pass
+    finally: release_db(conn)
     return render_template('index.html', packages=packages)
 
 @app.route('/tests')
@@ -63,25 +105,38 @@ def tests_catalog():
     try:
         conn = get_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t JOIN test_categories c ON t.category_id = c.id WHERE t.is_active = TRUE ORDER BY c.name, t.name")
+        # ONLY FETCH TESTS THAT HAVE AN ACTIVE LAB AND PRICE
+        cursor.execute("""
+            SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category 
+            FROM tests t 
+            JOIN test_categories c ON t.category_id = c.id 
+            JOIN lab_test_pricing ltp ON t.id = ltp.test_id
+            JOIN labs l ON ltp.lab_id = l.id
+            WHERE t.is_active = TRUE AND l.is_active = TRUE 
+            ORDER BY c.name, t.name
+        """)
         tests_list = cursor.fetchall()
         cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
         pricing_list = cursor.fetchall()
-    except Exception as e:
-        print("DB Error:", e)
+    except Exception as e: pass
     finally: release_db(conn)
     return render_template('tests.html', tests=tests_list, pricing=json.dumps(pricing_list))
 
 @app.route('/book')
 def checkout_page(): return render_template('checkout.html')
 
-@app.route('/my-bookings')
+@app.route('/my-bookings', methods=['GET', 'POST'])
 def my_bookings():
-    phone = request.args.get('phone', '').strip()
+    auto_migrate_db()
+    email = request.args.get('email', '').strip()
     order_id_input = request.args.get('order_id', '').strip()
     orders = []
-    conn = None
-    if phone and order_id_input:
+    
+    if email and order_id_input:
+        if not session.get(f'verified_{email}'):
+            return render_template('my_bookings.html', error="Please verify your email via OTP first.", searched_email=email, searched_id=order_id_input)
+        
+        conn = None
         try:
             conn = get_db()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -89,16 +144,17 @@ def my_bookings():
                 SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, 
                        u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report 
                 FROM orders o JOIN users u ON o.user_id = u.id 
-                WHERE u.phone = %s AND o.id = %s
-            """, (phone, order_id_input))
+                WHERE u.email = %s AND o.id = %s
+            """, (email, order_id_input))
             orders = cursor.fetchall()
             if orders:
                 cursor.execute("SELECT oi.order_id, t.name as test_name, l.name as lab_name, oi.price FROM order_items oi JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id WHERE oi.order_id = %s", (order_id_input,))
                 db_items = cursor.fetchall()
                 for order in orders: order['test_list'] = db_items
-        except Exception as e: print("DB Error:", e)
+        except Exception as e: pass
         finally: release_db(conn)
-    return render_template('my_bookings.html', orders=orders, searched_phone=phone, searched_id=order_id_input)
+        
+    return render_template('my_bookings.html', orders=orders, searched_email=email, searched_id=order_id_input)
 
 @app.route('/download-report/<int:order_id>')
 def download_report(order_id):
@@ -110,9 +166,24 @@ def download_report(order_id):
         record = cursor.fetchone()
         if record and record['report_file']:
             return send_file(io.BytesIO(record['report_file']), download_name=record['report_filename'], as_attachment=True)
-    except Exception as e: print("DB Error:", e)
+    except Exception as e: pass
     finally: release_db(conn)
-    return "Report not found or not uploaded yet.", 404
+    return "Report not found.", 404
+    
+@app.route('/admin/download-prescription/<int:order_id>')
+def download_prescription(order_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT prescription_file, prescription_filename FROM orders WHERE id = %s", (order_id,))
+        record = cursor.fetchone()
+        if record and record['prescription_file']:
+            return send_file(io.BytesIO(record['prescription_file']), download_name=record['prescription_filename'], as_attachment=True)
+    except Exception as e: pass
+    finally: release_db(conn)
+    return "Prescription not found.", 404
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -127,11 +198,12 @@ def admin_login():
 @app.route('/admin')
 def admin_dashboard():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    auto_migrate_db()
     conn = None
     try:
         conn = get_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
+        cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
         cursor.execute("SELECT oi.order_id, t.name as test_name, l.name as lab_name, oi.price FROM order_items oi JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id")
         db_items = cursor.fetchall()
@@ -140,6 +212,7 @@ def admin_dashboard():
             if row['order_id'] not in items_map: items_map[row['order_id']] = []
             items_map[row['order_id']].append(row)
         for order in orders: order['test_list'] = items_map.get(order['id'], [])
+        
         cursor.execute("SELECT id, name, is_active FROM labs ORDER BY name")
         all_labs = cursor.fetchall()
         cursor.execute("SELECT DISTINCT ON (LOWER(name)) id, name FROM labs WHERE is_active = TRUE ORDER BY LOWER(name), id")
@@ -150,8 +223,7 @@ def admin_dashboard():
         inventory = cursor.fetchall()
         cursor.execute("SELECT * FROM packages ORDER BY id DESC")
         packages = cursor.fetchall()
-    except Exception as e: 
-        raise e  # Let the crash reporter catch it!
+    except Exception as e: raise e 
     finally: release_db(conn)
     return render_template('admin.html', orders=orders, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages)
 
@@ -171,7 +243,7 @@ def upload_report():
             user = cursor.fetchone()
             conn.commit()
             if user:
-                msg = f"Hello {user[1]},\n\nYour test report for CareDrop Order #{order_id} is now available!\nPlease visit our website, click 'My Bookings', and enter your Phone Number + Order ID to download your PDF."
+                msg = f"Hello {user[1]},\n\nYour test report for CareDrop Order #{order_id} is now available!\nPlease visit our website, click 'My Bookings', verify your email, and download your PDF."
                 send_email_async(user[0], f"Your Test Report is Ready - #{order_id}", msg)
         except Exception as e: print(e)
         finally: release_db(conn)
@@ -283,11 +355,25 @@ def delete_package(pkg_id):
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
+# --- REWRITTEN TO ACCEPT FILES (MULTIPART FORM) ---
 @app.route('/api/place-order', methods=['POST'])
 def place_order():
-    data = request.json
-    name, phone, email, patient_name, address, date, cart = data.get('name','').strip(), data.get('phone','').strip(), data.get('email','').strip(), data.get('patient_name','').strip(), data.get('address','').strip(), data.get('date','').strip(), data.get('cart', [])
-    if not all([name, phone, patient_name, address, date, cart]): return jsonify({"success": False, "message": "Missing fields or cart empty."})
+    name = request.form.get('name', '').strip()
+    phone = request.form.get('phone', '').strip()
+    email = request.form.get('email', '').strip()
+    patient_name = request.form.get('patient_name', '').strip()
+    address = request.form.get('address', '').strip()
+    date = request.form.get('date', '').strip()
+    cart_json = request.form.get('cart', '[]')
+    cart = json.loads(cart_json)
+    
+    if not session.get(f'verified_{email}'):
+        return jsonify({"success": False, "message": "Email not verified. Please complete OTP verification."})
+        
+    if not all([name, phone, patient_name, address, date, cart]): 
+        return jsonify({"success": False, "message": "Missing fields or cart empty."})
+    
+    prescription = request.files.get('prescription')
     
     conn = None
     try:
@@ -295,12 +381,22 @@ def place_order():
         cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         user_id = user[0] if user else (cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email)) or cursor.fetchone()[0])
-        cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, patient_name, address, date, data.get('time_slot', 'Morning'), data.get('total', 0)))
+        
+        if prescription and prescription.filename:
+            file_data = prescription.read()
+            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
+        else:
+            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
+            
         order_id = cursor.fetchone()[0]
-        for item in cart: cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, item['id'], item['selectedLabId'], item['currentPrice']))
+        
+        for item in cart: 
+            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, item['id'].replace('PKG_',''), item['selectedLabId'], item['currentPrice']))
         conn.commit()
-        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {data.get('total', 0)}")
-        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id} - Rs. {data.get('total', 0)}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {patient_name}\nAddress: {address}\nDate: {date}")
+        
+        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
+        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {patient_name}\nAddress: {address}\nDate: {date}")
+        
         return jsonify({"success": True, "order_id": order_id})
     except Exception as e: 
         if conn: conn.rollback()
