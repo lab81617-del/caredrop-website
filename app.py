@@ -30,7 +30,6 @@ def auto_migrate_db():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("DROP TABLE IF EXISTS packages CASCADE") 
         cursor.execute("CREATE TABLE IF NOT EXISTS smart_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, badge VARCHAR(50), discount_percent NUMERIC NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, is_homepage BOOLEAN DEFAULT TRUE)")
         cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES smart_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
@@ -38,7 +37,7 @@ def auto_migrate_db():
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
         conn.commit()
-    except Exception as e: print("Auto-Migrate Error:", e)
+    except Exception as e: pass
     finally: release_db(conn)
 
 def send_email_api(recipient, subject, text_body):
@@ -83,8 +82,7 @@ def home():
     conn = None
     packages = []
     try:
-        conn = get_db()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
             SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.id as lab_id, l.name as lab_name,
                    COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
@@ -112,14 +110,11 @@ def tests_catalog():
     pricing_list = []
     packages_list = []
     try:
-        conn = get_db()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
         tests_list = cursor.fetchall()
-        
         cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
         pricing_list = cursor.fetchall()
-        
         cursor.execute("""
             SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.id as lab_id, l.name as lab_name,
                    COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
@@ -156,7 +151,7 @@ def my_bookings():
             cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s AND o.id = %s", (email, order_id_input))
             orders = cursor.fetchall()
             if orders:
-                cursor.execute("SELECT oi.order_id, COALESCE(t.name, 'Smart Package') as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id WHERE oi.order_id = %s", (order_id_input,))
+                cursor.execute("SELECT oi.order_id, COALESCE(t.name, 'Health Package') as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id WHERE oi.order_id = %s", (order_id_input,))
                 db_items = cursor.fetchall()
                 for order in orders: order['test_list'] = db_items
         except Exception as e: pass
@@ -205,7 +200,7 @@ def admin_dashboard():
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
-        cursor.execute("SELECT oi.order_id, COALESCE(t.name, 'Smart Package') as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id")
+        cursor.execute("SELECT oi.order_id, COALESCE(t.name, 'Health Package') as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id JOIN labs l ON oi.lab_id = l.id")
         db_items = cursor.fetchall()
         items_map = {}
         for row in db_items:
@@ -220,10 +215,8 @@ def admin_dashboard():
         categories = cursor.fetchall()
         cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, ltp.price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.id DESC LIMIT 200")
         inventory = cursor.fetchall()
-        
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
-        
         cursor.execute("""
             SELECT p.id, p.title, p.badge, p.discount_percent, p.is_homepage, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
@@ -353,14 +346,11 @@ def add_package():
             lab_id = request.form.get('lab_id')
             is_homepage = True if request.form.get('is_homepage') else False
             test_ids = request.form.getlist('test_ids')
-            
             cursor.execute("INSERT INTO smart_packages (title, badge, discount_percent, lab_id, is_homepage) VALUES (%s, %s, %s, %s, %s) RETURNING id", (title, badge, discount, lab_id, is_homepage))
             pkg_id = cursor.fetchone()[0]
-            
-            for tid in test_ids:
-                cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
+            for tid in test_ids: cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
             conn.commit()
-        except Exception as e: print(e)
+        except Exception as e: pass
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
@@ -398,23 +388,18 @@ def place_order():
         cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         user_id = user[0] if user else (cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email)) or cursor.fetchone()[0])
-        
         if prescription and prescription.filename:
             file_data = prescription.read()
             cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
         else:
             cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
-            
         order_id = cursor.fetchone()[0]
-        
         for item in cart: 
             clean_id = str(item['id']).replace('PKG_','')
             cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice']))
         conn.commit()
-        
         send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
         send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {patient_name}\nAddress: {address}\nDate: {date}")
-        
         return jsonify({"success": True, "order_id": order_id})
     except Exception as e: 
         if conn: conn.rollback()
