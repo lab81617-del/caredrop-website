@@ -57,7 +57,6 @@
     <div style="background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 2px dashed #22C55E;">
         <h2 style="color: #166534; margin-top: 0; font-size: 24px; font-weight: 800;">Have a Doctor's Prescription?</h2>
         <p style="color: #15803D; margin-bottom: 25px; font-weight: 600; font-size: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">Skip the manual search. Upload a photo of your prescription directly, and our support team will contact you to confirm the lowest cost and timing.</p>
-        <!-- FIX: Wipes the cart cleanly before jumping to checkout -->
         <button onclick="directPrescription()" class="btn-hero" style="background: #15803D; padding: 14px 28px;">📄 Upload Prescription Now</button>
     </div>
 
@@ -65,7 +64,6 @@
         <h2>Special Health Packages</h2>
         <div class="grid">
             {% for pkg in packages %}
-                <!-- FIX: Safety block hides any broken blank packages -->
                 {% if pkg.title %}
                 <div class="pkg-card">
                     {% if pkg.badge %}<div class="pkg-badge">{{ pkg.badge }}</div>{% endif %}
@@ -79,7 +77,8 @@
                             {% endif %}
                         {% endfor %}
                     </ul>
-                    <button class="pkg-btn" onclick="bookPackage({{ pkg.id }}, '{{ pkg.title }}', {{ pkg.discounted_price }}, '{{ pkg.lab_name or \'CareDrop\' }}')">Book This Package</button>
+                    <!-- FIX: Removed the backslash that crashed the system -->
+                    <button class="pkg-btn" onclick="bookPackage({{ pkg.id }}, '{{ pkg.title }}', {{ pkg.discounted_price }}, '{{ pkg.lab_name or "CareDrop" }}')">Book This Package</button>
                 </div>
                 {% endif %}
             {% else %}
@@ -117,10 +116,9 @@
     </footer>
 
     <script>
-        // THIS FIXES THE "LFT" AUTO-SELECT BUG
         function directPrescription() {
-            sessionStorage.removeItem('caredrop_cart'); // Destroys the cart memory completely
-            window.location.href = '/book?direct=true'; // Jumps to checkout
+            sessionStorage.removeItem('caredrop_cart'); 
+            window.location.href = '/book?direct=true'; 
         }
 
         function bookPackage(pkgId, title, price, labName) {
