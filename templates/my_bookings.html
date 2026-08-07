@@ -11,8 +11,8 @@
         .header { background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { margin: 0; color: #0D9488; font-size: 22px; font-weight: 800; }
         .search-box { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; text-align: center; }
-        .search-box input { padding: 14px; width: 100%; max-width: 250px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 15px; outline: none; margin-bottom: 10px; }
-        .search-box button { padding: 14px 24px; background: #0F172A; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; width: 100%; max-width: 510px; }
+        .search-box input { padding: 14px; width: 100%; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 15px; outline: none; margin-bottom: 10px; box-sizing: border-box; }
+        .search-box button { padding: 14px 24px; background: #0F172A; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; width: 100%; transition: 0.2s; }
         .order-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border-left: 6px solid #0D9488; }
         .badge { background: #CCFBF1; color: #0F766E; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-block; margin-top: 4px; }
         .btn-download { display: inline-block; margin-top: 15px; background: #0D9488; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; }
@@ -27,17 +27,27 @@
         
         <div class="search-box">
             <h2 style="margin-bottom: 5px; font-size: 20px;">Secure Medical Record Access</h2>
-            <p style="font-size: 14px; color: #64748B; margin-bottom: 20px;">For patient privacy, please provide both your phone number and Order ID.</p>
-            <form method="GET" style="display: flex; flex-direction: column; align-items: center;">
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%;">
-                    <input type="tel" name="phone" placeholder="Registered Mobile No." value="{{ searched_phone }}" required>
-                    <input type="number" name="order_id" placeholder="Order ID (e.g. 5)" value="{{ searched_id }}" required>
+            <p style="font-size: 14px; color: #64748B; margin-bottom: 20px;">Enter your registered Email and Order ID. An OTP will be sent to verify your identity.</p>
+            
+            {% if error %}
+            <div style="background: #FEE2E2; color: #991B1B; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 700;">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <div style="display: flex; gap: 15px; flex-direction: column; max-width: 400px; margin: 0 auto;">
+                <input type="email" id="searchEmail" placeholder="Registered Email Address" value="{{ searched_email }}" required>
+                <input type="number" id="searchOrderId" placeholder="Order ID (e.g. 5)" value="{{ searched_id }}" required>
+                <button type="button" id="sendOtpBtn" onclick="sendAuthOTP()">1. Send OTP to Email</button>
+                
+                <div id="verifyBlock" style="display: none; margin-top: 15px; border-top: 1px solid #E2E8F0; padding-top: 15px;">
+                    <input type="text" id="otpCode" placeholder="Enter 4-Digit Code" style="background: #F8FAFC;">
+                    <button type="button" onclick="verifyAuthOTP()" style="background: #0D9488;">2. Verify & View Records</button>
                 </div>
-                <button type="submit">Unlock Booking Details</button>
-            </form>
+            </div>
         </div>
 
-        {% if searched_phone and searched_id %}
+        {% if searched_email and searched_id and not error %}
             {% for order in orders %}
             <div class="order-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
@@ -62,10 +72,52 @@
             </div>
             {% else %}
             <div style="text-align: center; background: white; padding: 40px; border-radius: 16px; color: #DC2626; font-weight: 600;">
-                Authentication Failed. Order ID and Phone Number do not match.
+                No matching Order found for this Email.
             </div>
             {% endfor %}
         {% endif %}
     </div>
+
+    <script>
+        function sendAuthOTP() {
+            const email = document.getElementById('searchEmail').value;
+            if(!email) return alert("Please enter your email.");
+            
+            document.getElementById('sendOtpBtn').innerText = "Sending...";
+            
+            fetch('/api/send-otp', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: email})
+            }).then(res => res.json()).then(data => {
+                if(data.success) {
+                    document.getElementById('sendOtpBtn').style.display = 'none';
+                    document.getElementById('verifyBlock').style.display = 'block';
+                } else {
+                    alert(data.message);
+                    document.getElementById('sendOtpBtn').innerText = "1. Send OTP to Email";
+                }
+            });
+        }
+
+        function verifyAuthOTP() {
+            const email = document.getElementById('searchEmail').value;
+            const orderId = document.getElementById('searchOrderId').value;
+            const otp = document.getElementById('otpCode').value;
+            
+            fetch('/api/verify-otp', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: email, otp: otp})
+            }).then(res => res.json()).then(data => {
+                if(data.success) {
+                    // Redirect safely to load the orders securely
+                    window.location.href = `/my-bookings?email=${encodeURIComponent(email)}&order_id=${encodeURIComponent(orderId)}`;
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+    </script>
 </body>
 </html>
