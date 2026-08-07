@@ -19,9 +19,8 @@
         
         .card { background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 30px; border: 1px solid #CBD5E1; overflow: hidden; }
         
-        /* SCROLLBAR & TABLE FIXES */
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .table-responsive::-webkit-scrollbar { height: 8px; }
+        .table-responsive { width: 100%; max-height: 500px; overflow-x: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .table-responsive::-webkit-scrollbar { height: 8px; width: 8px; }
         .table-responsive::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 4px; }
         
         table { width: 100%; border-collapse: collapse; text-align: left; min-width: 800px; }
@@ -36,7 +35,6 @@
         .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; background: white; transition: 0.2s; font-family: inherit; font-weight: 600; color: #0F172A; }
         .input-group input:focus, .input-group select:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
         
-        /* VERTICAL SCROLL ZONE FOR TESTS */
         .checkbox-grid { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; padding: 15px; border: 1px solid #94A3B8; border-radius: 8px; background: #F8FAFC; }
         .checkbox-grid::-webkit-scrollbar { width: 6px; }
         .checkbox-grid::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 4px; }
@@ -114,14 +112,15 @@
             </div>
         </div>
         
-        <!-- MANAGE INVENTORY TAB -->
+        <!-- INVENTORY TAB -->
         <div id="inventory" class="tab-content">
-            <div class="card form-container">
-                <div class="form-title">🏥 Partner Lab Manager</div>
-                <div class="table-responsive" style="border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                    <form action="/admin/add-lab" method="POST" style="display: flex; gap: 15px; padding: 20px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
-                        <input type="text" name="lab_name" placeholder="Enter new partner lab name..." required style="flex: 1; padding: 12px 16px; border: 1px solid #94A3B8; border-radius: 8px; outline:none; font-weight: 600;">
-                        <button type="submit" class="btn-save">+ Add Lab</button>
+            
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="form-title" style="padding: 20px 20px 0 20px; border:none; margin:0;">🏥 Partner Lab Manager</div>
+                <div class="table-responsive" style="padding: 0 20px 20px 20px;">
+                    <form action="/admin/add-lab" method="POST" style="display: flex; gap: 10px; margin: 15px 0;">
+                        <input type="text" name="lab_name" placeholder="Enter new partner lab name..." required style="flex: 1; padding: 12px 16px; border: 1px solid #94A3B8; border-radius: 8px; outline:none; background:white; font-weight: 600;">
+                        <button type="submit" class="btn-save" style="padding: 12px 24px; font-size: 14px;">+ Add Lab</button>
                     </form>
                     <table style="min-width: 100%;">
                         <thead><tr><th>Lab Name</th><th>Current Status</th><th>Actions</th></tr></thead>
@@ -165,14 +164,41 @@
                     </div>
                 </form>
             </div>
+
+            <!-- THE RESTORED INVENTORY LIST -->
+            <div class="card table-responsive">
+                <div class="form-title" style="padding: 30px 30px 0 30px; border:none; margin:0; display:flex; justify-content:space-between; align-items:center;">
+                    <span>📋 Live Inventory Pricing</span>
+                    <input type="text" id="inventorySearch" onkeyup="filterInventory()" placeholder="🔍 Search inventory..." style="padding: 10px 16px; border: 1px solid #94A3B8; border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; font-weight: 600; width: 250px;">
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Test Name</th><th>Category</th><th>Lab Name</th><th>Price</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="inventoryBody">
+                        {% for item in inventory %}
+                        <tr class="inv-row">
+                            <td style="font-weight: 800; color: #0F172A;" class="inv-name">{{ item.test_name }}</td>
+                            <td style="font-size: 13px; color: #64748B; font-weight: 600;">{{ item.category_name }}</td>
+                            <td><span class="badge" style="background:#F1F5F9; border:1px solid #CBD5E1; color:#475569;">{{ item.lab_name }}</span></td>
+                            <td style="font-weight: 800; color: #0D9488; font-size: 16px;">₹{{ item.price }}</td>
+                            <td>
+                                <form action="/admin/delete-inventory/{{ item.test_id }}/{{ item.lab_id }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this price?');">
+                                    <button type="submit" class="btn-delete">🗑️ Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
         
-        <!-- PACKAGES & OFFERS TAB -->
+     <!-- PACKAGES TAB -->
         <div id="packages" class="tab-content">
             
-            <!-- SECTION 1: CREATE PACKAGE -->
             <div class="card form-container">
-                <div class="form-title">📦 Step 1: Create a Health Package</div>
+                <div class="form-title">📦 Step 1: Create a Base Health Package</div>
                 <form action="/admin/add-health-package" method="POST">
                     <div class="form-grid">
                         <div class="input-group"><label>Package Title</label><input type="text" name="title" placeholder="e.g. Complete Care Profile" required></div>
@@ -199,7 +225,6 @@
                 </form>
             </div>
 
-            <!-- SECTION 2: CREATE SPECIAL OFFER -->
             <div class="section-divider">OR</div>
 
             <div class="card form-container" style="border: 2px solid #0D9488;">
@@ -226,7 +251,6 @@
                 </form>
             </div>
 
-          <!-- SECTION 3: LIVE TABLE -->
             <div class="card table-responsive" style="margin-top: 40px;">
                 <div class="form-title" style="padding: 30px 30px 0 30px; border:none; margin:0;">📋 Live Packages & Active Offers</div>
                 <table>
@@ -270,6 +294,15 @@
             labels.forEach(label => {
                 let testName = label.querySelector('.test-name-span').innerText.toLowerCase();
                 label.style.display = testName.includes(input) ? 'flex' : 'none';
+            });
+        }
+        
+        function filterInventory() {
+            let input = document.getElementById('inventorySearch').value.toLowerCase();
+            let rows = document.querySelectorAll('.inv-row');
+            rows.forEach(row => {
+                let testName = row.querySelector('.inv-name').innerText.toLowerCase();
+                row.style.display = testName.includes(input) ? '' : 'none';
             });
         }
 
