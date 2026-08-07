@@ -18,7 +18,11 @@
         .tab-content.active { display: block; }
         
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); overflow: hidden; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
+        
+        /* MOBILE TABLE WRAPPER */
+        .table-responsive { width: 100%; overflow-x: auto; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 700px; }
         th, td { padding: 18px 25px; border-bottom: 1px solid #F1F5F9; }
         th { background: #F8FAFC; font-weight: 700; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
         tr:last-child td { border-bottom: none; }
@@ -55,7 +59,7 @@
         
         <!-- LIVE ORDERS TAB -->
         <div id="orders" class="tab-content active">
-            <div class="card">
+            <div class="card table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -122,7 +126,7 @@
         <div id="inventory" class="tab-content">
             <div class="card" style="margin-bottom: 30px;">
                 <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">🏥 Partner Lab Manager</div>
-                <div style="padding: 0 25px 25px 25px;">
+                <div class="table-responsive" style="padding: 0 25px 25px 25px;">
                     <form action="/admin/add-lab" method="POST" style="display: flex; gap: 15px; margin-bottom: 20px; margin-top: 15px;">
                         <input type="text" name="lab_name" placeholder="Enter new partner lab name..." required style="flex: 1; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 14px; outline:none;">
                         <button type="submit" class="btn-save" style="padding: 12px 24px;">+ Add Lab</button>
@@ -208,10 +212,8 @@
             </div>
 
             <div class="card">
-                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0; display: flex; justify-content: space-between; align-items: center;">
+                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <span>Current Catalog & Prices</span>
-                    
-                    <!-- THE NEW LAB FILTER DROPDOWN -->
                     <select id="catalogLabFilter" onchange="filterCatalog()" style="padding: 8px 15px; border-radius: 8px; border: 1px solid #CBD5E1; font-weight: 700; outline: none; cursor: pointer;">
                         <option value="all">View All Labs</option>
                         {% for lab in active_labs %}
@@ -219,42 +221,43 @@
                         {% endfor %}
                     </select>
                 </div>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Test Name</th>
-                            <th>Category</th>
-                            <th>Lab Name</th>
-                            <th>Current Price</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="catalogTableBody">
-                        {% for item in inventory %}
-                        <tr class="catalog-row" data-lab="{{ item.lab_name|lower }}">
-                            <td style="font-weight: 700;">{{ item.test_name }}</td>
-                            <td style="font-size: 13px; color: #64748B;">{{ item.category_name }}</td>
-                            <td><span class="badge">{{ item.lab_name }}</span></td>
-                            <td style="font-weight: 800; color: #0D9488;">₹{{ item.price }}</td>
-                            <td>
-                                <form action="/admin/delete-inventory/{{ item.test_id }}/{{ item.lab_id }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this price?');">
-                                    <button type="submit" class="btn-delete">🗑️ Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="5" style="text-align: center; padding: 40px; color: #94A3B8;">Your catalog is empty.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Test Name</th>
+                                <th>Category</th>
+                                <th>Lab Name</th>
+                                <th>Current Price</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalogTableBody">
+                            {% for item in inventory %}
+                            <tr class="catalog-row" data-lab="{{ item.lab_name|lower }}">
+                                <td style="font-weight: 700;">{{ item.test_name }}</td>
+                                <td style="font-size: 13px; color: #64748B;">{{ item.category_name }}</td>
+                                <td><span class="badge">{{ item.lab_name }}</span></td>
+                                <td style="font-weight: 800; color: #0D9488;">₹{{ item.price }}</td>
+                                <td>
+                                    <form action="/admin/delete-inventory/{{ item.test_id }}/{{ item.lab_id }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this price?');">
+                                        <button type="submit" class="btn-delete">🗑️ Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" style="text-align: center; padding: 40px; color: #94A3B8;">Your catalog is empty.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         
-     <!-- MANAGE PACKAGES TAB -->
+        <!-- MANAGE PACKAGES TAB (NOW SMART AND LAB SPECIFIC) -->
         <div id="packages" class="tab-content">
             <div class="card form-container">
-                <div class="form-title">🎁 Add New Special Health Package</div>
+                <div class="form-title">🎁 Create Smart Package Offer</div>
                 <form action="/admin/add-package" method="POST">
                     <div class="form-grid">
                         <div class="input-group">
@@ -268,12 +271,26 @@
                     </div>
                     <div class="form-grid">
                         <div class="input-group">
-                            <label>Final Discounted Price (₹)</label>
-                            <input type="number" name="discounted_price" placeholder="e.g. 999" required>
+                            <label>Select Lab For This Package</label>
+                            <select name="lab_name" required>
+                                {% for lab in active_labs %}
+                                <option value="{{ lab.name }}">{{ lab.name }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="input-group">
-                            <label>Original Crossed-Out Price (₹)</label>
-                            <input type="number" name="original_price" placeholder="e.g. 2500" required>
+                            <label>Original Total Cost (₹) of all tests</label>
+                            <input type="number" id="pkgOriginal" name="original_price" placeholder="e.g. 2500" oninput="calcDiscount()" required>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Discount Percentage (%)</label>
+                            <input type="number" id="pkgPercent" placeholder="e.g. 30" oninput="calcDiscount()" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Final Customer Price (₹) <span style="color: #0D9488;">(Auto Calculated)</span></label>
+                            <input type="number" id="pkgFinal" name="discounted_price" readonly style="background: #F1F5F9; border-color: #0D9488; font-weight: 800; color: #0D9488;" required>
                         </div>
                     </div>
                     <div class="input-group" style="margin-bottom: 20px;">
@@ -284,7 +301,7 @@
                 </form>
             </div>
 
-            <div class="card">
+            <div class="card table-responsive">
                 <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">Live Homepage Packages</div>
                 <table>
                     <thead>
@@ -297,9 +314,12 @@
                     </thead>
                     <tbody>
                         {% for pkg in packages %}
+                        <!-- FIX: Safely hide blank database rows created during testing -->
+                        {% if pkg.title %}
                         <tr>
                             <td>
                                 <div style="font-weight: 800; color: #0F766E; font-size: 16px;">{{ pkg.title }}</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px; margin-bottom: 4px;">🔬 {{ pkg.lab_name or 'CareDrop Verified' }}</div>
                                 {% if pkg.badge %}<span class="badge" style="background:#FCE7F3; color:#BE185D;">{{ pkg.badge }}</span>{% endif %}
                             </td>
                             <td>
@@ -315,6 +335,7 @@
                                 </form>
                             </td>
                         </tr>
+                        {% endif %}
                         {% else %}
                         <tr><td colspan="4" style="text-align: center; padding: 40px; color: #94A3B8;">No packages live on the homepage yet.</td></tr>
                         {% endfor %}
@@ -326,6 +347,19 @@
     </div>
 
     <script>
+        // SMART DISCOUNT CALCULATOR
+        function calcDiscount() {
+            let original = parseFloat(document.getElementById('pkgOriginal').value) || 0;
+            let percent = parseFloat(document.getElementById('pkgPercent').value) || 0;
+            
+            if (original > 0 && percent >= 0) {
+                let finalPrice = original - (original * (percent / 100));
+                document.getElementById('pkgFinal').value = Math.round(finalPrice);
+            } else {
+                document.getElementById('pkgFinal').value = '';
+            }
+        }
+
         // TAB SWITCHING LOGIC
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -339,7 +373,7 @@
             localStorage.setItem('caredrop_admin_tab', tabId);
         }
 
-        // NEW: LIVE CATALOG FILTER LOGIC
+        // LIVE CATALOG FILTER LOGIC
         function filterCatalog() {
             const selectedLab = document.getElementById('catalogLabFilter').value;
             const rows = document.querySelectorAll('.catalog-row');
