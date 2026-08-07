@@ -64,7 +64,7 @@
                             <th>Schedule</th>
                             <th>Tests Selected</th>
                             <th>Total Amount</th>
-                            <th>Order Status</th>
+                            <th>Order Status & Report</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,15 +86,27 @@
                             </td>
                             <td style="font-weight: 800; font-size: 18px;">₹{{ order.total_amount }}</td>
                             <td>
-                                <form action="/admin/update-order" method="POST" style="margin:0;">
+                                <!-- AUTO-SAVING STATUS DROPDOWN -->
+                                <form action="/admin/update-order" method="POST" style="margin:0; margin-bottom:10px;">
                                     <input type="hidden" name="order_id" value="{{ order.id }}">
-                                    <select name="status" onchange="this.form.submit()" style="padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1; outline: none; font-weight: 700; font-size: 13px; cursor:pointer;">
+                                    <select name="status" onchange="this.form.submit()" style="padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1; outline: none; font-weight: 700; font-size: 13px; cursor:pointer; width: 100%;">
                                         <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>🔴 Pending</option>
                                         <option value="Sample Collected" {% if order.status == 'Sample Collected' %}selected{% endif %}>🟡 Sample Collected</option>
                                         <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>🟢 Completed</option>
                                         <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>⚫ Cancelled</option>
                                     </select>
                                 </form>
+                                
+                                <!-- PDF UPLOADER -->
+                                {% if order.has_report %}
+                                    <span style="display:block; background:#DCFCE7; color:#166534; padding:6px; border-radius:6px; font-size:12px; font-weight:700; text-align:center;">✅ Report Uploaded</span>
+                                {% else %}
+                                    <form action="/admin/upload-report" method="POST" enctype="multipart/form-data" style="margin:0; display:flex; flex-direction:column; gap:5px;">
+                                        <input type="hidden" name="order_id" value="{{ order.id }}">
+                                        <input type="file" name="report_file" accept=".pdf" required style="font-size: 11px; max-width: 150px;">
+                                        <button type="submit" style="background:#0F766E; color:white; border:none; padding:6px; border-radius:6px; font-weight:700; cursor:pointer; font-size:12px;">Upload PDF</button>
+                                    </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
@@ -227,9 +239,8 @@
             </div>
         </div>
         
-        <!-- NEW TAB: MANAGE PACKAGES -->
+        <!-- MANAGE PACKAGES TAB -->
         <div id="packages" class="tab-content">
-            <!-- ADD PACKAGE FORM -->
             <div class="card form-container">
                 <div class="form-title">🎁 Add New Special Health Package</div>
                 <form action="/admin/add-package" method="POST">
@@ -261,7 +272,6 @@
                 </form>
             </div>
 
-            <!-- LIVE PACKAGES TABLE -->
             <div class="card">
                 <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">Live Homepage Packages</div>
                 <table>
@@ -298,7 +308,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
+           </div>
         </div>
 
     </div>
@@ -309,7 +319,6 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            // Highlight the clicked button
             if(tabId === 'orders') document.querySelectorAll('.tab-btn')[0].classList.add('active');
             if(tabId === 'inventory') document.getElementById('inventoryTabBtn').classList.add('active');
             if(tabId === 'packages') document.getElementById('packagesTabBtn').classList.add('active');
