@@ -156,14 +156,13 @@ def my_bookings():
             """, (email, order_id_input))
             orders = cursor.fetchall()
             if orders:
-                # Fallback JOIN for packages vs regular tests
+                # FIX: Simplified database query to prevent column mismatch errors
                 cursor.execute("""
                     SELECT oi.order_id, 
-                           COALESCE(t.name, p.title, 'Special Package') as test_name, 
+                           COALESCE(t.name, 'Special Health Package') as test_name, 
                            l.name as lab_name, oi.price 
                     FROM order_items oi 
                     LEFT JOIN tests t ON oi.test_id = t.id 
-                    LEFT JOIN packages p ON oi.test_id = p.id
                     JOIN labs l ON oi.lab_id = l.id 
                     WHERE oi.order_id = %s
                 """, (order_id_input,))
@@ -224,14 +223,13 @@ def admin_dashboard():
         cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
         
-        # Updated query to handle both regular tests and packages correctly in admin view
+        # FIX: Simplified database query to prevent column mismatch errors
         cursor.execute("""
             SELECT oi.order_id, 
-                   COALESCE(t.name, p.title, 'Special Package') as test_name, 
+                   COALESCE(t.name, 'Special Health Package') as test_name, 
                    l.name as lab_name, oi.price 
             FROM order_items oi 
             LEFT JOIN tests t ON oi.test_id = t.id 
-            LEFT JOIN packages p ON oi.test_id = p.id
             JOIN labs l ON oi.lab_id = l.id
         """)
         db_items = cursor.fetchall()
@@ -417,7 +415,6 @@ def place_order():
             
         order_id = cursor.fetchone()[0]
         
-        # --- THE FIX: We force the ID to act like text (str) before trying to clean it up ---
         for item in cart: 
             clean_id = str(item['id']).replace('PKG_','')
             cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price) VALUES (%s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice']))
