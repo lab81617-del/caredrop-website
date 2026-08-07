@@ -31,11 +31,11 @@
         <div class="card">
             <h2 style="margin-top: 0; font-size: 18px;">1. Order Summary</h2>
             <div id="checkoutItems"></div>
-            <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; margin-top: 20px; color: #0D9488;">
+            <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; margin-top: 20px; color: #0D9488;" id="totalContainer">
                 <span>Total Amount:</span>
                 <span id="checkoutTotal">₹0</span>
             </div>
-            <p style="font-size: 13px; color: #64748B; text-align: right;">Pay via Cash/UPI on collection.</p>
+            <p style="font-size: 13px; color: #64748B; text-align: right;" id="paymentNote">Pay via Cash/UPI on collection.</p>
         </div>
 
         <div class="card">
@@ -94,8 +94,8 @@
                     <input type="text" id="address" placeholder="House No, Area, Landmark" required>
                 </div>
                 
-                <div class="input-group" style="margin-bottom: 30px; background: #F8FAFC; padding: 15px; border-radius: 8px; border: 1px dashed #CBD5E1;">
-                    <label>Upload Doctor's Prescription (Optional)</label>
+                <div class="input-group" style="margin-bottom: 30px; background: #F8FAFC; padding: 15px; border-radius: 8px; border: 1px dashed #CBD5E1;" id="uploadBox">
+                    <label>Upload Doctor's Prescription <span id="uploadRequiredText">(Optional)</span></label>
                     <input type="file" id="prescription" accept="image/*,.pdf" style="border: none; padding: 0;">
                 </div>
 
@@ -108,12 +108,29 @@
         let isEmailVerified = false;
         let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
         let total = 0;
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDirectUpload = urlParams.get('direct');
 
-        // Render Cart
+        // Render Cart or Prescription Banner
         const container = document.getElementById('checkoutItems');
         if(cart.length === 0) {
-            container.innerHTML = '<p style="color:#64748B;">Your cart is empty.</p>';
-            document.getElementById('submitBtn').disabled = true;
+            if (isDirectUpload) {
+                container.innerHTML = '<div style="background: #F0FDF4; color: #166534; padding: 15px; border-radius: 8px; font-weight: 700; border: 1px dashed #22C55E; text-align: center;">📄 Direct Prescription Upload Mode<br><span style="font-size: 13px; font-weight: 600;">Please attach your prescription below. Our support team will contact you shortly to confirm total costs and timings.</span></div>';
+                document.getElementById('totalContainer').style.display = 'none';
+                document.getElementById('paymentNote').style.display = 'none';
+                
+                // Highlight the upload box
+                const uploadBox = document.getElementById('uploadBox');
+                uploadBox.style.background = '#FEF2F2';
+                uploadBox.style.borderColor = '#EF4444';
+                document.getElementById('uploadRequiredText').innerText = "(REQUIRED)";
+                document.getElementById('uploadRequiredText').style.color = '#EF4444';
+                
+            } else {
+                container.innerHTML = '<p style="color:#64748B;">Your cart is empty. Go back to the catalog to add tests, or upload a prescription below.</p>';
+                document.getElementById('totalContainer').style.display = 'none';
+            }
         } else {
             cart.forEach(item => {
                 total += parseFloat(item.currentPrice);
@@ -177,7 +194,11 @@
             e.preventDefault();
             
             if(!isEmailVerified) return alert("You must verify your email with an OTP before booking.");
-            if(cart.length === 0) return alert("Cart is empty");
+            
+            const fileInput = document.getElementById('prescription');
+            if(cart.length === 0 && fileInput.files.length === 0) {
+                return alert("Please select tests from the catalog or upload a prescription file.");
+            }
 
             document.getElementById('submitBtn').innerText = "Processing...";
             document.getElementById('submitBtn').disabled = true;
@@ -193,7 +214,6 @@
             formData.append('total', total);
             formData.append('cart', JSON.stringify(cart));
             
-            const fileInput = document.getElementById('prescription');
             if(fileInput.files.length > 0) {
                 formData.append('prescription', fileInput.files[0]);
             }
@@ -201,7 +221,7 @@
             try {
                 const response = await fetch('/api/place-order', {
                     method: 'POST',
-                    body: formData // No Content-Type header needed for FormData
+                    body: formData
                 });
                 const result = await response.json();
                 
