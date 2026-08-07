@@ -61,11 +61,12 @@
                 <div class="pkg-title">{{ pkg.title }}</div>
                 <div class="pkg-price">₹{{ pkg.discounted_price }} <span class="pkg-old">₹{{ pkg.original_price }}</span></div>
                 <ul class="pkg-features">
-                    {% for feature in pkg.features.split(',') %}
+                    {% for feature in (pkg.features or '').split(',') %}
+                        {% if feature.strip() %}
                         <li>✅ {{ feature.strip() }}</li>
+                        {% endif %}
                     {% endfor %}
                 </ul>
-                <!-- THIS BUTTON NOW ADDS DIRECTLY TO CART -->
                 <button class="pkg-btn" onclick="bookPackage({{ pkg.id }}, '{{ pkg.title }}', {{ pkg.discounted_price }})">Book This Package</button>
             </div>
             {% else %}
@@ -79,21 +80,17 @@
     <script>
         function bookPackage(pkgId, title, price) {
             let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
-            
-            // Check if package is already in cart to prevent duplicates
             const exists = cart.find(item => item.id === 'PKG_' + pkgId);
             if (!exists) {
                 cart.push({
                     id: 'PKG_' + pkgId,
                     name: title,
-                    selectedLabId: 1, // Requires a default lab ID for the database
+                    selectedLabId: 1, 
                     labName: "CareDrop Special Package",
                     currentPrice: price
                 });
                 sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
             }
-            
-            // Redirect straight to checkout
             window.location.href = '/book';
         }
     </script>
