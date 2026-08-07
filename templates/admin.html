@@ -73,7 +73,11 @@
                             <td style="font-weight: 800; color: #0D9488; font-size: 18px;">#{{ order.id }}</td>
                             <td>
                                 <div style="font-weight: 700;">{{ order.patient_name }}</div>
-                                <div style="font-size: 13px; color: #64748B;">📞 {{ order.phone }}</div>
+                                <div style="font-size: 13px; color: #64748B; margin-bottom: 5px;">📞 {{ order.phone }}</div>
+                                <!-- PRESCRIPTION BUTTON -->
+                                {% if order.has_prescription %}
+                                    <a href="/admin/download-prescription/{{ order.id }}" style="background: #E0F2FE; color: #0284C7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-block;">📄 View Prescription</a>
+                                {% endif %}
                             </td>
                             <td>
                                 <div style="font-weight: 700;">{{ order.collection_date }}</div>
@@ -86,7 +90,6 @@
                             </td>
                             <td style="font-weight: 800; font-size: 18px;">₹{{ order.total_amount }}</td>
                             <td>
-                                <!-- AUTO-SAVING STATUS DROPDOWN -->
                                 <form action="/admin/update-order" method="POST" style="margin:0; margin-bottom:10px;">
                                     <input type="hidden" name="order_id" value="{{ order.id }}">
                                     <select name="status" onchange="this.form.submit()" style="padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1; outline: none; font-weight: 700; font-size: 13px; cursor:pointer; width: 100%;">
@@ -97,7 +100,6 @@
                                     </select>
                                 </form>
                                 
-                                <!-- PDF UPLOADER -->
                                 {% if order.has_report %}
                                     <span style="display:block; background:#DCFCE7; color:#166534; padding:6px; border-radius:6px; font-size:12px; font-weight:700; text-align:center;">✅ Report Uploaded</span>
                                 {% else %}
@@ -239,7 +241,7 @@
             </div>
         </div>
         
-        <!-- MANAGE PACKAGES TAB -->
+       <!-- MANAGE PACKAGES TAB -->
         <div id="packages" class="tab-content">
             <div class="card form-container">
                 <div class="form-title">🎁 Add New Special Health Package</div>
@@ -308,9 +310,8 @@
                         {% endfor %}
                     </tbody>
                 </table>
-           </div>
+            </div>
         </div>
-
     </div>
 
     <script>
