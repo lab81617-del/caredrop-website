@@ -23,17 +23,17 @@
         .section h2 { font-size: 28px; font-weight: 800; margin-bottom: 30px; color: #1E293B; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
         
-        .pkg-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-top: 4px solid #0D9488; position: relative; transition: 0.2s; }
+        .pkg-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-top: 4px solid #0D9488; position: relative; transition: 0.2s; display: flex; flex-direction: column; }
         .pkg-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.06); }
         .pkg-badge { position: absolute; top: -12px; right: 20px; background: #EC4899; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; }
         .pkg-title { font-size: 20px; font-weight: 800; color: #0D9488; margin-bottom: 10px; }
         .pkg-price { font-size: 28px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .pkg-old { font-size: 16px; color: #94A3B8; text-decoration: line-through; font-weight: 600; }
         
-        .pkg-features { list-style: none; padding: 0; margin: 0 0 25px 0; }
+        .pkg-features { list-style: none; padding: 0; margin: 0 0 25px 0; flex-grow: 1; }
         .pkg-features li { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; font-weight: 600; color: #475569; }
         
-        .pkg-btn { display: block; text-align: center; background: #F1F5F9; color: #0F172A; padding: 14px; border-radius: 8px; font-weight: 700; text-decoration: none; transition: 0.2s; }
+        .pkg-btn { display: block; width: 100%; text-align: center; background: #F1F5F9; color: #0F172A; padding: 14px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 16px; transition: 0.2s; margin-top: auto; }
         .pkg-btn:hover { background: #0D9488; color: white; }
     </style>
 </head>
@@ -65,7 +65,8 @@
                         <li>✅ {{ feature.strip() }}</li>
                     {% endfor %}
                 </ul>
-                <a href="/tests" class="pkg-btn">Build This Package & Book</a>
+                <!-- THIS BUTTON NOW ADDS DIRECTLY TO CART -->
+                <button class="pkg-btn" onclick="bookPackage({{ pkg.id }}, '{{ pkg.title }}', {{ pkg.discounted_price }})">Book This Package</button>
             </div>
             {% else %}
             <div style="background: white; padding: 40px; border-radius: 16px; text-align: center; color: #64748B; font-weight: 600;">
@@ -74,5 +75,27 @@
             {% endfor %}
         </div>
     </div>
+
+    <script>
+        function bookPackage(pkgId, title, price) {
+            let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
+            
+            // Check if package is already in cart to prevent duplicates
+            const exists = cart.find(item => item.id === 'PKG_' + pkgId);
+            if (!exists) {
+                cart.push({
+                    id: 'PKG_' + pkgId,
+                    name: title,
+                    selectedLabId: 1, // Requires a default lab ID for the database
+                    labName: "CareDrop Special Package",
+                    currentPrice: price
+                });
+                sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
+            }
+            
+            // Redirect straight to checkout
+            window.location.href = '/book';
+        }
+    </script>
 </body>
 </html>
