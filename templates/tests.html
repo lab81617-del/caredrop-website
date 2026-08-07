@@ -37,10 +37,10 @@
         .test-meta { font-size: 13px; color: #64748B; font-weight: 600; display: flex; gap: 10px; align-items: center; }
         .test-fasting { background: #FFF7ED; color: #B45309; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
         
-        .lab-options { display: flex; flex-direction: column; gap: 10px; }
-        .lab-option-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #F8FAFC; border-radius: 8px; border: 1px solid #F1F5F9; }
+        .lab-options { display: flex; flex-direction: column; gap: 8px; }
+        .lab-option-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #F8FAFC; border-radius: 8px; border: 1px solid #F1F5F9; }
         .lab-option-name { font-size: 14px; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 8px; }
-        .btn-add { background: #0D9488; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .btn-add { background: #0D9488; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; transition: 0.2s; white-space: nowrap; }
         .btn-add:hover { background: #0F766E; }
 
         /* PACKAGE STYLES */
@@ -68,9 +68,11 @@
         .modal-btn-secondary { background: #F1F5F9; color: #64748B; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 14px; }
 
         @media (max-width: 600px) {
-            .lab-option-row { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .btn-add { width: 100%; }
             .test-header { flex-direction: column; }
+            /* THIS FIXES THE MOBILE BLOAT: Keeps elements on one row, just shrinks the text/padding */
+            .lab-option-row { padding: 8px 12px; }
+            .lab-option-name { font-size: 13px; }
+            .btn-add { padding: 8px 12px; font-size: 12px; }
         }
     </style>
 </head>
