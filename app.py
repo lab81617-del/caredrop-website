@@ -1,11 +1,10 @@
 import os
 import threading
-import smtplib
 import json
 import io
 import random
 import traceback
-from email.message import EmailMessage
+import urllib.request
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, send_file
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -40,21 +39,33 @@ def auto_migrate_db():
     except Exception as e: print("Auto-Migrate Error:", e)
     finally: release_db(conn)
 
-def send_email_async(recipient, subject, body):
-    gmail_pwd = os.environ.get("GMAIL_APP_PASSWORD")
-    if not gmail_pwd: return
-    def email_job():
-        try:
-            msg = EmailMessage()
-            msg['Subject'], msg['From'], msg['To'] = subject, "ihcdiagnostics.ynr@gmail.com", recipient
-            msg.set_content(body)
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-                server.login("ihcdiagnostics.ynr@gmail.com", gmail_pwd)
-                server.send_message(msg)
-        except Exception as e: print(e)
-    threading.Thread(target=email_job).start()
+# --- THE BREVO API: THIS SNEAKS PAST RENDER'S FIREWALL ---
+def send_email_api(recipient, subject, text_body):
+    api_key = os.environ.get("BREVO_API_KEY")
+    if not api_key: return "Missing BREVO_API_KEY"
+    
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json"
+    }
+    data = {
+        "sender": {"name": "CareDrop Diagnostics", "email": "ihcdiagnostics.ynr@gmail.com"},
+        "to": [{"email": recipient}],
+        "subject": subject,
+        "textContent": text_body
+    }
+    try:
+        req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
+        urllib.request.urlopen(req)
+        return "Success"
+    except Exception as e:
+        return str(e)
 
-# --- NEW: LIVE DIAGNOSTIC OTP SENDER ---
+def send_email_async(recipient, subject, body):
+    threading.Thread(target=send_email_api, args=(recipient, subject, body)).start()
+
 @app.route('/api/send-otp', methods=['POST'])
 def send_otp():
     email = request.json.get('email', '').strip()
@@ -64,24 +75,14 @@ def send_otp():
     session[f'otp_{email}'] = otp
     msg = f"Your CareDrop Verification Code is: {otp}\n\nPlease use this 4-digit code to complete your request securely."
     
-    gmail_pwd = os.environ.get("GMAIL_APP_PASSWORD")
-    if not gmail_pwd:
-        return jsonify({"success": False, "message": "CRITICAL ERROR: GMAIL_APP_PASSWORD is missing in Render."})
+    if not os.environ.get("BREVO_API_KEY"):
+        return jsonify({"success": False, "message": "CRITICAL ERROR: BREVO_API_KEY is missing in Render Environment."})
         
-    try:
-        # Running directly (not async) so we can catch the exact error
-        em = EmailMessage()
-        em['Subject'] = f"CareDrop OTP: {otp}"
-        em['From'] = "ihcdiagnostics.ynr@gmail.com"
-        em['To'] = email
-        em.set_content(msg)
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login("ihcdiagnostics.ynr@gmail.com", gmail_pwd)
-            server.send_message(em)
+    result = send_email_api(email, f"CareDrop OTP: {otp}", msg)
+    if result == "Success":
         return jsonify({"success": True, "message": "OTP sent to your email."})
-    except Exception as e:
-        # THIS WILL PRINT THE EXACT ERROR ON YOUR SCREEN
-        return jsonify({"success": False, "message": f"EMAIL CRASHED: {str(e)}"})
+    else:
+        return jsonify({"success": False, "message": f"API CRASHED: {result}"})
 
 @app.route('/api/verify-otp', methods=['POST'])
 def verify_otp():
