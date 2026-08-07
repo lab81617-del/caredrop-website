@@ -156,7 +156,6 @@ def my_bookings():
             """, (email, order_id_input))
             orders = cursor.fetchall()
             if orders:
-                # FIX: Simplified database query to prevent column mismatch errors
                 cursor.execute("""
                     SELECT oi.order_id, 
                            COALESCE(t.name, 'Special Health Package') as test_name, 
@@ -222,8 +221,6 @@ def admin_dashboard():
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
-        
-        # FIX: Simplified database query to prevent column mismatch errors
         cursor.execute("""
             SELECT oi.order_id, 
                    COALESCE(t.name, 'Special Health Package') as test_name, 
@@ -395,10 +392,14 @@ def place_order():
     if not session.get(f'verified_{email}'):
         return jsonify({"success": False, "message": "Email not verified. Please complete OTP verification."})
         
-    if not all([name, phone, patient_name, address, date, cart]): 
-        return jsonify({"success": False, "message": "Missing fields or cart empty."})
-    
     prescription = request.files.get('prescription')
+    
+    if not all([name, phone, patient_name, address, date]): 
+        return jsonify({"success": False, "message": "Missing required patient fields."})
+        
+    # NEW RULE: Cart can be empty IF a prescription is uploaded
+    if not cart and not (prescription and prescription.filename):
+        return jsonify({"success": False, "message": "Please add tests to your cart or upload a prescription."})
     
     conn = None
     try:
