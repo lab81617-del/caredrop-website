@@ -20,7 +20,7 @@
         .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.2); }
         
         .section { padding: 40px 5%; }
-        .section h2 { font-size: 28px; font-weight: 800; margin-bottom: 30px; color: #1E293B; }
+        .section h2 { font-size: 28px; font-weight: 800; margin-bottom: 20px; color: #1E293B; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
         
         .pkg-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-top: 4px solid #0D9488; position: relative; transition: 0.2s; display: flex; flex-direction: column; }
@@ -52,6 +52,13 @@
         <a href="/tests" class="btn-hero">🔍 Search Tests & Packages</a>
     </div>
 
+    <!-- DIRECT PRESCRIPTION UPLOAD BANNER -->
+    <div style="background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 2px dashed #22C55E;">
+        <h2 style="color: #166534; margin-top: 0; font-size: 24px; font-weight: 800;">Have a Doctor's Prescription?</h2>
+        <p style="color: #15803D; margin-bottom: 25px; font-weight: 600; font-size: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">Skip the manual search. Upload a photo of your prescription directly, and our support team will contact you to confirm the lowest cost and timing.</p>
+        <a href="/book?direct=true" class="btn-hero" style="background: #15803D; padding: 14px 28px;">📄 Upload Prescription Now</a>
+    </div>
+
     <div class="section">
         <h2>Special Health Packages</h2>
         <div class="grid">
@@ -74,6 +81,21 @@
                 No special packages are currently active. Click "Search Tests" to build your own!
             </div>
             {% endfor %}
+        </div>
+    </div>
+
+    <!-- OUR MOTIVE & COMPANY INFO -->
+    <div class="section" style="background: white; border-radius: 24px; margin: 20px 5% 60px 5%; padding: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+        <h2 style="color: #0F172A; text-align: center; margin-bottom: 30px;">The IHC Diagnostics Mission</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+            <div>
+                <h3 style="color: #0D9488; font-size: 20px; font-weight: 800;">Who We Are</h3>
+                <p style="color: #475569; line-height: 1.7; font-size: 15px;">Backed by the trusted expertise of <b>IHC Diagnostics</b>, CareDrop is Yamunanagar's premier healthcare aggregator. We partner strictly with highly-rated and NABL-accredited laboratories to ensure absolute accuracy and hygiene for every patient we serve.</p>
+            </div>
+            <div>
+                <h3 style="color: #0D9488; font-size: 20px; font-weight: 800;">Our Motive</h3>
+                <p style="color: #475569; line-height: 1.7; font-size: 15px;">We built CareDrop to eliminate the friction in modern healthcare. You shouldn't have to wait in crowded clinic lines or negotiate prices. Our platform provides absolute transparency, allowing you to compare lab costs, book certified phlebotomists to your doorstep, and receive your digital reports seamlessly.</p>
+            </div>
         </div>
     </div>
 
