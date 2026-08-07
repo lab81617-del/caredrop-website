@@ -10,17 +10,21 @@
         
         /* DESKTOP STYLES */
         .navbar { display: flex; justify-content: space-between; padding: 20px 5%; background: white; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: center; }
+        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: left; line-height: 1.1; }
         .nav-links { display: flex; gap: 20px; align-items: center; }
         .nav-links a { text-decoration: none; color: #475569; font-weight: 700; }
-        .btn-nav { background: #0F172A; color: white !important; padding: 10px 20px; border-radius: 8px; }
+        .btn-nav { background: #0F172A; color: white !important; padding: 10px 20px; border-radius: 8px; transition: 0.2s; }
         
         .hero { text-align: center; padding: 60px 20px; background: #E0F2FE; border-radius: 24px; margin: 20px 5%; }
-        .hero h1 { font-size: 42px; font-weight: 800; color: #0F766E; margin-bottom: 20px; }
+        .hero h1 { font-size: 42px; font-weight: 800; color: #0F766E; margin-bottom: 20px; line-height: 1.2; }
         .hero p { font-size: 18px; color: #475569; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.6; }
         .btn-hero { background: #0D9488; color: white; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: 700; text-decoration: none; display: inline-block; transition: 0.2s; border: none; cursor: pointer; }
         .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.2); }
         
+        .presc-banner { background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 2px dashed #22C55E; }
+        .presc-banner h2 { color: #166534; margin-top: 0; font-size: 24px; font-weight: 800; }
+        .presc-banner p { color: #15803D; margin-bottom: 25px; font-weight: 600; font-size: 16px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+
         .section { padding: 40px 5%; flex-grow: 1; }
         .section h2 { font-size: 28px; font-weight: 800; margin-bottom: 20px; color: #1E293B; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
@@ -39,22 +43,36 @@
         .pkg-btn { display: block; width: 100%; text-align: center; background: #F1F5F9; color: #0F172A; padding: 14px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 16px; transition: 0.2s; margin-top: auto; }
         .pkg-btn:hover { background: #0D9488; color: white; }
 
-        /* --- MOBILE SMART STYLES --- */
+        /* --- THE MOBILE APP FIX --- */
         @media (max-width: 768px) {
-            .navbar { flex-direction: column; gap: 15px; padding: 15px 5%; }
-            .nav-links { width: 100%; justify-content: center; gap: 15px; }
-            .hero { padding: 40px 15px; margin: 15px 5%; }
-            .hero h1 { font-size: 32px; }
-            .hero p { font-size: 15px; margin-bottom: 20px; }
+            /* Keeps logo and buttons on the same line, just smaller */
+            .navbar { padding: 15px; flex-direction: row; }
+            .logo { font-size: 20px; }
+            .logo span { font-size: 9px; }
+            .nav-links { gap: 12px; }
+            .nav-links a { font-size: 14px; }
+            .btn-nav { padding: 8px 14px; font-size: 14px; }
+            
+            /* Shrinks hero text significantly so it doesn't look clumsy */
+            .hero { padding: 35px 15px; margin: 15px 5%; border-radius: 16px; }
+            .hero h1 { font-size: 26px; margin-bottom: 15px; line-height: 1.3; }
+            .hero p { font-size: 14px; margin-bottom: 20px; }
             .btn-hero { width: 100%; box-sizing: border-box; font-size: 16px; padding: 14px; }
-            .section h2 { font-size: 24px; text-align: center; }
+            
+            /* Shrinks prescription box */
+            .presc-banner { padding: 25px 15px; margin: 0 5%; border-radius: 16px; }
+            .presc-banner h2 { font-size: 20px; margin-bottom: 10px; }
+            .presc-banner p { font-size: 14px; margin-bottom: 15px; }
+
+            .section h2 { font-size: 22px; text-align: center; }
             .motive-grid { grid-template-columns: 1fr !important; gap: 30px !important; text-align: center; }
+            .pkg-card { padding: 20px; }
         }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <a href="/" class="logo">CareDrop <span style="font-size: 11px; color:#64748B; display:block; letter-spacing:1px;">BY IHC DIAGNOSTICS</span></a>
+        <a href="/" class="logo">CareDrop<br><span style="font-size: 10px; color:#64748B; letter-spacing:1px; line-height: 1;">BY IHC DIAGNOSTICS</span></a>
         <div class="nav-links">
             <a href="/my-bookings">My Bookings</a>
             <a href="/tests" class="btn-nav">Book Test</a>
@@ -68,9 +86,9 @@
     </div>
 
     <!-- DIRECT PRESCRIPTION UPLOAD BANNER -->
-    <div style="background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 2px dashed #22C55E;">
-        <h2 style="color: #166534; margin-top: 0; font-size: 24px; font-weight: 800;">Have a Doctor's Prescription?</h2>
-        <p style="color: #15803D; margin-bottom: 25px; font-weight: 600; font-size: 15px; max-width: 600px; margin-left: auto; margin-right: auto;">Skip the manual search. Upload a photo of your prescription directly, and our support team will contact you to confirm the lowest cost and timing.</p>
+    <div class="presc-banner">
+        <h2>Have a Doctor's Prescription?</h2>
+        <p>Skip the manual search. Upload a photo of your prescription directly, and our support team will contact you to confirm the lowest cost and timing.</p>
         <button onclick="directPrescription()" class="btn-hero" style="background: #15803D;">📄 Upload Prescription Now</button>
     </div>
 
@@ -117,7 +135,7 @@
         </div>
     </div>
 
-    <!-- MOBILE FRIENDLY CUSTOMER SUPPORT FOOTER (UPDATED WITH REAL INFO) -->
+    <!-- MOBILE FRIENDLY CUSTOMER SUPPORT FOOTER -->
     <footer style="background: #0F172A; color: white; padding: 40px 5%; margin-top: auto; text-align: center;">
         <h3 style="color: #0D9488; margin-top: 0; font-size: 22px; font-weight: 800; margin-bottom: 20px;">CareDrop <span style="font-size: 14px; font-weight: 400; color: #94A3B8; letter-spacing: 1px; display: block; margin-top: 5px;">BY IHC DIAGNOSTICS</span></h3>
         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; color: #CBD5E1; font-size: 15px; max-width: 400px; margin-left: auto; margin-right: auto; text-align: left; background: #1E293B; padding: 20px; border-radius: 12px;">
