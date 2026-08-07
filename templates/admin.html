@@ -74,7 +74,6 @@
                             <td>
                                 <div style="font-weight: 700;">{{ order.patient_name }}</div>
                                 <div style="font-size: 13px; color: #64748B; margin-bottom: 5px;">📞 {{ order.phone }}</div>
-                                <!-- PRESCRIPTION BUTTON -->
                                 {% if order.has_prescription %}
                                     <a href="/admin/download-prescription/{{ order.id }}" style="background: #E0F2FE; color: #0284C7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-block;">📄 View Prescription</a>
                                 {% endif %}
@@ -209,7 +208,18 @@
             </div>
 
             <div class="card">
-                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0;">Current Catalog & Prices</div>
+                <div class="form-title" style="padding: 25px 25px 0 25px; border:none; margin:0; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Current Catalog & Prices</span>
+                    
+                    <!-- THE NEW LAB FILTER DROPDOWN -->
+                    <select id="catalogLabFilter" onchange="filterCatalog()" style="padding: 8px 15px; border-radius: 8px; border: 1px solid #CBD5E1; font-weight: 700; outline: none; cursor: pointer;">
+                        <option value="all">View All Labs</option>
+                        {% for lab in active_labs %}
+                        <option value="{{ lab.name|lower }}">{{ lab.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <table>
                     <thead>
                         <tr>
@@ -220,9 +230,9 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="catalogTableBody">
                         {% for item in inventory %}
-                        <tr>
+                        <tr class="catalog-row" data-lab="{{ item.lab_name|lower }}">
                             <td style="font-weight: 700;">{{ item.test_name }}</td>
                             <td style="font-size: 13px; color: #64748B;">{{ item.category_name }}</td>
                             <td><span class="badge">{{ item.lab_name }}</span></td>
@@ -241,7 +251,7 @@
             </div>
         </div>
         
-       <!-- MANAGE PACKAGES TAB -->
+     <!-- MANAGE PACKAGES TAB -->
         <div id="packages" class="tab-content">
             <div class="card form-container">
                 <div class="form-title">🎁 Add New Special Health Package</div>
@@ -312,9 +322,11 @@
                 </table>
             </div>
         </div>
+
     </div>
 
     <script>
+        // TAB SWITCHING LOGIC
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -325,6 +337,21 @@
             if(tabId === 'packages') document.getElementById('packagesTabBtn').classList.add('active');
             
             localStorage.setItem('caredrop_admin_tab', tabId);
+        }
+
+        // NEW: LIVE CATALOG FILTER LOGIC
+        function filterCatalog() {
+            const selectedLab = document.getElementById('catalogLabFilter').value;
+            const rows = document.querySelectorAll('.catalog-row');
+            
+            rows.forEach(row => {
+                const rowLab = row.getAttribute('data-lab');
+                if (selectedLab === 'all' || rowLab === selectedLab) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
 
         window.onload = () => {
