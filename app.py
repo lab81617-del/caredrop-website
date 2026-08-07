@@ -30,11 +30,10 @@ def auto_migrate_db():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        # Clean up previous iteration tables
-        try: cursor.execute("DROP TABLE smart_packages CASCADE")
-        except: pass
-        try: cursor.execute("DROP TABLE packages CASCADE")
-        except: pass
+        
+        # SAFELY clean up previous iteration tables without breaking the transaction
+        cursor.execute("DROP TABLE IF EXISTS smart_packages CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS packages CASCADE")
         
         # 1. CORE PACKAGES TABLE
         cursor.execute("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
@@ -48,8 +47,11 @@ def auto_migrate_db():
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
         conn.commit()
-    except Exception as e: print("Auto-Migrate Error:", e)
-    finally: release_db(conn)
+    except Exception as e: 
+        print("Auto-Migrate Error:", e)
+        if conn: conn.rollback()
+    finally: 
+        release_db(conn)
 
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
