@@ -35,6 +35,7 @@ def auto_migrate_db():
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
+        cursor.execute("ALTER TABLE packages ADD COLUMN IF NOT EXISTS lab_name VARCHAR(255) DEFAULT 'CareDrop Verified'")
         conn.commit()
     except Exception as e: print("Auto-Migrate Error:", e)
     finally: release_db(conn)
@@ -360,7 +361,8 @@ def add_package():
         conn = None
         try:
             conn = get_db(); cursor = conn.cursor()
-            cursor.execute("INSERT INTO packages (title, badge, discounted_price, original_price, features) VALUES (%s, %s, %s, %s, %s)", (request.form.get('title').strip(), request.form.get('badge').strip(), request.form.get('discounted_price'), request.form.get('original_price'), request.form.get('features').strip()))
+            # NOW SAVES THE SPECIFIC LAB NAME WITH THE PACKAGE
+            cursor.execute("INSERT INTO packages (title, badge, discounted_price, original_price, features, lab_name) VALUES (%s, %s, %s, %s, %s, %s)", (request.form.get('title').strip(), request.form.get('badge').strip(), request.form.get('discounted_price'), request.form.get('original_price'), request.form.get('features').strip(), request.form.get('lab_name', 'CareDrop Verified')))
             conn.commit()
         except: pass
         finally: release_db(conn)
@@ -397,7 +399,6 @@ def place_order():
     if not all([name, phone, patient_name, address, date]): 
         return jsonify({"success": False, "message": "Missing required patient fields."})
         
-    # NEW RULE: Cart can be empty IF a prescription is uploaded
     if not cart and not (prescription and prescription.filename):
         return jsonify({"success": False, "message": "Please add tests to your cart or upload a prescription."})
     
