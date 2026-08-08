@@ -7,27 +7,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; }
-        input, select, textarea, button { font-family: inherit; }
+        * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important; }
+        body { background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; padding-bottom: 90px; }
+        input, select, textarea, button { background-color: #fff; border: 1px solid #d1d5db; }
         
         .container { max-width: 800px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; border: none; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0D9488; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid #E2E8F0; }
         
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .input-group label { display: block; font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #334155; }
-        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-weight: 600; }
+        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-weight: 600; color: #0F172A; }
         .input-group input:focus, .input-group select:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
         
         .otp-box { background: #F0FDF4; padding: 20px; border-radius: 12px; border: 1px solid #BBF7D0; margin-bottom: 20px; }
-        .btn-action { background: #0F172A; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
-        .btn-action:hover { background: #0D9488; }
-        .btn-otp { background: #0D9488; color: white; padding: 12px 18px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px; width: 100%; font-size: 14px; }
+        .btn-action { background: #0F172A !important; color: white !important; padding: 16px 24px; border: none !important; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn-action:hover { background: #0D9488 !important; }
+        .btn-otp { background: #0D9488 !important; color: white !important; padding: 12px 18px; border: none !important; border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px; width: 100%; font-size: 14px; }
         
-        .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px dashed #CBD5E1; }
+        .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px dashed #CBD5E1; text-transform: capitalize; }
         
-        .wa-float { position: fixed; bottom: 20px; left: 20px; background: #25D366; color: white; padding: 14px 24px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 99; transition: 0.2s; }
+        /* CUSTOM FILE UPLOAD UI */
+        .custom-file-upload { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: #E0F2FE; color: #0284C7; border: 1px dashed #7DD3FC; padding: 16px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 15px; width: 100%; box-sizing: border-box; transition: 0.2s; text-align: center; }
+        .custom-file-upload:hover { background: #BAE6FD; }
+        input[type="file"] { display: none; }
+        
+        .wa-float { position: fixed; bottom: 20px; left: 20px; background: #25D366; color: white !important; padding: 14px 24px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 99; transition: 0.2s; border: none !important; }
 
         @media (max-width: 600px) { 
             .form-grid { grid-template-columns: 1fr; } 
@@ -39,7 +45,7 @@
     <div class="container">
         <div class="header">
             <h1>Secure Checkout</h1>
-            <a href="/tests" style="text-decoration: none; color: #64748B; font-weight: 800; font-size: 14px;">&larr; Back to Catalog</a>
+            <a href="/tests" style="text-decoration: none; color: #64748B; font-weight: 800; font-size: 14px; border: none !important; background: transparent;">&larr; Back to Catalog</a>
         </div>
 
         <div class="card">
@@ -66,7 +72,7 @@
                         <label>Enter 4-Digit Code from Email</label>
                         <input type="text" id="otpCode" placeholder="1234">
                     </div>
-                    <button type="button" class="btn-otp" style="background: #0F172A;" onclick="verifyOTP()">Verify Email</button>
+                    <button type="button" class="btn-otp" style="background: #0F172A !important;" onclick="verifyOTP()">Verify Email</button>
                 </div>
             </div>
             <div id="emailVerifiedMsg" style="display: none; color: #166534; font-weight: 800; background: #DCFCE7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #86EFAC;">
@@ -87,7 +93,7 @@
                 </div>
 
                 <!-- DYNAMIC PATIENT TOGGLE -->
-                <div class="input-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #F8FAFC; padding: 10px 15px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                <div class="input-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #F8FAFC; padding: 12px 15px; border-radius: 8px; border: 1px solid #E2E8F0;">
                     <input type="checkbox" id="someoneElse" style="width: 18px; height: 18px; margin: 0; accent-color: #0D9488;" onchange="togglePatient()">
                     <label style="margin: 0; cursor: pointer;" for="someoneElse">I am booking this for someone else.</label>
                 </div>
@@ -95,6 +101,23 @@
                 <div class="input-group" id="patientNameGroup" style="display: none; margin-bottom: 20px;">
                     <label>Patient's Full Name</label>
                     <input type="text" id="patientName">
+                </div>
+
+                <!-- REQUIRED LAB FIELDS: AGE & GENDER -->
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Patient Age (Years)</label>
+                        <input type="number" id="age" min="1" max="120" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Patient Gender</label>
+                        <select id="gender" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-grid">
@@ -117,9 +140,12 @@
                     <input type="text" id="address" placeholder="House No, Area, Landmark" required>
                 </div>
                 
-                <div class="input-group" style="margin-bottom: 30px; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 2px dashed #CBD5E1;" id="uploadBox">
-                    <label style="font-size: 16px;">Upload Doctor's Prescription <span id="uploadRequiredText" style="color: #64748B; font-size: 13px;">(Optional)</span></label>
-                    <input type="file" id="prescription" accept="image/*,.pdf" style="border: none; padding: 0; background: transparent;">
+                <div class="input-group" style="margin-bottom: 30px; background: #F8FAFC; padding: 25px; border-radius: 12px; border: 1px solid #E2E8F0;" id="uploadBox">
+                    <label style="font-size: 16px; margin-bottom: 15px;">Upload Doctor's Prescription <span id="uploadRequiredText" style="color: #64748B; font-size: 13px;">(Optional)</span></label>
+                    <label for="prescription" class="custom-file-upload">
+                        <i data-lucide="file-up" style="width: 20px; height: 20px;"></i> <span id="fileName">Select PDF or Image</span>
+                    </label>
+                    <input type="file" id="prescription" accept="image/*,.pdf" onchange="updateFileName()">
                 </div>
 
                 <button type="submit" class="btn-action" id="submitBtn">Confirm Booking & Pay Later</button>
@@ -143,7 +169,7 @@
         const container = document.getElementById('checkoutItems');
         if(cart.length === 0) {
             if (isDirectUpload) {
-                container.innerHTML = '<div style="background: #FEF2F2; color: #DC2626; padding: 20px; border-radius: 8px; font-weight: 800; border: 2px dashed #EF4444; text-align: center; font-size: 16px;"><i data-lucide="file-warning" style="margin-bottom: 8px;"></i><br>Direct Prescription Upload Mode<br><span style="font-size: 14px; font-weight: 600; color: #B91C1C;">Please attach your prescription below. Our support team will contact you shortly to confirm total costs and timings.</span></div>';
+                container.innerHTML = '<div style="background: #FEF2F2; color: #DC2626; padding: 20px; border-radius: 8px; font-weight: 800; border: 2px dashed #EF4444; text-align: center; font-size: 16px; border: none !important;"><i data-lucide="file-warning" style="margin-bottom: 8px; width: 28px; height: 28px;"></i><br>Direct Prescription Upload Mode<br><span style="font-size: 14px; font-weight: 600; color: #B91C1C;">Please attach your prescription below. Our support team will contact you shortly to confirm total costs and timings.</span></div>';
                 lucide.createIcons();
                 document.getElementById('totalContainer').style.display = 'none';
                 document.getElementById('paymentNote').style.display = 'none';
@@ -170,11 +196,25 @@
             document.getElementById('checkoutTotal').innerText = `₹${total}`;
         }
 
+        // Native Date Picker Config
         document.getElementById('date').min = new Date().toISOString().split("T")[0];
 
         function togglePatient() {
             const isSomeoneElse = document.getElementById('someoneElse').checked;
             document.getElementById('patientNameGroup').style.display = isSomeoneElse ? 'block' : 'none';
+        }
+
+        function updateFileName() {
+            const fileInput = document.getElementById('prescription');
+            const fileNameSpan = document.getElementById('fileName');
+            if (fileInput.files.length > 0) {
+                fileNameSpan.innerText = fileInput.files[0].name;
+                document.querySelector('.custom-file-upload').style.background = '#F0FDF4';
+                document.querySelector('.custom-file-upload').style.borderColor = '#22C55E';
+                document.querySelector('.custom-file-upload').style.color = '#166534';
+            } else {
+                fileNameSpan.innerText = "Select PDF or Image";
+            }
         }
 
         function sendOTP() {
@@ -226,6 +266,8 @@
             formData.append('phone', document.getElementById('phone').value);
             formData.append('email', document.getElementById('email').value);
             formData.append('patient_name', finalPatientName);
+            formData.append('age', document.getElementById('age').value);
+            formData.append('gender', document.getElementById('gender').value);
             formData.append('date', document.getElementById('date').value);
             formData.append('time_slot', document.getElementById('timeSlot').value);
             formData.append('address', document.getElementById('address').value);
