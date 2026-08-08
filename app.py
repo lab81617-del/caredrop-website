@@ -30,15 +30,24 @@ def auto_migrate_db():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("DROP TABLE IF EXISTS smart_packages CASCADE")
-        cursor.execute("DROP TABLE IF EXISTS packages CASCADE")
+        
+        # Enforce Unique Labs to prevent duplicates
+        try: cursor.execute("ALTER TABLE labs ADD CONSTRAINT labs_name_key UNIQUE (name)")
+        except: pass
+        
         cursor.execute("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
         cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
         cursor.execute("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
+        
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
+        
+        # New Patient Data Fields
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS age INTEGER")
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS gender VARCHAR(20)")
+        
         cursor.execute("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
         cursor.execute("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
         conn.commit()
@@ -62,8 +71,7 @@ def send_email_async(recipient, subject, body):
     threading.Thread(target=send_email_api, args=(recipient, subject, body)).start()
 
 @app.route('/ping')
-def ping():
-    return "OK", 200
+def ping(): return "OK", 200
 
 @app.route('/api/send-otp', methods=['POST'])
 def send_otp():
@@ -95,7 +103,6 @@ def home():
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
             SELECT hp.id, hp.title, hp.price as original_price, l.id as lab_id, l.name as lab_name,
-                   COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
                    string_agg(t.name, ', ') as features,
                    so.id as offer_id, so.discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
                    ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) as discounted_price
@@ -156,8 +163,7 @@ def my_bookings():
         conn = None
         try:
             conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-            # Fetch all orders for this email, latest first
-            cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s ORDER BY o.id DESC", (email,))
+            cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s ORDER BY o.id DESC", (email,))
             orders = cursor.fetchall()
             if orders:
                 for order in orders:
@@ -205,7 +211,7 @@ def admin_login():
     if request.method == 'POST':
         if request.form.get('password') == ADMIN_PASSWORD: session['admin_logged_in'] = True; return redirect(url_for('admin_dashboard'))
         else: error = "Access Denied."
-    return f'<html><body style="background:#F1F5F9; display:flex; justify-content:center; align-items:center; height:100vh;"><div style="background:white; padding:40px; border-radius:12px; text-align:center;"><form method="POST"><input type="password" name="password" placeholder="Master Password" required style="padding:14px; margin-bottom:15px; width:100%; font-family:inherit;"><button type="submit" style="width:100%; background:#0F172A; color:white; padding:14px; border:none; border-radius:8px; font-weight:bold; font-family:inherit;">Login</button></form><div style="color:red;">{error if error else ""}</div></div></body></html>'
+    return f'<html><body style="background:#F1F5F9; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><div style="background:white; padding:40px; border-radius:12px; text-align:center;"><form method="POST"><input type="password" name="password" placeholder="Master Password" required style="padding:14px; margin-bottom:15px; width:100%; border:1px solid #ccc; border-radius:8px;"><button type="submit" style="width:100%; background:#0F172A; color:white; padding:14px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Login</button></form><div style="color:red; margin-top:10px;">{error if error else ""}</div></div></body></html>'
 
 @app.route('/admin')
 def admin_dashboard():
@@ -214,7 +220,7 @@ def admin_dashboard():
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
+        cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
         cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
         db_items = cursor.fetchall()
@@ -233,7 +239,6 @@ def admin_dashboard():
         inventory = cursor.fetchall()
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
-        
         cursor.execute("""
             SELECT hp.id, hp.title, hp.price as original_price, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
@@ -302,112 +307,100 @@ def admin_add_test():
     finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/delete-inventory/<int:test_id>/<int:lab_id>', methods=['POST'])
-def delete_inventory(test_id, lab_id):
+@app.route('/admin/add-lab', methods=['POST'])
+def add_lab():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute("DELETE FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
+        cursor.execute("INSERT INTO labs (name, is_active) VALUES (%s, TRUE) ON CONFLICT (name) DO NOTHING", (request.form.get('lab_name').strip(),))
         conn.commit()
     except: pass
     finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/add-lab', methods=['POST'])
-def add_lab():
-    if session.get('admin_logged_in') and request.form.get('lab_name').strip():
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            cursor.execute("INSERT INTO labs (name, is_active) VALUES (%s, TRUE)", (request.form.get('lab_name').strip(),))
-            conn.commit()
-        except: pass
-        finally: release_db(conn)
-    return redirect(url_for('admin_dashboard'))
-
 @app.route('/admin/toggle-lab/<int:lab_id>', methods=['POST'])
 def toggle_lab(lab_id):
-    if session.get('admin_logged_in'):
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            cursor.execute("UPDATE labs SET is_active = NOT is_active WHERE id = %s", (lab_id,))
-            conn.commit()
-        except: pass
-        finally: release_db(conn)
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("UPDATE labs SET is_active = NOT is_active WHERE id = %s", (lab_id,))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete-lab/<int:lab_id>', methods=['POST'])
 def delete_lab(lab_id):
-    if session.get('admin_logged_in'):
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            cursor.execute("DELETE FROM lab_test_pricing WHERE lab_id = %s", (lab_id,))
-            cursor.execute("DELETE FROM labs WHERE id = %s", (lab_id,))
-            conn.commit()
-        except: pass
-        finally: release_db(conn)
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM lab_test_pricing WHERE lab_id = %s", (lab_id,))
+        cursor.execute("DELETE FROM labs WHERE id = %s", (lab_id,))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add-health-package', methods=['POST'])
 def add_health_package():
-    if session.get('admin_logged_in'):
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            title = request.form.get('title').strip()
-            lab_id = request.form.get('lab_id')
-            price = request.form.get('price')
-            test_ids = request.form.getlist('test_ids')
-            cursor.execute("INSERT INTO health_packages (title, lab_id, price) VALUES (%s, %s, %s) RETURNING id", (title, lab_id, price))
-            pkg_id = cursor.fetchone()[0]
-            for tid in test_ids: cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
-            conn.commit()
-        except Exception as e: pass
-        finally: release_db(conn)
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        title = request.form.get('title').strip()
+        lab_id = request.form.get('lab_id')
+        price = request.form.get('price')
+        test_ids = request.form.getlist('test_ids')
+        cursor.execute("INSERT INTO health_packages (title, lab_id, price) VALUES (%s, %s, %s) RETURNING id", (title, lab_id, price))
+        pkg_id = cursor.fetchone()[0]
+        for tid in test_ids: cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
+        conn.commit()
+    except Exception as e: pass
+    finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete-health-package/<int:pkg_id>', methods=['POST'])
 def delete_health_package(pkg_id):
-    if session.get('admin_logged_in'):
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            cursor.execute("DELETE FROM health_packages WHERE id = %s", (pkg_id,))
-            conn.commit()
-        except: pass
-        finally: release_db(conn)
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM health_packages WHERE id = %s", (pkg_id,))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add-special-offer', methods=['POST'])
 def add_special_offer():
-    if session.get('admin_logged_in'):
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            pkg_id = request.form.get('package_id')
-            discount = request.form.get('discount_percent')
-            badge = request.form.get('badge').strip()
-            end_date = request.form.get('end_date')
-            cursor.execute("DELETE FROM special_offers WHERE package_id = %s", (pkg_id,))
-            cursor.execute("INSERT INTO special_offers (package_id, discount_percent, badge, end_date) VALUES (%s, %s, %s, %s)", (pkg_id, discount, badge, end_date))
-            conn.commit()
-        except Exception as e: pass
-        finally: release_db(conn)
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        pkg_id = request.form.get('package_id')
+        discount = request.form.get('discount_percent')
+        badge = request.form.get('badge').strip()
+        end_date = request.form.get('end_date')
+        cursor.execute("DELETE FROM special_offers WHERE package_id = %s", (pkg_id,))
+        cursor.execute("INSERT INTO special_offers (package_id, discount_percent, badge, end_date) VALUES (%s, %s, %s, %s)", (pkg_id, discount, badge, end_date))
+        conn.commit()
+    except Exception as e: pass
+    finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete-offer/<int:offer_id>', methods=['POST'])
 def delete_offer(offer_id):
-    if session.get('admin_logged_in'):
-        conn = None
-        try:
-            conn = get_db(); cursor = conn.cursor()
-            cursor.execute("DELETE FROM special_offers WHERE id = %s", (offer_id,))
-            conn.commit()
-        except: pass
-        finally: release_db(conn)
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM special_offers WHERE id = %s", (offer_id,))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/api/place-order', methods=['POST'])
@@ -416,6 +409,8 @@ def place_order():
     phone = request.form.get('phone', '').strip()
     email = request.form.get('email', '').strip()
     patient_name = request.form.get('patient_name', '').strip()
+    age = request.form.get('age', '').strip()
+    gender = request.form.get('gender', '').strip()
     address = request.form.get('address', '').strip()
     date = request.form.get('date', '').strip()
     cart_json = request.form.get('cart', '[]')
@@ -426,7 +421,7 @@ def place_order():
     
     final_patient_name = patient_name if patient_name else name
     
-    if not all([name, phone, final_patient_name, address, date]): return jsonify({"success": False, "message": "Missing required patient fields."})
+    if not all([name, phone, final_patient_name, address, date, age, gender]): return jsonify({"success": False, "message": "Missing required patient fields."})
     if not cart and not (prescription and prescription.filename): return jsonify({"success": False, "message": "Please add tests to your cart or upload a prescription."})
     
     conn = None
@@ -435,11 +430,13 @@ def place_order():
         cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         user_id = user[0] if user else (cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email)) or cursor.fetchone()[0])
+        
         if prescription and prescription.filename:
             file_data = prescription.read()
-            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, final_patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
+            cursor.execute("INSERT INTO orders (user_id, patient_name, age, gender, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, final_patient_name, age, gender, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
         else:
-            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, final_patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
+            cursor.execute("INSERT INTO orders (user_id, patient_name, age, gender, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, final_patient_name, age, gender, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
+        
         order_id = cursor.fetchone()[0]
         for item in cart: 
             is_pkg = 'PKG_' in str(item['id'])
@@ -447,8 +444,8 @@ def place_order():
             item_type = 'package' if is_pkg else 'test'
             cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price, item_type) VALUES (%s, %s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice'], item_type))
         conn.commit()
-        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {final_patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
-        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {final_patient_name}\nAddress: {address}\nDate: {date}")
+        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {final_patient_name} ({age} {gender})\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
+        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {final_patient_name} ({age} {gender})\nAddress: {address}\nDate: {date}")
         return jsonify({"success": True, "order_id": order_id})
     except Exception as e: 
         if conn: conn.rollback()
