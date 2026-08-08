@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catalog | CareDrop</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; color: #0F172A; }
+        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; color: #0F172A; padding-bottom: 80px;}
+        input, select, textarea, button { font-family: inherit; }
+        
         .navbar { display: flex; justify-content: space-between; padding: 15px 5%; background: white; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .logo { font-size: 22px; font-weight: 800; color: #0D9488; text-decoration: none; line-height: 1.1; }
         .nav-links { display: flex; gap: 15px; align-items: center; }
@@ -19,13 +22,12 @@
         .search-box:focus { border-color: #0D9488; box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); }
 
         .catalog-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
-        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 14px 24px; border-radius: 10px; font-weight: 800; font-size: 15px; color: #64748B; cursor: pointer; transition: 0.2s; width: 100%; max-width: 250px; font-family: inherit; }
+        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 14px 24px; border-radius: 10px; font-weight: 800; font-size: 15px; color: #64748B; cursor: pointer; transition: 0.2s; width: 100%; max-width: 250px; }
         .tab-btn.active { background: #0F172A; color: white; border-color: #0F172A; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2); }
 
         .catalog-view { display: none; }
         .catalog-view.active { display: block; }
 
-        /* REFINED TEST CARD STYLES */
         .category-group { margin-bottom: 40px; }
         .category-title { font-size: 20px; font-weight: 800; color: #1E293B; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px; }
         
@@ -34,12 +36,13 @@
         .test-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 15px; }
         .test-name { font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 8px; }
         .test-meta { font-size: 14px; color: #64748B; font-weight: 700; display: flex; gap: 10px; align-items: center; }
-        .test-fasting { background: #FFF7ED; color: #B45309; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 800; }
+        .test-fasting { background: #FFF7ED; color: #B45309; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; }
         
         .lab-options { display: flex; flex-direction: column; gap: 10px; }
         .lab-option-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0; }
-        .lab-option-name { font-size: 14px; font-weight: 800; color: #334155; display: flex; align-items: center; gap: 8px; }
-        .btn-add { background: #0D9488; color: white; padding: 10px 18px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; transition: 0.2s; white-space: nowrap; font-family: inherit; }
+        .lab-option-name { font-size: 15px; font-weight: 800; color: #334155; display: flex; flex-direction: column; gap: 4px; }
+        .lab-badge-text { font-size: 11px; font-weight: 700; color: #0D9488; background: #CCFBF1; padding: 2px 6px; border-radius: 4px; display: inline-block; width: fit-content; }
+        .btn-add { background: #0D9488; color: white; padding: 10px 18px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; transition: 0.2s; white-space: nowrap; }
         .btn-add:hover { background: #0F766E; }
 
         /* ALL PACKAGES STYLES */
@@ -47,36 +50,37 @@
         .pkg-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #CBD5E1; position: relative; display: flex; flex-direction: column; transition: 0.2s; }
         .pkg-card:hover { border-color: #0D9488; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.1); }
         .pkg-title { font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 5px; }
-        .pkg-lab { font-size: 13px; font-weight: 800; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-block; padding: 6px 12px; border-radius: 6px; }
+        .pkg-lab { font-size: 13px; font-weight: 800; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; }
         .pkg-price { font-size: 26px; font-weight: 800; margin-bottom: 15px; color: #0D9488; display: flex; align-items: center; gap: 10px; }
         .pkg-old { font-size: 16px; color: #94A3B8; text-decoration: line-through; font-weight: 700; }
         .pkg-features { list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 14px; font-weight: 700; color: #475569; flex-grow: 1; }
         .pkg-features li { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .pkg-btn { width: 100%; background: #0F172A; color: white; padding: 14px; border-radius: 8px; font-weight: 800; border: none; cursor: pointer; margin-top: auto; font-size: 15px; font-family: inherit; transition: 0.2s; }
+        .pkg-btn { width: 100%; background: #0F172A; color: white; padding: 14px; border-radius: 8px; font-weight: 800; border: none; cursor: pointer; margin-top: auto; font-size: 15px; transition: 0.2s; }
         .pkg-btn:hover { background: #0D9488; }
 
-        /* FLOATING CART */
+        /* FLOATING CART & WA */
         .cart-float { position: fixed; bottom: 20px; right: 20px; background: #0D9488; color: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.4); font-weight: 800; display: flex; gap: 20px; align-items: center; z-index: 100; cursor: pointer; transition: 0.2s; font-size: 15px; }
         .cart-float:hover { transform: translateY(-3px); }
+        .wa-float { position: fixed; bottom: 20px; left: 20px; background: #25D366; color: white; padding: 14px 24px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 99; transition: 0.2s; }
 
-        /* THE STRICT VALUE RECOMMENDATION MODAL */
+        /* MODAL */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
         .modal-box { background: white; padding: 35px 30px; border-radius: 16px; width: 100%; max-width: 400px; text-align: center; position: relative; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-icon { font-size: 45px; margin-bottom: 10px; }
-        .modal-title { font-size: 24px; font-weight: 800; color: #0F766E; margin-bottom: 15px; margin-top: 0; }
+        .modal-title { font-size: 24px; font-weight: 800; color: #0F766E; margin-bottom: 15px; margin-top: 15px; }
         .modal-text { font-size: 15px; font-weight: 600; color: #475569; margin-bottom: 25px; line-height: 1.5; }
         .modal-features { background: #F0FDF4; padding: 20px; border-radius: 12px; font-size: 14px; font-weight: 800; color: #166534; margin-bottom: 25px; text-align: left; line-height: 1.6; }
-        .modal-btn-primary { background: #0D9488; color: white; padding: 16px 24px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; margin-bottom: 12px; font-family: inherit; }
-        .modal-btn-secondary { background: #F1F5F9; color: #64748B; padding: 14px 24px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%; font-size: 15px; font-family: inherit; }
+        .modal-btn-primary { background: #0D9488; color: white; padding: 16px 24px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; margin-bottom: 12px; }
+        .modal-btn-secondary { background: #F1F5F9; color: #64748B; padding: 14px 24px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%; font-size: 15px; }
 
         @media (max-width: 600px) {
             .test-header { flex-direction: column; }
             .lab-option-row { padding: 12px; }
-            .lab-option-name { font-size: 13px; }
+            .lab-option-name { font-size: 14px; }
             .btn-add { padding: 10px 16px; font-size: 13px; }
             .catalog-tabs { flex-direction: row; gap: 8px; }
             .tab-btn { padding: 12px 16px; font-size: 14px; }
+            .wa-float { font-size: 0; padding: 14px; }
         }
     </style>
 </head>
@@ -93,9 +97,8 @@
             <button id="btn-packages" class="tab-btn" onclick="switchCatalog('packages')">All Packages</button>
         </div>
 
-        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search for CBC, Thyroid, Sugar..." onkeyup="filterTests()">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search for CBC, Thyroid, Sugar..." onkeyup="filterTests()">
 
-        <!-- INDIVIDUAL TESTS VIEW -->
         <div id="view-tests" class="catalog-view active">
             {% set current_category = '' %}
             {% for test in tests %}
@@ -111,7 +114,7 @@
                         <div>
                             <div class="test-name">{{ test.name }}</div>
                             <div class="test-meta">
-                                {% if test.fasting_requirement != 'None' %} <span class="test-fasting">🍽️ {{ test.fasting_requirement }}</span> {% endif %}
+                                {% if test.fasting_requirement != 'None' %} <span class="test-fasting"><i data-lucide="coffee" style="width: 14px; height: 14px;"></i> {{ test.fasting_requirement }}</span> {% endif %}
                             </div>
                         </div>
                     </div>
@@ -125,9 +128,18 @@
                                 document.write('<span style="font-size:13px; color:#EF4444; font-weight:800;">Price not assigned yet</span>');
                             }
                             matches.forEach(m => {
+                                // Dynamic Lab Hierarchy Logic
+                                let badgeText = "★ 4.6 | Standard Partner";
+                                if(m.lab_name.toUpperCase().includes("BHARAT")) badgeText = "★ 4.9 | NABL Accredited";
+                                if(m.lab_name.toUpperCase().includes("HYPATHO")) badgeText = "★ 4.8 | Fast Reporting";
+                                if(m.lab_name.toUpperCase().includes("BHARGAV")) badgeText = "★ 4.7 | Verified Accuracy";
+                                
                                 document.write(`
                                     <div class="lab-option-row">
-                                        <div class="lab-option-name">🔬 ${m.lab_name}</div>
+                                        <div class="lab-option-name">
+                                            <span><i data-lucide="microscope" style="width: 14px; height: 14px; vertical-align:middle; color:#64748B;"></i> ${m.lab_name}</span>
+                                            <span class="lab-badge-text">${badgeText}</span>
+                                        </div>
                                         <button class="btn-add" onclick="triggerRecommendationEngine('${testId}', '${"{{ test.name }}"}', '${m.lab_id}', '${m.lab_name}', '${m.price}')">+ ₹${m.price} Add</button>
                                     </div>
                                 `);
@@ -139,20 +151,19 @@
             {% if tests|length > 0 %} </div> {% endif %}
         </div>
 
-        <!-- ALL PACKAGES VIEW -->
         <div id="view-packages" class="catalog-view">
             <div class="pkg-grid">
                 {% for pkg in raw_packages %}
                     {% if pkg.title %}
                     <div class="pkg-card">
                         <div class="pkg-title">{{ pkg.title }}</div>
-                        <div class="pkg-lab">🔬 By {{ pkg.lab_name }}</div>
+                        <div class="pkg-lab"><i data-lucide="microscope" style="width: 14px; height: 14px;"></i> By {{ pkg.lab_name }}</div>
                         <div class="pkg-price">₹{{ pkg.original_price if not pkg.offer_id else pkg.discounted_price }} 
                             {% if pkg.offer_id %}<span class="pkg-old">₹{{ pkg.original_price }}</span>{% endif %}
                         </div>
                         <ul class="pkg-features">
                             {% for feature in (pkg.features or '').split(',') %}
-                                {% if feature.strip() %}<li>✅ {{ feature.strip() }}</li>{% endif %}
+                                {% if feature.strip() %}<li><i data-lucide="check-circle-2" style="color: #166534; width: 16px; height: 16px;"></i> {{ feature.strip() }}</li>{% endif %}
                             {% endfor %}
                         </ul>
                         <button class="pkg-btn" onclick="forceAddToCart('PKG_{{ pkg.id }}', '{{ pkg.title }}', {{ pkg.lab_id }}, '{{ pkg.lab_name }}', {{ pkg.discounted_price if pkg.offer_id else pkg.original_price }})">Add Package to Cart</button>
@@ -163,13 +174,12 @@
                 {% endfor %}
             </div>
         </div>
-
     </div>
 
-    <!-- STRICT MATHEMATICAL UPSELL MODAL -->
+    <!-- MODAL -->
     <div id="upsellModal" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-icon">💡</div>
+            <i data-lucide="lightbulb" style="width: 48px; height: 48px; color: #EAB308; margin: 0 auto;"></i>
             <h3 class="modal-title">Smart Value Alert</h3>
             <p class="modal-text">You selected <b id="upsellTestName" style="color:#0F172A;"></b>. Our system found a full <b id="upsellPkgName" style="color: #0F172A;"></b> that includes your test and more, for the same or lower price:</p>
             
@@ -192,7 +202,13 @@
         <span style="background: white; color: #0D9488; padding: 6px 12px; border-radius: 8px;">Checkout &rarr;</span>
     </div>
 
+   <!-- WHATSAPP CTA -->
+    <a href="https://wa.me/919485978790?text=Hi%20CareDrop,%20I%20want%20to%20book%20a%20test" target="_blank" class="wa-float">
+        <i data-lucide="message-circle" style="width: 24px; height: 24px;"></i> <span>Book via WhatsApp</span>
+    </a>
+
     <script>
+        lucide.createIcons();
         let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
         let packagesData = {{ packages | safe }};
         let pendingTestForCart = null; 
@@ -202,29 +218,24 @@
         function switchCatalog(view) {
             document.querySelectorAll('.catalog-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
             document.getElementById('view-' + view).classList.add('active');
             document.getElementById('btn-' + view).classList.add('active');
-            
             document.getElementById('searchInput').style.display = (view === 'tests') ? 'block' : 'none';
         }
 
         function filterTests() {
             let input = document.getElementById('searchInput').value.toLowerCase();
             let cards = document.querySelectorAll('.test-card');
-            
             cards.forEach(card => {
                 let text = card.getAttribute('data-name');
                 card.style.display = text.includes(input) ? "flex" : "none";
             });
-            
             document.querySelectorAll('.category-group').forEach(group => {
                 let visibleCards = group.querySelectorAll('.test-card[style="display: flex;"]');
                 group.style.display = (input === '' || visibleCards.length > 0) ? "block" : "none";
             });
         }
 
-        // STRICT BUSINESS LOGIC: Only show if package price <= selected test price
         function triggerRecommendationEngine(testId, testName, labId, labName, price) {
             let matchedPkg = null;
             let numericTestId = parseInt(testId);
@@ -234,8 +245,6 @@
             for (let pkg of packagesData) {
                 if (pkg.test_ids && pkg.test_ids.includes(numericTestId) && pkg.lab_id === numericLabId) {
                     let pkgPrice = pkg.offer_id ? parseFloat(pkg.discounted_price) : parseFloat(pkg.original_price);
-                    
-                    // ONLY popup if the package is mathematically a better deal
                     if (pkgPrice <= testPrice) {
                         matchedPkg = pkg;
                         break;
@@ -245,9 +254,8 @@
 
             if (matchedPkg) {
                 pendingTestForCart = {id: testId, name: testName, selectedLabId: labId, labName: labName, currentPrice: price};
-                
                 let pkgFinalPrice = matchedPkg.offer_id ? matchedPkg.discounted_price : matchedPkg.original_price;
-
+                
                 document.getElementById('upsellTestName').innerText = testName;
                 document.getElementById('upsellPkgName').innerText = matchedPkg.title;
                 document.getElementById('upsellPrice').innerText = pkgFinalPrice;
@@ -256,8 +264,9 @@
                 document.getElementById('upsellPkgLabName').value = matchedPkg.lab_name;
                 document.getElementById('upsellPkgFinalPrice').value = pkgFinalPrice;
                 
-                let featureHtml = matchedPkg.features.split(',').map(f => `<div style="margin-bottom:6px;">✅ ${f.trim()}</div>`).join('');
+                let featureHtml = matchedPkg.features.split(',').map(f => `<div style="margin-bottom:8px; display:flex; align-items:center; gap:6px;"><i data-lucide="check-circle-2" style="width:14px; height:14px;"></i> ${f.trim()}</div>`).join('');
                 document.getElementById('upsellFeatures').innerHTML = featureHtml;
+                lucide.createIcons();
                 
                 document.getElementById('upsellModal').style.display = 'flex';
             } else {
@@ -291,7 +300,6 @@
                 cart.push({ id: id, name: name, selectedLabId: labId, labName: labName, currentPrice: price });
                 sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
                 updateCartUI();
-                
                 let floatBtn = document.getElementById('cartFloat');
                 floatBtn.style.transform = 'scale(1.1)';
                 setTimeout(() => floatBtn.style.transform = 'scale(1)', 200);
