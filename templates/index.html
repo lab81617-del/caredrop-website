@@ -7,22 +7,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; color: #0F172A; display: flex; flex-direction: column; min-height: 100vh; }
-        input, select, textarea, button { font-family: inherit; }
+        * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important; }
+        body { background: #F8FAFC; margin: 0; color: #0F172A; display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 90px; }
+        input, select, textarea, button { background-color: #fff; border: 1px solid #d1d5db; }
         
         .navbar { display: flex; justify-content: space-between; padding: 20px 5%; background: white; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: left; line-height: 1.1; }
+        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: left; line-height: 1.1; border: none !important; }
         .nav-links { display: flex; gap: 20px; align-items: center; }
-        .nav-links a { text-decoration: none; color: #475569; font-weight: 800; font-size: 15px; }
-        .btn-nav { background: #0F172A; color: white !important; padding: 12px 24px; border-radius: 8px; transition: 0.2s; }
+        .nav-links a { text-decoration: none; color: #475569; font-weight: 800; font-size: 15px; border: none !important; background: transparent; }
+        .btn-nav { background: #0F172A !important; color: white !important; padding: 12px 24px; border-radius: 8px; transition: 0.2s; border: none; }
         
         .hero { text-align: center; padding: 60px 20px; background: #E0F2FE; border-radius: 24px; margin: 20px 5%; position: relative; overflow: hidden; }
         .hero h1 { font-size: 42px; font-weight: 800; color: #0F766E; margin-bottom: 20px; line-height: 1.2; position: relative; z-index: 2; }
         .hero p { font-size: 18px; color: #475569; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.6; font-weight: 600; position: relative; z-index: 2; }
-        .btn-hero { background: #0D9488; color: white; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: 0.2s; border: none; cursor: pointer; position: relative; z-index: 2; }
+        .btn-hero { background: #0D9488 !important; color: white; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: 0.2s; border: none !important; cursor: pointer; position: relative; z-index: 2; }
         .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.2); }
         
-        .presc-banner { background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 2px dashed #22C55E; }
+        /* Fixed dashed border to solid premium border */
+        .presc-banner { background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 1px solid #d1fae5; }
         .presc-banner h2 { color: #166534; margin-top: 0; font-size: 24px; font-weight: 800; }
         .presc-banner p { color: #15803D; margin-bottom: 25px; font-weight: 700; font-size: 16px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
 
@@ -32,9 +34,9 @@
         
         .pkg-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 2px solid #0D9488; position: relative; transition: 0.2s; display: flex; flex-direction: column; }
         .pkg-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(13, 148, 136, 0.1); }
-        .pkg-badge { position: absolute; top: -12px; right: 20px; background: #EC4899; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); }
-        .pkg-title { font-size: 22px; font-weight: 800; color: #0D9488; margin-bottom: 5px; }
-        .pkg-lab { font-size: 14px; font-weight: 800; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; }
+        .pkg-badge { position: absolute; top: -12px; right: 20px; background: #EC4899; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); border: none; }
+        .pkg-title { font-size: 22px; font-weight: 800; color: #0D9488; margin-bottom: 5px; text-transform: capitalize; }
+        .pkg-lab { font-size: 14px; font-weight: 800; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; text-transform: capitalize; }
         .pkg-price { font-size: 32px; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; color: #0F172A; }
         .pkg-old { font-size: 18px; color: #94A3B8; text-decoration: line-through; font-weight: 700; }
         .pkg-timer { font-size: 13px; color: #DC2626; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 6px; }
@@ -42,18 +44,16 @@
         .pkg-features { list-style: none; padding: 0; margin: 0 0 25px 0; flex-grow: 1; }
         .pkg-features li { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 15px; font-weight: 700; color: #475569; }
         
-        .pkg-btn { display: block; width: 100%; text-align: center; background: #0F172A; color: white; padding: 16px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; font-size: 16px; transition: 0.2s; margin-top: auto; }
-        .pkg-btn:hover { background: #0D9488; }
+        .pkg-btn { display: block; width: 100%; text-align: center; background: #0F172A !important; color: white !important; padding: 16px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; font-size: 16px; transition: 0.2s; margin-top: auto; }
+        .pkg-btn:hover { background: #0D9488 !important; }
 
-        /* HOW IT WORKS EMPTY STATE */
         .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; text-align: center; }
         .how-step { background: white; padding: 40px 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; }
         .how-icon { background: #E0F2FE; color: #0284C7; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; }
         .how-step h3 { font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 10px; }
         .how-step p { font-size: 14px; color: #475569; font-weight: 600; line-height: 1.6; }
 
-        /* WHATSAPP CTA FLOATER */
-        .wa-float { position: fixed; bottom: 20px; left: 20px; background: #25D366; color: white; padding: 14px 24px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 100; transition: 0.2s; }
+        .wa-float { position: fixed; bottom: 20px; left: 20px; background: #25D366; color: white !important; padding: 14px 24px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 100; transition: 0.2s; border: none !important; }
         .wa-float:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5); }
 
         @media (max-width: 768px) {
@@ -71,9 +71,10 @@
             .presc-banner h2 { font-size: 20px; margin-bottom: 10px; }
             .presc-banner p { font-size: 14px; margin-bottom: 15px; }
             .section h2 { font-size: 24px; text-align: center; }
-            .motive-grid { grid-template-columns: 1fr !important; gap: 30px !important; text-align: center; }
+            /* Left-align text blocks on mobile for readability */
+            .motive-grid { grid-template-columns: 1fr !important; gap: 30px !important; text-align: left; }
             .pkg-card { padding: 25px; }
-            .wa-float { font-size: 0; padding: 14px; } /* Shows icon only on mobile to save space */
+            .wa-float { font-size: 0; padding: 14px; }
         }
     </style>
 </head>
@@ -95,7 +96,7 @@
     <div class="presc-banner">
         <h2>Have a Doctor's Prescription?</h2>
         <p>Skip the manual search. Upload a photo of your prescription directly, and our support team will contact you to confirm the lowest cost and timing.</p>
-        <button onclick="directPrescription()" class="btn-hero" style="background: #15803D;"><i data-lucide="file-text" style="width: 20px; height: 20px;"></i> Upload Prescription</button>
+        <button onclick="directPrescription()" class="btn-hero" style="background: #15803D !important;"><i data-lucide="file-text" style="width: 20px; height: 20px;"></i> Upload Prescription</button>
     </div>
 
     <div class="section">
@@ -126,7 +127,7 @@
                 {% endfor %}
             </div>
         {% else %}
-            <!-- EMPTY STATE: HOW IT WORKS -->
+            <!-- CONDITIONAL EMPTY STATE -->
             <h2 style="color: #0D9488;">How CareDrop Works</h2>
             <div class="how-grid">
                 <div class="how-step">
@@ -172,7 +173,7 @@
         <p style="color: #475569; font-size: 13px; margin: 0; font-weight: 700;">© 2026 CareDrop Labs. All rights reserved.</p>
     </footer>
 
-    <!-- WHATSAPP FLOATING BUTTON -->
+    <!-- WHATSAPP CTA FLOATER -->
     <a href="https://wa.me/919485978790?text=Hi%20CareDrop,%20I%20want%20to%20book%20a%20test" target="_blank" class="wa-float">
         <i data-lucide="message-circle" style="width: 24px; height: 24px;"></i> <span>Book via WhatsApp</span>
     </a>
