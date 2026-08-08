@@ -4,87 +4,155 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bookings | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .header { background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { margin: 0; color: #0D9488; font-size: 22px; font-weight: 800; }
-        .search-box { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; text-align: center; }
-        .search-box input { padding: 14px; width: 100%; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 15px; outline: none; margin-bottom: 10px; box-sizing: border-box; }
-        .search-box button { padding: 14px 24px; background: #0F172A; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; width: 100%; transition: 0.2s; }
-        .order-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border-left: 6px solid #0D9488; }
-        .badge { background: #CCFBF1; color: #0F766E; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-block; margin-top: 4px; }
-        .btn-download { display: inline-block; margin-top: 15px; background: #0D9488; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; }
+        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; color: #0F172A; display: flex; flex-direction: column; min-height: 100vh; }
+        input, select, textarea, button { font-family: inherit; }
+        
+        .navbar { display: flex; justify-content: space-between; padding: 20px 5%; background: white; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: left; line-height: 1.1; }
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links a { text-decoration: none; color: #475569; font-weight: 800; font-size: 15px; }
+        .btn-nav { background: #0F172A; color: white !important; padding: 12px 24px; border-radius: 8px; transition: 0.2s; }
+        
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; flex-grow: 1; width: 100%; box-sizing: border-box;}
+        
+        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; }
+        h1 { margin-top: 0; font-size: 24px; font-weight: 800; color: #0F172A; margin-bottom: 25px; }
+        
+        .input-group label { display: block; font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #334155; }
+        .input-group input { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-weight: 600; margin-bottom: 15px; }
+        .input-group input:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
+        
+        .btn-primary { background: #0F172A; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn-primary:hover { background: #0D9488; }
+        
+        .order-card { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+        .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px dashed #CBD5E1; padding-bottom: 15px; }
+        .status-badge { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; }
+        .status-Pending { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; }
+        .status-Sample { background: #FEF9C3; color: #B45309; border: 1px solid #FDE047; }
+        .status-Completed { background: #F0FDF4; color: #166534; border: 1px solid #86EFAC; }
+        
+        .test-list { list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 14px; font-weight: 600; color: #475569; }
+        .test-list li { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #E2E8F0; }
+        
+        .btn-download { background: #0D9488; color: white; padding: 12px 20px; border-radius: 8px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center; box-sizing: border-box; }
+        
+        @media (max-width: 768px) {
+            .navbar { padding: 15px; flex-direction: row; }
+            .logo { font-size: 20px; }
+            .logo span { font-size: 9px; }
+            .nav-links { gap: 12px; }
+            .nav-links a { font-size: 14px; }
+            .btn-nav { padding: 8px 14px; font-size: 14px; }
+            .card { padding: 20px; }
+            .order-header { flex-direction: column; gap: 15px; }
+        }
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <a href="/" class="logo">CareDrop<br><span style="font-size: 10px; color:#64748B; letter-spacing:1px; line-height: 1;">BY IHC DIAGNOSTICS</span></a>
+        <div class="nav-links"><a href="/tests" class="btn-nav">Book Test</a></div>
+    </nav>
+
     <div class="container">
-        <div class="header">
-            <h1>CareDrop Patient Portal</h1>
-            <a href="/" style="text-decoration: none; color: #64748B; font-weight: 700;">&larr; Home</a>
-        </div>
-        
-        <div class="search-box">
-            <h2 style="margin-bottom: 5px; font-size: 20px;">Secure Medical Record Access</h2>
-            <p style="font-size: 14px; color: #64748B; margin-bottom: 20px;">Enter your registered Email and Order ID. An OTP will be sent to verify your identity.</p>
+        <div class="card">
+            <h1>Access Medical Records</h1>
             
-            {% if error %}
-            <div style="background: #FEE2E2; color: #991B1B; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 700;">
-                {{ error }}
-            </div>
-            {% endif %}
-
-            <div style="display: flex; gap: 15px; flex-direction: column; max-width: 400px; margin: 0 auto;">
-                <input type="email" id="searchEmail" placeholder="Registered Email Address" value="{{ searched_email }}" required>
-                <input type="number" id="searchOrderId" placeholder="Order ID (e.g. 5)" value="{{ searched_id }}" required>
-                <button type="button" id="sendOtpBtn" onclick="sendAuthOTP()">1. Send OTP to Email</button>
+            {% if not searched_email %}
+                <p style="color: #475569; font-weight: 600; margin-bottom: 25px;">Enter your email to securely view your active bookings and download past lab reports.</p>
                 
-                <div id="verifyBlock" style="display: none; margin-top: 15px; border-top: 1px solid #E2E8F0; padding-top: 15px;">
-                    <input type="text" id="otpCode" placeholder="Enter 4-Digit Code" style="background: #F8FAFC;">
-                    <button type="button" onclick="verifyAuthOTP()" style="background: #0D9488;">2. Verify & View Records</button>
-                </div>
-            </div>
-        </div>
-
-        {% if searched_email and searched_id and not error %}
-            {% for order in orders %}
-            <div class="order-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
-                    <span style="font-weight: 800; font-size: 18px; color: #0D9488;">Order #{{ order.id }}</span>
-                    <span style="font-weight: 700; font-size: 14px; background: #F1F5F9; padding: 6px 12px; border-radius: 8px;">Status: {{ order.status }}</span>
-                </div>
-                <p style="margin: 5px 0; font-weight: 700;">Patient: {{ order.patient_name }}</p>
-                <p style="margin: 5px 0; font-size: 14px; color: #64748B;">📅 Schedule: {{ order.collection_date }} ({{ order.time_slot }})</p>
-                <p style="margin: 5px 0; font-size: 14px; color: #64748B;">📍 Address: {{ order.address }}</p>
-                <div style="margin-top: 15px;">
-                    <strong style="font-size: 13px; color: #475569;">Tests Booked:</strong><br>
-                    {% for test in order.test_list %}
-                        <div class="badge">{{ test.test_name }} — {{ test.lab_name }} (₹{{ test.price }})</div><br>
-                    {% endfor %}
+                <div id="otpSection">
+                    <div class="input-group">
+                        <label>Patient Email Address</label>
+                        <input type="email" id="email" placeholder="Enter the email used for booking" required>
+                    </div>
+                    <button type="button" class="btn-primary" id="sendOtpBtn" onclick="sendOTP()">Send OTP Code</button>
                 </div>
                 
-                {% if order.has_report %}
-                    <a href="/download-report/{{ order.id }}" class="btn-download">📄 Download PDF Report</a>
-                {% elif order.status == 'Completed' %}
-                    <p style="margin-top: 15px; color: #0F766E; font-weight: 700; font-size: 14px;">Report generation in progress...</p>
-                {% endif %}
-            </div>
+                <div id="verifySection" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
+                    <div class="input-group">
+                        <label>Enter 4-Digit Security Code</label>
+                        <input type="text" id="otpCode" placeholder="Check your email inbox">
+                    </div>
+                    <button type="button" class="btn-primary" style="background: #0D9488;" onclick="verifyOTP()">Verify & Access Records</button>
+                </div>
+
             {% else %}
-            <div style="text-align: center; background: white; padding: 40px; border-radius: 16px; color: #DC2626; font-weight: 600;">
-                No matching Order found for this Email.
-            </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <div>
+                        <div style="font-size: 14px; color: #64748B; font-weight: 700;">Viewing records for:</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #0F172A;">{{ searched_email }}</div>
+                    </div>
+                    <a href="/my-bookings" style="color: #0D9488; font-weight: 800; text-decoration: none; font-size: 14px;">Change Email</a>
+                </div>
 
+                {% if orders %}
+                    {% for order in orders %}
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 5px;">Order #{{ order.id }}</div>
+                                <div style="font-size: 14px; color: #475569; font-weight: 600;"><i data-lucide="calendar" style="width: 14px; height: 14px; vertical-align: middle;"></i> {{ order.collection_date }} | {{ order.time_slot }}</div>
+                                <div style="font-size: 14px; color: #475569; font-weight: 600; margin-top: 5px;"><i data-lucide="user" style="width: 14px; height: 14px; vertical-align: middle;"></i> Patient: {{ order.patient_name }}</div>
+                            </div>
+                            <div>
+                                {% if order.status == 'Pending' %}
+                                    <span class="status-badge status-Pending"><i data-lucide="clock" style="width:14px; height:14px;"></i> Pending Confirmation</span>
+                                {% elif order.status == 'Sample Collected' %}
+                                    <span class="status-badge status-Sample"><i data-lucide="test-tube" style="width:14px; height:14px;"></i> Sample Collected</span>
+                                {% elif order.status == 'Completed' %}
+                                    <span class="status-badge status-Completed"><i data-lucide="check-circle-2" style="width:14px; height:14px;"></i> Completed</span>
+                                {% else %}
+                                    <span class="status-badge" style="background:#F1F5F9; color:#475569;"><i class="lucide-x-circle"></i> Cancelled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <ul class="test-list">
+                            {% for test in order.test_list %}
+                                <li>
+                                    <span><b>{{ test.test_name }}</b> <span style="color:#94A3B8; font-size:12px;">({{ test.lab_name }})</span></span>
+                                    <span>₹{{ test.price }}</span>
+                                </li>
+                            {% endfor %}
+                            <li style="border: none; font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 10px;">
+                                <span>Total Amount</span>
+                                <span>₹{{ order.total_amount }}</span>
+                            </li>
+                        </ul>
+                        
+                        {% if order.has_report %}
+                            <a href="/download-report/{{ order.id }}" class="btn-download"><i data-lucide="file-text"></i> Download PDF Report</a>
+                        {% elif order.status == 'Completed' %}
+                            <button class="btn-download" style="background: #94A3B8; cursor: not-allowed;" disabled><i data-lucide="file-text"></i> Report Unavailable</button>
+                        {% else %}
+                            <div style="text-align: center; font-size: 13px; color: #64748B; font-weight: 700; padding: 10px; background: white; border-radius: 8px; border: 1px dashed #CBD5E1;"><i data-lucide="hourglass" style="width: 14px; height: 14px; vertical-align: middle;"></i> Report will be available here once processing is complete.</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 40px 20px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px;">
+                        <i data-lucide="folder-open" style="width: 48px; height: 48px; color: #94A3B8; margin-bottom: 15px;"></i>
+                        <h3 style="margin-top: 0; color: #0F172A;">No Bookings Found</h3>
+                        <p style="color: #475569; font-weight: 600; font-size: 14px;">We couldn't find any lab bookings associated with {{ searched_email }}.</p>
+                        <a href="/tests" class="btn-primary" style="display: inline-block; width: auto; text-decoration: none; margin-top: 15px;">Browse Catalog</a>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
     <script>
-        function sendAuthOTP() {
-            const email = document.getElementById('searchEmail').value;
-            if(!email) return alert("Please enter your email.");
-            
-            document.getElementById('sendOtpBtn').innerText = "Sending...";
-            
+        lucide.createIcons();
+
+        function sendOTP() {
+            const email = document.getElementById('email').value;
+            if(!email) return alert("Please enter your email address.");
+            document.getElementById('sendOtpBtn').innerText = "Sending Secure Code...";
             fetch('/api/send-otp', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -92,27 +160,26 @@
             }).then(res => res.json()).then(data => {
                 if(data.success) {
                     document.getElementById('sendOtpBtn').style.display = 'none';
-                    document.getElementById('verifyBlock').style.display = 'block';
+                    document.getElementById('email').disabled = true;
+                    document.getElementById('verifySection').style.display = 'block';
                 } else {
                     alert(data.message);
-                    document.getElementById('sendOtpBtn').innerText = "1. Send OTP to Email";
+                    document.getElementById('sendOtpBtn').innerText = "Send OTP Code";
                 }
             });
         }
 
-        function verifyAuthOTP() {
-            const email = document.getElementById('searchEmail').value;
-            const orderId = document.getElementById('searchOrderId').value;
+        function verifyOTP() {
+            const email = document.getElementById('email').value;
             const otp = document.getElementById('otpCode').value;
-            
+            if(!otp) return alert("Please enter the 4-digit code.");
             fetch('/api/verify-otp', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({email: email, otp: otp})
             }).then(res => res.json()).then(data => {
                 if(data.success) {
-                    // Redirect safely to load the orders securely
-                    window.location.href = `/my-bookings?email=${encodeURIComponent(email)}&order_id=${encodeURIComponent(orderId)}`;
+                    window.location.href = '/my-bookings?email=' + encodeURIComponent(email);
                 } else {
                     alert(data.message);
                 }
