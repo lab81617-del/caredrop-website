@@ -30,26 +30,19 @@ def auto_migrate_db():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        
         cursor.execute("DROP TABLE IF EXISTS smart_packages CASCADE")
         cursor.execute("DROP TABLE IF EXISTS packages CASCADE")
-        
         cursor.execute("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
         cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
         cursor.execute("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
-        
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
-        
-        # Prevents ID collisions between tests and packages
         cursor.execute("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
         cursor.execute("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
-        
         conn.commit()
     except Exception as e: 
-        print("Auto-Migrate Error:", e)
         if conn: conn.rollback()
     finally: release_db(conn)
 
@@ -67,6 +60,10 @@ def send_email_api(recipient, subject, text_body):
 
 def send_email_async(recipient, subject, body):
     threading.Thread(target=send_email_api, args=(recipient, subject, body)).start()
+
+@app.route('/ping')
+def ping():
+    return "OK", 200
 
 @app.route('/api/send-otp', methods=['POST'])
 def send_otp():
@@ -106,7 +103,7 @@ def home():
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
             LEFT JOIN tests t ON pt.test_id = t.id
-            LEFT JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
+            JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
             GROUP BY hp.id, l.id, l.name, so.id, so.discount_percent, so.badge, so.end_date
             ORDER BY hp.id DESC
         """)
@@ -153,29 +150,29 @@ def checkout_page(): return render_template('checkout.html')
 def my_bookings():
     auto_migrate_db()
     email = request.args.get('email', '').strip()
-    order_id_input = request.args.get('order_id', '').strip()
     orders = []
-    if email and order_id_input:
-        if not session.get(f'verified_{email}'): return render_template('my_bookings.html', error="Please verify your email via OTP first.", searched_email=email, searched_id=order_id_input)
+    if email:
+        if not session.get(f'verified_{email}'): return render_template('my_bookings.html', error="Please verify your email via OTP first.", searched_email=email)
         conn = None
         try:
             conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s AND o.id = %s", (email, order_id_input))
+            # Fetch all orders for this email, latest first
+            cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s ORDER BY o.id DESC", (email,))
             orders = cursor.fetchall()
             if orders:
-                cursor.execute("""
-                    SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, oi.price 
-                    FROM order_items oi 
-                    LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test'
-                    LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package'
-                    JOIN labs l ON oi.lab_id = l.id 
-                    WHERE oi.order_id = %s
-                """, (order_id_input,))
-                db_items = cursor.fetchall()
-                for order in orders: order['test_list'] = db_items
+                for order in orders:
+                    cursor.execute("""
+                        SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, oi.price 
+                        FROM order_items oi 
+                        LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test'
+                        LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package'
+                        JOIN labs l ON oi.lab_id = l.id 
+                        WHERE oi.order_id = %s
+                    """, (order['id'],))
+                    order['test_list'] = cursor.fetchall()
         except Exception as e: pass
         finally: release_db(conn)
-    return render_template('my_bookings.html', orders=orders, searched_email=email, searched_id=order_id_input)
+    return render_template('my_bookings.html', orders=orders, searched_email=email)
 
 @app.route('/download-report/<int:order_id>')
 def download_report(order_id):
@@ -208,7 +205,7 @@ def admin_login():
     if request.method == 'POST':
         if request.form.get('password') == ADMIN_PASSWORD: session['admin_logged_in'] = True; return redirect(url_for('admin_dashboard'))
         else: error = "Access Denied."
-    return f'<html><body style="background:#F1F5F9; display:flex; justify-content:center; align-items:center; height:100vh;"><div style="background:white; padding:40px; border-radius:12px; text-align:center;"><form method="POST"><input type="password" name="password" placeholder="Master Password" required style="padding:14px; margin-bottom:15px; width:100%;"><button type="submit" style="width:100%; background:#0F172A; color:white; padding:14px;">Login</button></form><div style="color:red;">{error if error else ""}</div></div></body></html>'
+    return f'<html><body style="background:#F1F5F9; display:flex; justify-content:center; align-items:center; height:100vh;"><div style="background:white; padding:40px; border-radius:12px; text-align:center;"><form method="POST"><input type="password" name="password" placeholder="Master Password" required style="padding:14px; margin-bottom:15px; width:100%; font-family:inherit;"><button type="submit" style="width:100%; background:#0F172A; color:white; padding:14px; border:none; border-radius:8px; font-weight:bold; font-family:inherit;">Login</button></form><div style="color:red;">{error if error else ""}</div></div></body></html>'
 
 @app.route('/admin')
 def admin_dashboard():
@@ -219,13 +216,7 @@ def admin_dashboard():
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT o.id, o.patient_name, o.address, o.collection_date, o.time_slot, o.total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
-        cursor.execute("""
-            SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, oi.price 
-            FROM order_items oi 
-            LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test'
-            LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package'
-            JOIN labs l ON oi.lab_id = l.id
-        """)
+        cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, oi.price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
         db_items = cursor.fetchall()
         items_map = {}
         for row in db_items:
@@ -242,6 +233,7 @@ def admin_dashboard():
         inventory = cursor.fetchall()
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
+        
         cursor.execute("""
             SELECT hp.id, hp.title, hp.price as original_price, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
@@ -251,7 +243,7 @@ def admin_dashboard():
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
             LEFT JOIN tests t ON pt.test_id = t.id
-            LEFT JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
+            LEFT JOIN special_offers so ON hp.id = so.package_id
             GROUP BY hp.id, l.name, so.id, so.discount_percent, so.badge, so.end_date
             ORDER BY hp.id DESC
         """)
@@ -431,7 +423,10 @@ def place_order():
     
     if not session.get(f'verified_{email}'): return jsonify({"success": False, "message": "Email not verified. Please complete OTP verification."})
     prescription = request.files.get('prescription')
-    if not all([name, phone, patient_name, address, date]): return jsonify({"success": False, "message": "Missing required patient fields."})
+    
+    final_patient_name = patient_name if patient_name else name
+    
+    if not all([name, phone, final_patient_name, address, date]): return jsonify({"success": False, "message": "Missing required patient fields."})
     if not cart and not (prescription and prescription.filename): return jsonify({"success": False, "message": "Please add tests to your cart or upload a prescription."})
     
     conn = None
@@ -442,9 +437,9 @@ def place_order():
         user_id = user[0] if user else (cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email)) or cursor.fetchone()[0])
         if prescription and prescription.filename:
             file_data = prescription.read()
-            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
+            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status, prescription_file, prescription_filename) VALUES (%s, %s, %s, %s, %s, %s, 'Pending', %s, %s) RETURNING id", (user_id, final_patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0), psycopg2.Binary(file_data), prescription.filename))
         else:
-            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
+            cursor.execute("INSERT INTO orders (user_id, patient_name, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, final_patient_name, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
         order_id = cursor.fetchone()[0]
         for item in cart: 
             is_pkg = 'PKG_' in str(item['id'])
@@ -452,8 +447,8 @@ def place_order():
             item_type = 'package' if is_pkg else 'test'
             cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price, item_type) VALUES (%s, %s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice'], item_type))
         conn.commit()
-        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
-        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {patient_name}\nAddress: {address}\nDate: {date}")
+        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {final_patient_name}\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
+        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {final_patient_name}\nAddress: {address}\nDate: {date}")
         return jsonify({"success": True, "order_id": order_id})
     except Exception as e: 
         if conn: conn.rollback()
