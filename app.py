@@ -25,35 +25,33 @@ def get_db(): return psycopg2.connect(os.environ.get("DATABASE_URL"))
 def release_db(conn): 
     if conn: conn.close()
 
-def auto_migrate_db():
+# BULLETPROOF MIGRATION ENGINE
+# Runs every command separately so one error doesn't break the whole database update
+def safe_migrate(query):
     conn = None
     try:
         conn = get_db()
         cursor = conn.cursor()
-        
-        # Enforce Unique Labs to prevent duplicates
-        try: cursor.execute("ALTER TABLE labs ADD CONSTRAINT labs_name_key UNIQUE (name)")
-        except: pass
-        
-        cursor.execute("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
-        cursor.execute("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
-        
-        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
-        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
-        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
-        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
-        
-        # New Patient Data Fields
-        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS age INTEGER")
-        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS gender VARCHAR(20)")
-        
-        cursor.execute("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
-        cursor.execute("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
+        cursor.execute(query)
         conn.commit()
-    except Exception as e: 
+    except:
         if conn: conn.rollback()
-    finally: release_db(conn)
+    finally:
+        release_db(conn)
+
+def auto_migrate_db():
+    safe_migrate("ALTER TABLE labs ADD CONSTRAINT labs_name_key UNIQUE (name)")
+    safe_migrate("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
+    safe_migrate("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
+    safe_migrate("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_filename VARCHAR(255)")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_file BYTEA")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS prescription_filename VARCHAR(255)")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS age INTEGER")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS gender VARCHAR(20)")
+    safe_migrate("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
+    safe_migrate("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
 
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
@@ -239,6 +237,7 @@ def admin_dashboard():
         inventory = cursor.fetchall()
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
+        
         cursor.execute("""
             SELECT hp.id, hp.title, hp.price as original_price, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
@@ -302,6 +301,18 @@ def admin_add_test():
             cursor.execute("SELECT id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
             if cursor.fetchone(): cursor.execute("UPDATE lab_test_pricing SET price = %s WHERE test_id = %s AND lab_id = %s", (price, test_id, lab_id))
             else: cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, tat) VALUES (%s, %s, %s, '24 Hours')", (test_id, lab_id, price))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete-inventory/<int:test_id>/<int:lab_id>', methods=['POST'])
+def delete_inventory(test_id, lab_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
         conn.commit()
     except: pass
     finally: release_db(conn)
