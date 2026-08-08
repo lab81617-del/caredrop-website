@@ -5,22 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | CareDrop</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; }
+        input, select, textarea, button { font-family: inherit; }
+        
         .container { max-width: 800px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0D9488; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid #E2E8F0; }
+        
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .input-group label { display: block; font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #334155; }
-        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-family: inherit; font-weight: 600; }
+        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-weight: 600; }
         .input-group input:focus, .input-group select:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
+        
         .otp-box { background: #F0FDF4; padding: 20px; border-radius: 12px; border: 1px solid #BBF7D0; margin-bottom: 20px; }
-        .btn-action { background: #0F172A; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; }
+        .btn-action { background: #0F172A; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
         .btn-action:hover { background: #0D9488; }
-        .btn-otp { background: #0D9488; color: white; padding: 12px 18px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px; width: 100%; font-family: inherit; font-size: 14px; }
+        .btn-otp { background: #0D9488; color: white; padding: 12px 18px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px; width: 100%; font-size: 14px; }
+        
         .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px dashed #CBD5E1; }
-        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        
+        .wa-float { position: fixed; bottom: 20px; left: 20px; background: #25D366; color: white; padding: 14px 24px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 99; transition: 0.2s; }
+
+        @media (max-width: 600px) { 
+            .form-grid { grid-template-columns: 1fr; } 
+            .wa-float { font-size: 0; padding: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -58,37 +70,46 @@
                 </div>
             </div>
             <div id="emailVerifiedMsg" style="display: none; color: #166534; font-weight: 800; background: #DCFCE7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #86EFAC;">
-                ✅ Email Verified Successfully.
+                <i data-lucide="check-circle-2" style="width: 18px; height: 18px; vertical-align: middle;"></i> Email Verified Successfully.
             </div>
 
             <h2 style="font-size: 20px; font-weight: 800; border-bottom: 2px solid #F1F5F9; padding-bottom: 15px;">3. Patient & Address Details</h2>
             <form id="orderForm">
                 <div class="form-grid">
                     <div class="input-group">
-                        <label>Booked By (Your Name)</label>
+                        <label>Your Full Name</label>
                         <input type="text" id="name" required>
                     </div>
                     <div class="input-group">
                         <label>Mobile Number</label>
                         <input type="tel" id="phone" required pattern="[0-9]{10}">
                     </div>
-                    <div class="input-group">
-                        <label>Patient Full Name</label>
-                        <input type="text" id="patientName" required>
-                    </div>
+                </div>
+
+                <!-- DYNAMIC PATIENT TOGGLE -->
+                <div class="input-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #F8FAFC; padding: 10px 15px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                    <input type="checkbox" id="someoneElse" style="width: 18px; height: 18px; margin: 0; accent-color: #0D9488;" onchange="togglePatient()">
+                    <label style="margin: 0; cursor: pointer;" for="someoneElse">I am booking this for someone else.</label>
+                </div>
+
+                <div class="input-group" id="patientNameGroup" style="display: none; margin-bottom: 20px;">
+                    <label>Patient's Full Name</label>
+                    <input type="text" id="patientName">
+                </div>
+
+                <div class="form-grid">
                     <div class="input-group">
                         <label>Collection Date</label>
                         <input type="date" id="date" required>
                     </div>
-                </div>
-                
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label>Preferred Time Slot</label>
-                    <select id="timeSlot" required>
-                        <option value="6:00 AM - 8:00 AM">6:00 AM - 8:00 AM (Fasting)</option>
-                        <option value="9:00 AM - 12:00 PM">9:00 AM - 12:00 PM</option>
-                        <option value="4:00 PM - 7:00 PM">4:00 PM - 7:00 PM</option>
-                    </select>
+                    <div class="input-group">
+                        <label>Preferred Time Slot</label>
+                        <select id="timeSlot" required>
+                            <option value="6:00 AM - 8:00 AM">6:00 AM - 8:00 AM (Fasting)</option>
+                            <option value="9:00 AM - 12:00 PM">9:00 AM - 12:00 PM</option>
+                            <option value="4:00 PM - 7:00 PM">4:00 PM - 7:00 PM</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="input-group" style="margin-bottom: 20px;">
@@ -106,7 +127,12 @@
         </div>
     </div>
 
+    <a href="https://wa.me/919485978790?text=Hi%20CareDrop,%20I%20want%20to%20book%20a%20test" target="_blank" class="wa-float">
+        <i data-lucide="message-circle" style="width: 24px; height: 24px;"></i> <span>Book via WhatsApp</span>
+    </a>
+
     <script>
+        lucide.createIcons();
         let isEmailVerified = false;
         let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
         let total = 0;
@@ -117,7 +143,8 @@
         const container = document.getElementById('checkoutItems');
         if(cart.length === 0) {
             if (isDirectUpload) {
-                container.innerHTML = '<div style="background: #F0FDF4; color: #166534; padding: 20px; border-radius: 8px; font-weight: 800; border: 2px dashed #22C55E; text-align: center; font-size: 16px;">📄 Direct Prescription Upload Mode<br><span style="font-size: 14px; font-weight: 600; color: #15803D;">Please attach your prescription below. Our support team will contact you shortly to confirm total costs and timings.</span></div>';
+                container.innerHTML = '<div style="background: #FEF2F2; color: #DC2626; padding: 20px; border-radius: 8px; font-weight: 800; border: 2px dashed #EF4444; text-align: center; font-size: 16px;"><i data-lucide="file-warning" style="margin-bottom: 8px;"></i><br>Direct Prescription Upload Mode<br><span style="font-size: 14px; font-weight: 600; color: #B91C1C;">Please attach your prescription below. Our support team will contact you shortly to confirm total costs and timings.</span></div>';
+                lucide.createIcons();
                 document.getElementById('totalContainer').style.display = 'none';
                 document.getElementById('paymentNote').style.display = 'none';
                 
@@ -126,7 +153,6 @@
                 uploadBox.style.borderColor = '#EF4444';
                 document.getElementById('uploadRequiredText').innerText = "(REQUIRED)";
                 document.getElementById('uploadRequiredText').style.color = '#DC2626';
-                
             } else {
                 container.innerHTML = '<p style="color:#64748B; font-weight: 700;">Your cart is empty. Go back to the catalog to add tests, or upload a prescription below.</p>';
                 document.getElementById('totalContainer').style.display = 'none';
@@ -136,26 +162,27 @@
                 total += parseFloat(item.currentPrice);
                 container.innerHTML += `
                     <div class="cart-item">
-                        <div><div style="font-weight:800; font-size: 16px;">${item.name}</div><div style="font-size:13px; font-weight: 700; color:#64748B;">🔬 By ${item.labName}</div></div>
+                        <div><div style="font-weight:800; font-size: 16px;">${item.name}</div><div style="font-size:13px; font-weight: 700; color:#64748B;"><i data-lucide="microscope" style="width: 12px; height: 12px; vertical-align: middle;"></i> By ${item.labName}</div></div>
                         <div style="font-weight:800; font-size: 18px; color:#0D9488;">₹${item.currentPrice}</div>
                     </div>`;
             });
+            lucide.createIcons();
             document.getElementById('checkoutTotal').innerText = `₹${total}`;
         }
 
         document.getElementById('date').min = new Date().toISOString().split("T")[0];
 
+        function togglePatient() {
+            const isSomeoneElse = document.getElementById('someoneElse').checked;
+            document.getElementById('patientNameGroup').style.display = isSomeoneElse ? 'block' : 'none';
+        }
+
         function sendOTP() {
             const email = document.getElementById('email').value;
             if(!email) return alert("Enter an email first.");
-            
             document.getElementById('sendOtpBtn').innerText = "Sending...";
-            
-            fetch('/api/send-otp', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: email})
-            }).then(res => res.json()).then(data => {
+            fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: email}) })
+            .then(res => res.json()).then(data => {
                 if(data.success) {
                     document.getElementById('sendOtpBtn').style.display = 'none';
                     document.getElementById('verifySection').style.display = 'block';
@@ -170,62 +197,49 @@
         function verifyOTP() {
             const email = document.getElementById('email').value;
             const otp = document.getElementById('otpCode').value;
-            
-            fetch('/api/verify-otp', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: email, otp: otp})
-            }).then(res => res.json()).then(data => {
+            fetch('/api/verify-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: email, otp: otp}) })
+            .then(res => res.json()).then(data => {
                 if(data.success) {
                     isEmailVerified = true;
                     document.getElementById('otpSection').style.display = 'none';
                     document.getElementById('emailVerifiedMsg').style.display = 'block';
                     document.getElementById('email').disabled = true;
-                } else {
-                    alert(data.message);
-                }
+                } else { alert(data.message); }
             });
         }
 
         document.getElementById('orderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             if(!isEmailVerified) return alert("You must verify your email with an OTP before booking.");
             
             const fileInput = document.getElementById('prescription');
-            if(cart.length === 0 && fileInput.files.length === 0) {
-                return alert("Please select tests from the catalog or upload a prescription file.");
-            }
+            if(cart.length === 0 && fileInput.files.length === 0) return alert("Please select tests from the catalog or upload a prescription.");
 
             document.getElementById('submitBtn').innerText = "Processing...";
             document.getElementById('submitBtn').disabled = true;
+
+            const isSomeoneElse = document.getElementById('someoneElse').checked;
+            const finalPatientName = isSomeoneElse ? document.getElementById('patientName').value : document.getElementById('name').value;
 
             const formData = new FormData();
             formData.append('name', document.getElementById('name').value);
             formData.append('phone', document.getElementById('phone').value);
             formData.append('email', document.getElementById('email').value);
-            formData.append('patient_name', document.getElementById('patientName').value);
+            formData.append('patient_name', finalPatientName);
             formData.append('date', document.getElementById('date').value);
             formData.append('time_slot', document.getElementById('timeSlot').value);
             formData.append('address', document.getElementById('address').value);
             formData.append('total', total);
             formData.append('cart', JSON.stringify(cart));
             
-            if(fileInput.files.length > 0) {
-                formData.append('prescription', fileInput.files[0]);
-            }
+            if(fileInput.files.length > 0) formData.append('prescription', fileInput.files[0]);
 
             try {
-                const response = await fetch('/api/place-order', {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await fetch('/api/place-order', { method: 'POST', body: formData });
                 const result = await response.json();
-                
                 if(result.success) {
                     sessionStorage.removeItem('caredrop_cart');
-                    alert(`Success! Your Order ID is #${result.order_id}. You will receive a confirmation email.`);
-                    window.location.href = '/my-bookings';
+                    window.location.href = '/my-bookings?email=' + encodeURIComponent(document.getElementById('email').value);
                 } else {
                     alert('Error: ' + result.message);
                     document.getElementById('submitBtn').innerText = "Confirm Booking & Pay Later";
