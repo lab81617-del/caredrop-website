@@ -7,14 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #F8FAFC; margin: 0; color: #0F172A; display: flex; flex-direction: column; min-height: 100vh; }
-        input, select, textarea, button { font-family: inherit; }
+        * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important; }
+        body { background: #F8FAFC; margin: 0; color: #0F172A; display: flex; flex-direction: column; min-height: 100vh; }
+        input, select, textarea, button { background-color: #fff; border: 1px solid #d1d5db; }
         
         .navbar { display: flex; justify-content: space-between; padding: 20px 5%; background: white; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: left; line-height: 1.1; }
+        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: left; line-height: 1.1; border: none !important; }
         .nav-links { display: flex; gap: 20px; align-items: center; }
-        .nav-links a { text-decoration: none; color: #475569; font-weight: 800; font-size: 15px; }
-        .btn-nav { background: #0F172A; color: white !important; padding: 12px 24px; border-radius: 8px; transition: 0.2s; }
+        .nav-links a { text-decoration: none; color: #475569; font-weight: 800; font-size: 15px; border: none !important; background: transparent; }
+        .btn-nav { background: #0F172A !important; color: white !important; padding: 12px 24px; border-radius: 8px; transition: 0.2s; border: none; }
         
         .container { max-width: 800px; margin: 40px auto; padding: 0 20px; flex-grow: 1; width: 100%; box-sizing: border-box;}
         
@@ -22,11 +23,11 @@
         h1 { margin-top: 0; font-size: 24px; font-weight: 800; color: #0F172A; margin-bottom: 25px; }
         
         .input-group label { display: block; font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #334155; }
-        .input-group input { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-weight: 600; margin-bottom: 15px; }
-        .input-group input:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
+        .input-group input, textarea { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-weight: 600; margin-bottom: 15px; color: #0F172A;}
+        .input-group input:focus, textarea:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
         
-        .btn-primary { background: #0F172A; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
-        .btn-primary:hover { background: #0D9488; }
+        .btn-primary { background: #0F172A !important; color: white !important; padding: 16px 24px; border: none !important; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn-primary:hover { background: #0D9488 !important; }
         
         .order-card { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
         .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px dashed #CBD5E1; padding-bottom: 15px; }
@@ -35,10 +36,12 @@
         .status-Sample { background: #FEF9C3; color: #B45309; border: 1px solid #FDE047; }
         .status-Completed { background: #F0FDF4; color: #166534; border: 1px solid #86EFAC; }
         
-        .test-list { list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 14px; font-weight: 600; color: #475569; }
-        .test-list li { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #E2E8F0; }
+        .test-list { list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 14px; font-weight: 700; color: #475569; }
+        .test-list li { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #E2E8F0; text-transform: capitalize; }
         
-        .btn-download { background: #0D9488; color: white; padding: 12px 20px; border-radius: 8px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center; box-sizing: border-box; }
+        .btn-download { background: #0D9488 !important; color: white !important; padding: 12px 20px; border-radius: 8px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center; box-sizing: border-box; border: none !important;}
+        
+        .feedback-section { margin-top: 15px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
         
         @media (max-width: 768px) {
             .navbar { padding: 15px; flex-direction: row; }
@@ -63,14 +66,14 @@
             <h1>Access Medical Records</h1>
             
             {% if not searched_email %}
-                <p style="color: #475569; font-weight: 600; margin-bottom: 25px;">Enter your email to securely view your active bookings and download past lab reports.</p>
+                <p style="color: #475569; font-weight: 700; margin-bottom: 25px;">Enter your email to securely view your active bookings and download past lab reports.</p>
                 
                 <div id="otpSection">
                     <div class="input-group">
                         <label>Patient Email Address</label>
                         <input type="email" id="email" placeholder="Enter the email used for booking" required>
                     </div>
-                    <button type="button" class="btn-primary" id="sendOtpBtn" onclick="sendOTP()">Send OTP Code</button>
+                    <button type="button" class="btn-primary" id="sendOtpBtn" onclick="sendOTP()">Send Secure Code</button>
                 </div>
                 
                 <div id="verifySection" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
@@ -78,16 +81,16 @@
                         <label>Enter 4-Digit Security Code</label>
                         <input type="text" id="otpCode" placeholder="Check your email inbox">
                     </div>
-                    <button type="button" class="btn-primary" style="background: #0D9488;" onclick="verifyOTP()">Verify & Access Records</button>
+                    <button type="button" class="btn-primary" style="background: #0D9488 !important;" onclick="verifyOTP()">Verify & Access Records</button>
                 </div>
 
             {% else %}
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div>
-                        <div style="font-size: 14px; color: #64748B; font-weight: 700;">Viewing records for:</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #0F172A;">{{ searched_email }}</div>
+                        <div style="font-size: 14px; color: #64748B; font-weight: 800;">Viewing records for:</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #0F172A;" id="userEmailAddress">{{ searched_email }}</div>
                     </div>
-                    <a href="/my-bookings" style="color: #0D9488; font-weight: 800; text-decoration: none; font-size: 14px;">Change Email</a>
+                    <a href="/my-bookings" style="color: #0D9488; font-weight: 800; text-decoration: none; font-size: 14px; background: transparent; border: none !important;">Change Email</a>
                 </div>
 
                 {% if orders %}
@@ -96,8 +99,8 @@
                         <div class="order-header">
                             <div>
                                 <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 5px;">Order #{{ order.id }}</div>
-                                <div style="font-size: 14px; color: #475569; font-weight: 600;"><i data-lucide="calendar" style="width: 14px; height: 14px; vertical-align: middle;"></i> {{ order.collection_date }} | {{ order.time_slot }}</div>
-                                <div style="font-size: 14px; color: #475569; font-weight: 600; margin-top: 5px;"><i data-lucide="user" style="width: 14px; height: 14px; vertical-align: middle;"></i> Patient: {{ order.patient_name }}</div>
+                                <div style="font-size: 14px; color: #475569; font-weight: 700;"><i data-lucide="calendar" style="width: 14px; height: 14px; vertical-align: middle;"></i> {{ order.collection_date }} | {{ order.time_slot }}</div>
+                                <div style="font-size: 14px; color: #475569; font-weight: 700; margin-top: 5px; text-transform: capitalize;"><i data-lucide="user" style="width: 14px; height: 14px; vertical-align: middle;"></i> Patient: {{ order.patient_name }}</div>
                             </div>
                             <div>
                                 {% if order.status == 'Pending' %}
@@ -107,7 +110,7 @@
                                 {% elif order.status == 'Completed' %}
                                     <span class="status-badge status-Completed"><i data-lucide="check-circle-2" style="width:14px; height:14px;"></i> Completed</span>
                                 {% else %}
-                                    <span class="status-badge" style="background:#F1F5F9; color:#475569;"><i class="lucide-x-circle"></i> Cancelled</span>
+                                    <span class="status-badge" style="background:#F1F5F9; color:#475569; border: 1px solid #CBD5E1;"><i data-lucide="x-circle" style="width:14px; height:14px;"></i> Cancelled</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -127,10 +130,18 @@
                         
                         {% if order.has_report %}
                             <a href="/download-report/{{ order.id }}" class="btn-download"><i data-lucide="file-text"></i> Download PDF Report</a>
+                            
+                            <!-- FEEDBACK SECTION FOR COMPLETED ORDERS -->
+                            <div class="feedback-section" id="fb_section_{{ order.id }}">
+                                <label style="display: block; font-size: 13px; font-weight: 800; color: #334155; margin-bottom: 8px;">How was your experience? (Optional)</label>
+                                <textarea id="fb_text_{{ order.id }}" rows="2" placeholder="Leave a suggestion or feedback..." style="margin-bottom: 10px;"></textarea>
+                                <button class="btn-primary" style="background: #0F172A !important; padding: 10px; font-size: 13px;" onclick="submitFeedback({{ order.id }})">Submit Feedback</button>
+                            </div>
+
                         {% elif order.status == 'Completed' %}
-                            <button class="btn-download" style="background: #94A3B8; cursor: not-allowed;" disabled><i data-lucide="file-text"></i> Report Unavailable</button>
+                            <button class="btn-download" style="background: #94A3B8 !important; cursor: not-allowed;" disabled><i data-lucide="file-text"></i> Report Unavailable</button>
                         {% else %}
-                            <div style="text-align: center; font-size: 13px; color: #64748B; font-weight: 700; padding: 10px; background: white; border-radius: 8px; border: 1px dashed #CBD5E1;"><i data-lucide="hourglass" style="width: 14px; height: 14px; vertical-align: middle;"></i> Report will be available here once processing is complete.</div>
+                            <div style="text-align: center; font-size: 13px; color: #64748B; font-weight: 800; padding: 12px; background: white; border-radius: 8px; border: 1px dashed #CBD5E1;"><i data-lucide="hourglass" style="width: 14px; height: 14px; vertical-align: middle;"></i> Report will be available here once processing is complete.</div>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -138,7 +149,7 @@
                     <div style="text-align: center; padding: 40px 20px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px;">
                         <i data-lucide="folder-open" style="width: 48px; height: 48px; color: #94A3B8; margin-bottom: 15px;"></i>
                         <h3 style="margin-top: 0; color: #0F172A;">No Bookings Found</h3>
-                        <p style="color: #475569; font-weight: 600; font-size: 14px;">We couldn't find any lab bookings associated with {{ searched_email }}.</p>
+                        <p style="color: #475569; font-weight: 700; font-size: 14px;">We couldn't find any lab bookings associated with {{ searched_email }}.</p>
                         <a href="/tests" class="btn-primary" style="display: inline-block; width: auto; text-decoration: none; margin-top: 15px;">Browse Catalog</a>
                     </div>
                 {% endif %}
@@ -164,7 +175,7 @@
                     document.getElementById('verifySection').style.display = 'block';
                 } else {
                     alert(data.message);
-                    document.getElementById('sendOtpBtn').innerText = "Send OTP Code";
+                    document.getElementById('sendOtpBtn').innerText = "Send Secure Code";
                 }
             });
         }
@@ -183,6 +194,26 @@
                 } else {
                     alert(data.message);
                 }
+            });
+        }
+
+        function submitFeedback(orderId) {
+            const msg = document.getElementById('fb_text_' + orderId).value;
+            const email = document.getElementById('userEmailAddress').innerText;
+            if(!msg.trim()) return alert("Please enter some feedback first.");
+            
+            const formData = new FormData();
+            formData.append('order_id', orderId);
+            formData.append('email', email);
+            formData.append('message', msg);
+
+            fetch('/api/submit-feedback', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('fb_section_' + orderId).innerHTML = '<div style="color: #166534; font-weight: 800; font-size: 13px;"><i data-lucide="check-circle-2" style="width: 14px; height: 14px; vertical-align: middle;"></i> Thank you for your feedback!</div>';
+                    lucide.createIcons();
+                } else { alert("Failed to submit feedback."); }
             });
         }
     </script>
