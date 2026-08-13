@@ -102,10 +102,10 @@ def home():
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
-            SELECT hp.id, hp.title, CAST(hp.price AS FLOAT) as original_price, l.id as lab_id, l.name as lab_name,
+            SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.id as lab_id, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
-                   so.id as offer_id, CAST(so.discount_percent AS FLOAT) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
-                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS FLOAT) as discounted_price
+                   so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
+                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
             FROM health_packages hp
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
@@ -127,7 +127,6 @@ def tests_catalog():
     packages_list = []
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-        # PERFECT GROUPING LOGIC FOR FRONTEND
         cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
         raw_tests = cursor.fetchall()
         for t in raw_tests:
@@ -135,15 +134,15 @@ def tests_catalog():
             if cat not in grouped_tests: grouped_tests[cat] = []
             grouped_tests[cat].append(t)
             
-        cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
+        cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS INTEGER) as price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
         pricing_list = cursor.fetchall()
         
         cursor.execute("""
-            SELECT hp.id, hp.title, CAST(hp.price AS FLOAT) as original_price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge,
+            SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge,
                    COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
                    string_agg(t.name, ', ') as features,
-                   so.id as offer_id, CAST(so.discount_percent AS FLOAT) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
-                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS FLOAT) as discounted_price
+                   so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
+                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
             FROM health_packages hp
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
@@ -170,12 +169,12 @@ def my_bookings():
         conn = None
         try:
             conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS FLOAT) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s ORDER BY o.id DESC", (email,))
+            cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS INTEGER) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE u.email = %s ORDER BY o.id DESC", (email,))
             orders = cursor.fetchall()
             if orders:
                 for order in orders:
                     cursor.execute("""
-                        SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS FLOAT) as price 
+                        SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS INTEGER) as price 
                         FROM order_items oi 
                         LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test'
                         LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package'
@@ -242,9 +241,9 @@ def admin_dashboard():
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS FLOAT) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
+        cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS INTEGER) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
-        cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS FLOAT) as price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
+        cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS INTEGER) as price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
         db_items = cursor.fetchall()
         items_map = {}
         for row in db_items:
@@ -261,16 +260,20 @@ def admin_dashboard():
         active_labs = cursor.fetchall()
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
-        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS FLOAT) as price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
+        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS INTEGER) as price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         inventory = cursor.fetchall()
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
         
+        # FETCH MASTER TESTS FOR DELETION
+        cursor.execute("SELECT t.id, t.name, c.name as category_name, t.fasting_requirement FROM tests t JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
+        master_tests = cursor.fetchall()
+        
         cursor.execute("""
-            SELECT hp.id, hp.title, CAST(hp.price AS FLOAT) as original_price, l.name as lab_name,
+            SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.name as lab_name,
                    string_agg(t.name, ', ') as features,
-                   so.id as offer_id, CAST(so.discount_percent AS FLOAT) as discount_percent, so.badge, TO_CHAR(so.end_date, 'YYYY-MM-DD') as end_date,
-                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS FLOAT) as discounted_price
+                   so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'YYYY-MM-DD') as end_date,
+                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
             FROM health_packages hp
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
@@ -282,7 +285,7 @@ def admin_dashboard():
         packages = cursor.fetchall()
     except Exception as e: raise e 
     finally: release_db(conn)
-    return render_template('admin.html', orders=orders, feedbacks=feedbacks, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests)
+    return render_template('admin.html', orders=orders, feedbacks=feedbacks, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests, master_tests=master_tests)
 
 @app.route('/admin/upload-report', methods=['POST'])
 def upload_report():
@@ -346,6 +349,18 @@ def admin_add_test():
     finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/delete-master-test/<int:test_id>', methods=['POST'])
+def delete_master_test(test_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM tests WHERE id = %s", (test_id,))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/add-lab', methods=['POST'])
 def add_lab():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -381,6 +396,18 @@ def delete_lab(lab_id):
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("DELETE FROM lab_test_pricing WHERE lab_id = %s", (lab_id,))
         cursor.execute("DELETE FROM labs WHERE id = %s", (lab_id,))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete-inventory/<int:test_id>/<int:lab_id>', methods=['POST'])
+def delete_inventory(test_id, lab_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
         conn.commit()
     except: pass
     finally: release_db(conn)
