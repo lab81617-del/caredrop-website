@@ -57,7 +57,6 @@
         .pkg-btn { width: 100%; background: #0F172A !important; color: white !important; padding: 14px; border-radius: 8px; font-weight: 800; border: none !important; cursor: pointer; margin-top: auto; font-size: 15px; transition: 0.2s; }
         .pkg-btn:hover { background: #0D9488 !important; }
 
-        /* REAL-TIME CART BAR */
         .cart-float { position: fixed; bottom: 20px; right: 20px; background: #0D9488; color: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.4); font-weight: 800; display: flex; justify-content: space-between; align-items: center; gap: 20px; z-index: 100; cursor: pointer; transition: 0.2s; font-size: 15px; border: none; }
         .cart-float:hover { transform: translateY(-3px); }
 
@@ -77,7 +76,6 @@
             .btn-add { padding: 10px 16px; font-size: 13px; }
             .catalog-tabs { flex-direction: row; gap: 8px; }
             .tab-btn { padding: 12px 16px; font-size: 14px; }
-            /* Force sticky bottom bar on mobile to not be missed */
             .cart-float { bottom: 0; right: 0; width: 100%; border-radius: 0; box-sizing: border-box; padding: 20px; }
             .cart-float:hover { transform: none; }
         }
@@ -86,7 +84,6 @@
 <body>
     <nav class="navbar">
         <a href="/" class="logo">CareDrop<br><span style="font-size: 10px; color:#64748B; letter-spacing:1px; line-height: 1;">BY IHC DIAGNOSTICS</span></a>
-        <!-- "Book Test" nav button hidden here as requested -->
         <div class="nav-links"><a href="/my-bookings">My Bookings</a></div>
     </nav>
 
@@ -100,54 +97,48 @@
         <input type="text" id="searchInput" class="search-box" placeholder="Search for CBC, Thyroid, Sugar..." onkeyup="filterTests()">
 
         <div id="view-tests" class="catalog-view active">
-            {% set current_category = '' %}
-            {% for test in tests %}
-                {% if test.category != current_category %}
-                    {% if current_category != '' %} </div> {% endif %}
-                    <div class="category-group" data-category="{{ test.category | lower }}">
-                        <div class="category-title">{{ test.category }}</div>
-                    {% set current_category = test.category %}
-                {% endif %}
-                
-                <div class="test-card" data-name="{{ test.name | lower }}">
-                    <div class="test-header">
-                        <div>
-                            <div class="test-name">{{ test.name }}</div>
-                            <div class="test-meta">
-                                {% if test.fasting_requirement != 'None' %} <span class="test-fasting"><i data-lucide="coffee" style="width: 14px; height: 14px;"></i> {{ test.fasting_requirement }}</span> {% endif %}
+            {% for category_name, test_items in grouped_tests.items() %}
+                <div class="category-group" data-category="{{ category_name | lower }}">
+                    <div class="category-title">{{ category_name }}</div>
+                    
+                    {% for test in test_items %}
+                    <div class="test-card" data-name="{{ test.name | lower }}">
+                        <div class="test-header">
+                            <div>
+                                <div class="test-name">{{ test.name }}</div>
+                                <div class="test-meta">
+                                    {% if test.fasting_requirement and test.fasting_requirement|lower != 'none' and test.fasting_requirement != '' %}
+                                        <span class="test-fasting"><i data-lucide="coffee" style="width: 14px; height: 14px;"></i> {{ test.fasting_requirement }}</span> 
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="lab-options">
-                        <script>
-                            var pData = {{ pricing | safe }};
-                            var testId = {{ test.id }};
-                            var matches = pData.filter(p => p.test_id === testId);
-                            if(matches.length === 0) {
-                                document.write('<span style="font-size:13px; color:#EF4444; font-weight:800;">Price not assigned yet</span>');
-                            }
-                            matches.forEach(m => {
-                                let badgeText = "★ 4.6 | Standard Partner";
-                                if(m.lab_name.toUpperCase().includes("BHARAT")) badgeText = "★ 4.9 | NABL Accredited";
-                                if(m.lab_name.toUpperCase().includes("HYPATHO")) badgeText = "★ 4.8 | Fast Reporting";
-                                if(m.lab_name.toUpperCase().includes("BHARGAV")) badgeText = "★ 4.7 | Verified Accuracy";
-                                
-                                document.write(`
-                                    <div class="lab-option-row">
-                                        <div class="lab-option-name">
-                                            <span><i data-lucide="microscope" style="width: 14px; height: 14px; vertical-align:middle; color:#64748B;"></i> ${m.lab_name}</span>
-                                            <span class="lab-badge-text">${badgeText}</span>
+                        
+                        <div class="lab-options">
+                            <script>
+                                var pData = {{ pricing | safe }};
+                                var testId = {{ test.id }};
+                                var matches = pData.filter(p => p.test_id === testId);
+                                if(matches.length === 0) {
+                                    document.write('<span style="font-size:13px; color:#EF4444; font-weight:800;">Price not assigned yet</span>');
+                                }
+                                matches.forEach(m => {
+                                    document.write(`
+                                        <div class="lab-option-row">
+                                            <div class="lab-option-name">
+                                                <span><i data-lucide="microscope" style="width: 14px; height: 14px; vertical-align:middle; color:#64748B;"></i> ${m.lab_name}</span>
+                                                <span class="lab-badge-text">★ ${m.rating} | ${m.cert_badge}</span>
+                                            </div>
+                                            <button class="btn-add" onclick="triggerRecommendationEngine('${testId}', '${"{{ test.name }}"}', '${m.lab_id}', '${m.lab_name}', '${m.price}')">+ ₹${m.price} Add</button>
                                         </div>
-                                        <button class="btn-add" onclick="triggerRecommendationEngine('${testId}', '${"{{ test.name }}"}', '${m.lab_id}', '${m.lab_name}', '${m.price}')">+ ₹${m.price} Add</button>
-                                    </div>
-                                `);
-                            });
-                        </script>
+                                    `);
+                                });
+                            </script>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
             {% endfor %}
-            {% if tests|length > 0 %} </div> {% endif %}
         </div>
 
         <div id="view-packages" class="catalog-view">
@@ -196,7 +187,7 @@
         </div>
     </div>
 
-    <!-- STICKY CART BAR -->
+  <!-- STICKY CART BAR -->
     <div class="cart-float" id="cartFloat" style="display: none;" onclick="window.location.href='/book'">
         <div>
             <span id="cartCount" style="margin-right: 10px;">0 Items</span> | 
