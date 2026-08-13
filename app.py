@@ -38,7 +38,10 @@ def safe_migrate(query):
         release_db(conn)
 
 def auto_migrate_db():
+    safe_migrate("CREATE TABLE IF NOT EXISTS test_categories (id SERIAL PRIMARY KEY, name VARCHAR(255) UNIQUE)")
     safe_migrate("ALTER TABLE labs ADD CONSTRAINT labs_name_key UNIQUE (name)")
+    safe_migrate("ALTER TABLE labs ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 4.5")
+    safe_migrate("ALTER TABLE labs ADD COLUMN IF NOT EXISTS cert_badge VARCHAR(100) DEFAULT 'Verified Partner'")
     safe_migrate("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
     safe_migrate("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
     safe_migrate("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
@@ -50,6 +53,7 @@ def auto_migrate_db():
     safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS gender VARCHAR(20)")
     safe_migrate("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
     safe_migrate("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
+    safe_migrate("CREATE TABLE IF NOT EXISTS patient_feedback (id SERIAL PRIMARY KEY, order_id INTEGER, patient_email VARCHAR(255), message TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
 
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
@@ -118,17 +122,24 @@ def home():
 @app.route('/tests')
 def tests_catalog():
     conn = None
-    tests_list = []
+    grouped_tests = {}
     pricing_list = []
     packages_list = []
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
+        # PERFECT GROUPING LOGIC FOR FRONTEND
         cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
-        tests_list = cursor.fetchall()
-        cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, ltp.tat, l.id as lab_id, l.name as lab_name, l.badge_type FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
+        raw_tests = cursor.fetchall()
+        for t in raw_tests:
+            cat = t['category']
+            if cat not in grouped_tests: grouped_tests[cat] = []
+            grouped_tests[cat].append(t)
+            
+        cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS FLOAT) as price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
         pricing_list = cursor.fetchall()
+        
         cursor.execute("""
-            SELECT hp.id, hp.title, CAST(hp.price AS FLOAT) as original_price, l.id as lab_id, l.name as lab_name,
+            SELECT hp.id, hp.title, CAST(hp.price AS FLOAT) as original_price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge,
                    COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
                    string_agg(t.name, ', ') as features,
                    so.id as offer_id, CAST(so.discount_percent AS FLOAT) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
@@ -138,14 +149,13 @@ def tests_catalog():
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
             LEFT JOIN tests t ON pt.test_id = t.id
             LEFT JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
-            GROUP BY hp.id, l.id, l.name, so.id, so.discount_percent, so.badge, so.end_date
+            GROUP BY hp.id, l.id, l.name, l.rating, l.cert_badge, so.id, so.discount_percent, so.badge, so.end_date
             ORDER BY hp.id DESC
         """)
         packages_list = cursor.fetchall()
     except Exception as e: pass
     finally: release_db(conn)
-    # The default=str ensures any Decimal objects Postgres hands us are safely serialized without crashing
-    return render_template('tests.html', tests=tests_list, pricing=json.dumps(pricing_list, default=str), packages=json.dumps(packages_list, default=str), raw_packages=packages_list)
+    return render_template('tests.html', grouped_tests=grouped_tests, pricing=json.dumps(pricing_list, default=str), packages=json.dumps(packages_list, default=str), raw_packages=packages_list)
 
 @app.route('/book')
 def checkout_page(): return render_template('checkout.html')
@@ -176,6 +186,21 @@ def my_bookings():
         except Exception as e: pass
         finally: release_db(conn)
     return render_template('my_bookings.html', orders=orders, searched_email=email)
+
+@app.route('/api/submit-feedback', methods=['POST'])
+def submit_feedback():
+    email = request.form.get('email')
+    order_id = request.form.get('order_id')
+    message = request.form.get('message')
+    if not session.get(f'verified_{email}'): return jsonify({"success": False, "message": "Unauthorized"})
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("INSERT INTO patient_feedback (order_id, patient_email, message) VALUES (%s, %s, %s)", (order_id, email, message))
+        conn.commit()
+        return jsonify({"success": True})
+    except: return jsonify({"success": False})
+    finally: release_db(conn)
 
 @app.route('/download-report/<int:order_id>')
 def download_report(order_id):
@@ -226,9 +251,13 @@ def admin_dashboard():
             if row['order_id'] not in items_map: items_map[row['order_id']] = []
             items_map[row['order_id']].append(row)
         for order in orders: order['test_list'] = items_map.get(order['id'], [])
-        cursor.execute("SELECT id, name, is_active FROM labs ORDER BY name")
+        
+        cursor.execute("SELECT * FROM patient_feedback ORDER BY id DESC")
+        feedbacks = cursor.fetchall()
+        
+        cursor.execute("SELECT id, name, CAST(rating AS FLOAT) as rating, cert_badge, is_active FROM labs ORDER BY name")
         all_labs = cursor.fetchall()
-        cursor.execute("SELECT DISTINCT ON (LOWER(name)) id, name FROM labs WHERE is_active = TRUE ORDER BY LOWER(name), id")
+        cursor.execute("SELECT id, name FROM labs WHERE is_active = TRUE ORDER BY name")
         active_labs = cursor.fetchall()
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
@@ -253,7 +282,7 @@ def admin_dashboard():
         packages = cursor.fetchall()
     except Exception as e: raise e 
     finally: release_db(conn)
-    return render_template('admin.html', orders=orders, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests)
+    return render_template('admin.html', orders=orders, feedbacks=feedbacks, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests)
 
 @app.route('/admin/upload-report', methods=['POST'])
 def upload_report():
@@ -286,10 +315,22 @@ def admin_update_order():
     finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/add-category', methods=['POST'])
+def admin_add_category():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("INSERT INTO test_categories (name) VALUES (%s) ON CONFLICT DO NOTHING", (request.form.get('category_name').strip(),))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/add-test', methods=['POST'])
 def admin_add_test():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    test_name, category_id, fasting, price, lab_ids = request.form.get('test_name').strip(), request.form.get('category_id'), request.form.get('fasting'), request.form.get('price'), request.form.getlist('lab_ids') 
+    test_name, category_id, fasting, price, lab_ids = request.form.get('test_name').strip(), request.form.get('category_id'), request.form.get('fasting').strip(), request.form.get('price'), request.form.getlist('lab_ids') 
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor()
@@ -311,7 +352,10 @@ def add_lab():
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute("INSERT INTO labs (name, is_active) VALUES (%s, TRUE) ON CONFLICT (name) DO NOTHING", (request.form.get('lab_name').strip(),))
+        name = request.form.get('lab_name').strip()
+        rating = request.form.get('rating')
+        badge = request.form.get('cert_badge').strip()
+        cursor.execute("INSERT INTO labs (name, rating, cert_badge, is_active) VALUES (%s, %s, %s, TRUE) ON CONFLICT (name) DO UPDATE SET rating = %s, cert_badge = %s", (name, rating, badge, rating, badge))
         conn.commit()
     except: pass
     finally: release_db(conn)
