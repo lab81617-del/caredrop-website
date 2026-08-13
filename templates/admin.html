@@ -23,7 +23,6 @@
         
         .card { background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 30px; border: 1px solid #CBD5E1; overflow: hidden; }
         
-        /* SCROLLBAR & TABLE FIXES */
         .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .table-wrapper::-webkit-scrollbar { height: 8px; }
         .table-wrapper::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 4px; }
@@ -40,7 +39,6 @@
         .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; background: white; transition: 0.2s; font-family: inherit; font-weight: 600; color: #0F172A; }
         .input-group input:focus, .input-group select:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
         
-        /* VERTICAL SCROLL ZONE FOR TESTS */
         .checkbox-grid { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; padding: 15px; border: 1px solid #94A3B8; border-radius: 8px; background: #F8FAFC; }
         .checkbox-grid::-webkit-scrollbar { width: 6px; }
         .checkbox-grid::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 4px; }
@@ -58,7 +56,7 @@
         .section-divider:not(:empty)::before { margin-right: .5em; }
         .section-divider:not(:empty)::after { margin-left: .5em; }
 
-       @media (max-width: 768px) {
+        @media (max-width: 768px) {
             .header-flex { flex-direction: column; align-items: stretch; gap: 15px; }
         }
     </style>
@@ -76,6 +74,7 @@
             <button id="packagesTabBtn" class="tab-btn" onclick="switchTab('packages')">🎁 Packages & Offers</button>
         </div>
         
+        <!-- LIVE ORDERS TAB -->
         <div id="orders" class="tab-content active">
             <div class="card table-wrapper">
                 <table>
@@ -129,22 +128,67 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- PATIENT FEEDBACK VIEWER -->
+            <div class="card form-container">
+                <div class="form-title"><i data-lucide="message-square" style="width: 20px; height: 20px;"></i> Patient Feedback & Suggestions</div>
+                {% if feedbacks %}
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        {% for fb in feedbacks %}
+                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 15px; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <div style="font-weight: 800; color: #0F172A; font-size: 14px;">Order #{{ fb.order_id }}</div>
+                                <div style="font-size: 12px; color: #64748B; font-weight: 700;">{{ fb.created_at.strftime('%d %b, %H:%M') }}</div>
+                            </div>
+                            <div style="color: #475569; font-size: 14px; line-height: 1.5;">"{{ fb.message }}"</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="color: #64748B; font-weight: 600; font-size: 14px;">No patient feedback has been submitted yet.</div>
+                {% endif %}
+            </div>
         </div>
         
+       <!-- INVENTORY TAB -->
         <div id="inventory" class="tab-content">
+            
+            <div class="card form-container" style="background: #F0FDF4; border: 1px solid #BBF7D0;">
+                <div class="form-title" style="color: #166534; border-bottom: 1px solid #86EFAC;"><i data-lucide="folder-plus" style="width: 20px; height: 20px;"></i> 1. Create a New Category</div>
+                <form action="/admin/add-category" method="POST" style="display: flex; gap: 15px; align-items: flex-end;">
+                    <div class="input-group" style="flex: 1;">
+                        <label style="color: #166534;">Category Name (e.g. Heart Health)</label>
+                        <input type="text" name="category_name" required style="border-color: #86EFAC;">
+                    </div>
+                    <button type="submit" class="btn-save" style="background: #166534 !important;">+ Add Category</button>
+                </form>
+            </div>
+
             <div class="card" style="margin-bottom: 20px;">
-                <div class="form-title" style="padding: 20px 20px 0 20px; border:none; margin:0;"><i data-lucide="building" style="width: 20px; height: 20px;"></i> Partner Lab Manager</div>
+                <div class="form-title" style="padding: 20px 20px 0 20px; border:none; margin:0;"><i data-lucide="building" style="width: 20px; height: 20px;"></i> 2. Partner Lab Manager</div>
                 <div class="table-wrapper" style="padding: 0 20px 20px 20px;">
-                    <form action="/admin/add-lab" method="POST" style="display: flex; gap: 15px; margin: 15px 0; background: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0;">
-                        <input type="text" name="lab_name" placeholder="Enter new partner lab name..." required style="flex: 1; padding: 12px 16px; border: 1px solid #94A3B8; border-radius: 8px; outline:none; font-weight: 800; color: #0F172A;">
-                        <button type="submit" class="btn-save">+ Add Lab</button>
+                    <form action="/admin/add-lab" method="POST" style="display: flex; gap: 15px; margin: 15px 0; background: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; align-items: flex-end; flex-wrap: wrap;">
+                        <div class="input-group" style="flex: 1; min-width: 200px;">
+                            <label>Lab Name</label>
+                            <input type="text" name="lab_name" required>
+                        </div>
+                        <div class="input-group" style="width: 120px;">
+                            <label>Rating</label>
+                            <input type="number" step="0.1" name="rating" placeholder="e.g. 4.8" required>
+                        </div>
+                        <div class="input-group" style="flex: 1; min-width: 200px;">
+                            <label>Certification Badge</label>
+                            <input type="text" name="cert_badge" placeholder="e.g. NABL Accredited" required>
+                        </div>
+                        <button type="submit" class="btn-save" style="padding: 14px 24px; font-size: 14px; margin-bottom: 2px;">+ Save Lab</button>
                     </form>
                     <table style="min-width: 100%;">
-                        <thead><tr><th>Lab Name</th><th>Current Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Lab Name</th><th>Quality Badge</th><th>Current Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             {% for lab in all_labs %}
                             <tr>
                                 <td style="font-weight: 800; font-size: 15px; text-transform: capitalize;">{{ lab.name }}</td>
+                                <td style="font-weight: 700; font-size: 13px; color: #475569;">★ {{ lab.rating }} | {{ lab.cert_badge }}</td>
                                 <td>
                                     {% if lab.is_active %}<span class="btn-toggle-active" style="display:inline-block;">Active</span>
                                     {% else %}<span class="btn-toggle-inactive" style="display:inline-block;">Hidden</span>{% endif %}
@@ -161,11 +205,15 @@
             </div>
 
             <div class="card form-container">
-                <div class="form-title"><i data-lucide="flask-conical" style="width: 20px; height: 20px;"></i> Add New Test to Inventory</div>
+                <div class="form-title"><i data-lucide="flask-conical" style="width: 20px; height: 20px;"></i> 3. Add New Test to Inventory</div>
                 <form action="/admin/add-test" method="POST">
                     <div class="form-grid">
                         <div class="input-group"><label>Test Name</label><input type="text" name="test_name" required></div>
                         <div class="input-group"><label>Category</label><select name="category_id">{% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}</select></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group"><label>Fasting/Condition (Leave blank or 'None' to hide)</label><input type="text" name="fasting" placeholder="e.g. 10 Hours Fasting"></div>
+                        <div class="input-group"><label>Base Price (₹)</label><input type="number" name="price" required></div>
                     </div>
                     <div class="input-group" style="margin-bottom: 20px;">
                         <label>Select Partner Labs to assign this test</label>
@@ -175,10 +223,7 @@
                             {% endfor %}
                         </div>
                     </div>
-                    <div class="form-grid">
-                        <div class="input-group"><label>Price (₹)</label><input type="number" name="price" required></div>
-                        <div class="input-group"><label>&nbsp;</label><button type="submit" class="btn-save" style="width: 100%;">+ Save Test</button></div>
-                    </div>
+                    <button type="submit" class="btn-save" style="width: 100%;">+ Save Test</button>
                 </form>
             </div>
 
@@ -304,7 +349,7 @@
     <script>
         lucide.createIcons();
 
-      function filterTests() {
+        function filterTests() {
             let input = document.getElementById('testSearch').value.toLowerCase();
             let labels = document.querySelectorAll('.test-label');
             labels.forEach(label => {
