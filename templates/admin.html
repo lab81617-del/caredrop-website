@@ -74,7 +74,6 @@
             <button id="packagesTabBtn" class="tab-btn" onclick="switchTab('packages')">🎁 Packages & Offers</button>
         </div>
         
-        <!-- LIVE ORDERS TAB -->
         <div id="orders" class="tab-content active">
             <div class="card table-wrapper">
                 <table>
@@ -150,17 +149,17 @@
             </div>
         </div>
         
-       <!-- INVENTORY TAB -->
+        <!-- INVENTORY TAB -->
         <div id="inventory" class="tab-content">
             
             <div class="card form-container" style="background: #F0FDF4; border: 1px solid #BBF7D0;">
                 <div class="form-title" style="color: #166534; border-bottom: 1px solid #86EFAC;"><i data-lucide="folder-plus" style="width: 20px; height: 20px;"></i> 1. Create a New Category</div>
-                <form action="/admin/add-category" method="POST" style="display: flex; gap: 15px; align-items: flex-end;">
-                    <div class="input-group" style="flex: 1;">
+                <form action="/admin/add-category" method="POST" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="input-group" style="flex: 1; min-width: 200px;">
                         <label style="color: #166534;">Category Name (e.g. Heart Health)</label>
                         <input type="text" name="category_name" required style="border-color: #86EFAC;">
                     </div>
-                    <button type="submit" class="btn-save" style="background: #166534 !important;">+ Add Category</button>
+                    <button type="submit" class="btn-save" style="background: #166534 !important; padding: 14px 24px; margin-bottom: 2px;">+ Add Category</button>
                 </form>
             </div>
 
@@ -204,15 +203,40 @@
                 </div>
             </div>
 
+            <!-- MASTER TEST DICTIONARY (THE FIX FOR GHOST TESTS) -->
+            <div class="card table-wrapper" style="margin-bottom: 30px;">
+                <div class="form-title" style="padding: 20px 20px 0 20px; border:none; margin:0; color:#DC2626;">
+                    <i data-lucide="database" style="width: 20px; height: 20px;"></i> 3. Master Test Dictionary (Delete Typos Here)
+                </div>
+                <div style="padding: 10px 20px; font-size: 13px; color: #475569; font-weight: 600;">If a deleted test still shows up in your package builder, delete it completely from this master list below.</div>
+                <table>
+                    <thead><tr><th>Test Name</th><th>Category</th><th>Fasting</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for t in master_tests %}
+                        <tr>
+                            <td style="font-weight: 800; text-transform: capitalize;">{{ t.name }}</td>
+                            <td style="font-size: 13px; font-weight: 700;">{{ t.category_name }}</td>
+                            <td style="font-size: 13px; color: #B45309; font-weight: 700;">{{ t.fasting_requirement }}</td>
+                            <td>
+                                <form action="/admin/delete-master-test/{{ t.id }}" method="POST" style="margin:0;" onsubmit="return confirm('WARNING: This will permanently delete this test from ALL labs and packages. Continue?');">
+                                    <button type="submit" class="btn-delete" style="background:#FEF2F2 !important; color:#DC2626 !important; border: 1px solid #FCA5A5 !important;"><i data-lucide="trash-2" style="width: 14px; height: 14px; vertical-align: middle;"></i> Delete Completely</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
             <div class="card form-container">
-                <div class="form-title"><i data-lucide="flask-conical" style="width: 20px; height: 20px;"></i> 3. Add New Test to Inventory</div>
+                <div class="form-title"><i data-lucide="flask-conical" style="width: 20px; height: 20px;"></i> 4. Add New Test & Assign Prices</div>
                 <form action="/admin/add-test" method="POST">
                     <div class="form-grid">
                         <div class="input-group"><label>Test Name</label><input type="text" name="test_name" required></div>
                         <div class="input-group"><label>Category</label><select name="category_id">{% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}</select></div>
                     </div>
                     <div class="form-grid">
-                        <div class="input-group"><label>Fasting/Condition (Leave blank or 'None' to hide)</label><input type="text" name="fasting" placeholder="e.g. 10 Hours Fasting"></div>
+                        <div class="input-group"><label>Fasting/Condition (Leave blank or type 'None' to hide)</label><input type="text" name="fasting" placeholder="e.g. 10 Hours Fasting"></div>
                         <div class="input-group"><label>Base Price (₹)</label><input type="number" name="price" required></div>
                     </div>
                     <div class="input-group" style="margin-bottom: 20px;">
@@ -223,13 +247,13 @@
                             {% endfor %}
                         </div>
                     </div>
-                    <button type="submit" class="btn-save" style="width: 100%;">+ Save Test</button>
+                    <button type="submit" class="btn-save" style="width: 100%;">+ Save Test & Price</button>
                 </form>
             </div>
 
             <div class="card table-wrapper">
                 <div class="form-title header-flex" style="padding: 30px 30px 0 30px; border:none; margin:0; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="display:flex; align-items:center; gap:10px;"><i data-lucide="list" style="width: 20px; height: 20px;"></i> Live Inventory Pricing</span>
+                    <span style="display:flex; align-items:center; gap:10px;"><i data-lucide="list" style="width: 20px; height: 20px;"></i> 5. Live Inventory Pricing</span>
                     <input type="text" id="inventorySearch" onkeyup="filterInventory()" placeholder="🔍 Search inventory..." style="padding: 12px 16px; border: 1px solid #94A3B8; border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; font-weight: 800; width: 100%; max-width: 300px;">
                 </div>
                 <table>
@@ -245,7 +269,7 @@
                             <td style="font-weight: 800; color: #0D9488; font-size: 16px;">₹{{ item.price }}</td>
                             <td>
                                 <form action="/admin/delete-inventory/{{ item.test_id }}/{{ item.lab_id }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this price?');">
-                                    <button type="submit" class="btn-delete">🗑️ Delete</button>
+                                    <button type="submit" class="btn-delete">🗑️ Delete Price</button>
                                 </form>
                             </td>
                         </tr>
@@ -320,7 +344,7 @@
                             <td>
                                 <div style="font-weight: 800; color: #0F766E; font-size: 16px; text-transform: capitalize;">{{ pkg.title }}</div>
                                 <div style="font-size: 13px; font-weight: 800; color: #64748B; margin-top: 4px; text-transform: capitalize;"><i data-lucide="microscope" style="width: 12px; height: 12px;"></i> {{ pkg.lab_name }}</div>
-                                <div style="font-size: 13px; color: #475569; font-weight: 600; margin-top: 8px; line-height: 1.5; max-width: 250px;">{{ pkg.features }}</div>
+                                <div style="font-size: 13px; color: #475569; font-weight: 600; margin-top: 8px; line-height: 1.5; max-width: 250px; text-transform: capitalize;">{{ pkg.features }}</div>
                             </td>
                             <td style="font-weight: 800; font-size: 18px; color: #0F172A;">₹{{ pkg.original_price }}</td>
                             <td>
