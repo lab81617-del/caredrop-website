@@ -22,33 +22,40 @@
         .search-box:focus { border-color: #0D9488; box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); }
 
         .catalog-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
-        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 14px 24px; border-radius: 10px; font-weight: 800; font-size: 15px; color: #64748B; cursor: pointer; transition: 0.2s; width: 100%; max-width: 250px; }
+        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 14px 24px; border-radius: 10px; font-weight: 800; font-size: 15px; color: #64748B; cursor: pointer; transition: 0.2s; width: 100%; max-width: 250px; font-family: inherit; }
         .tab-btn.active { background: #0F172A !important; color: white !important; border-color: #0F172A !important; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2); }
 
         .catalog-view { display: none; }
         .catalog-view.active { display: block; }
 
         .category-group { margin-bottom: 40px; }
-        .category-title { font-size: 20px; font-weight: 800; color: #1E293B; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px; text-transform: capitalize; }
+        .category-title { font-size: 20px; font-weight: 800; color: #1E293B; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px; text-transform: capitalize; }
         
-        .test-card { display: flex; flex-direction: column; padding: 25px; border: 1px solid #CBD5E1; border-radius: 12px; margin-bottom: 15px; background: white; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        /* THE HORIZONTAL SCROLLER */
+        .category-scroll { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .category-scroll::-webkit-scrollbar { height: 6px; }
+        .category-scroll::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 4px; }
+        .category-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+
+        .test-card { display: flex; flex-direction: column; padding: 25px; border: 1px solid #CBD5E1; border-radius: 12px; background: white; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); min-width: 300px; max-width: 340px; flex: 0 0 auto; scroll-snap-align: start; }
         .test-card:hover { border-color: #0D9488; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1); }
         .test-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 15px; }
-        .test-name { font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 8px; text-transform: capitalize; }
+        .test-name { font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 8px; text-transform: capitalize; line-height: 1.3; }
         .test-meta { font-size: 14px; color: #64748B; font-weight: 700; display: flex; gap: 10px; align-items: center; }
         .test-fasting { background: #FFF7ED; color: #B45309; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; border: none !important; }
         
         .lab-options { display: flex; flex-direction: column; gap: 10px; }
         .lab-option-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0; }
-        .lab-option-name { font-size: 15px; font-weight: 800; color: #334155; display: flex; flex-direction: column; gap: 4px; text-transform: capitalize; }
+        .lab-option-name { font-size: 14px; font-weight: 800; color: #334155; display: flex; flex-direction: column; gap: 4px; text-transform: capitalize; }
         .lab-badge-text { font-size: 11px; font-weight: 700; color: #0D9488; background: #CCFBF1; padding: 2px 6px; border-radius: 4px; display: inline-block; width: fit-content; border: none !important; }
         .btn-add { background: #0D9488 !important; color: white !important; padding: 10px 18px; border: none !important; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; transition: 0.2s; white-space: nowrap; }
         .btn-add:hover { background: #0F766E !important; }
 
+        /* ALL PACKAGES STYLES */
         .pkg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .pkg-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #CBD5E1; position: relative; display: flex; flex-direction: column; transition: 0.2s; }
         .pkg-card:hover { border-color: #0D9488; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.1); }
-        .pkg-title { font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 5px; text-transform: capitalize; }
+        .pkg-title { font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 5px; text-transform: uppercase; }
         .pkg-lab { font-size: 13px; font-weight: 800; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; text-transform: capitalize; border: none !important; }
         .pkg-price { font-size: 26px; font-weight: 800; margin-bottom: 15px; color: #0D9488; display: flex; align-items: center; gap: 10px; }
         .pkg-old { font-size: 16px; color: #94A3B8; text-decoration: line-through; font-weight: 700; }
@@ -72,10 +79,11 @@
         @media (max-width: 600px) {
             .test-header { flex-direction: column; }
             .lab-option-row { padding: 12px; }
-            .lab-option-name { font-size: 14px; }
+            .lab-option-name { font-size: 13px; }
             .btn-add { padding: 10px 16px; font-size: 13px; }
             .catalog-tabs { flex-direction: row; gap: 8px; }
             .tab-btn { padding: 12px 16px; font-size: 14px; }
+            .test-card { min-width: 280px; }
             .cart-float { bottom: 0; right: 0; width: 100%; border-radius: 0; box-sizing: border-box; padding: 20px; }
             .cart-float:hover { transform: none; }
         }
@@ -101,42 +109,45 @@
                 <div class="category-group" data-category="{{ category_name | lower }}">
                     <div class="category-title">{{ category_name }}</div>
                     
-                    {% for test in test_items %}
-                    <div class="test-card" data-name="{{ test.name | lower }}">
-                        <div class="test-header">
-                            <div>
-                                <div class="test-name">{{ test.name }}</div>
-                                <div class="test-meta">
-                                    {% if test.fasting_requirement and test.fasting_requirement|lower != 'none' and test.fasting_requirement != '' %}
-                                        <span class="test-fasting"><i data-lucide="coffee" style="width: 14px; height: 14px;"></i> {{ test.fasting_requirement }}</span> 
-                                    {% endif %}
+                    <!-- HORIZONTAL SCROLL WRAPPER -->
+                    <div class="category-scroll">
+                        {% for test in test_items %}
+                        <div class="test-card" data-name="{{ test.name | lower }}">
+                            <div class="test-header">
+                                <div>
+                                    <div class="test-name">{{ test.name }}</div>
+                                    <div class="test-meta">
+                                        {% if test.fasting_requirement and test.fasting_requirement|lower != 'none' and test.fasting_requirement != '' %}
+                                            <span class="test-fasting"><i data-lucide="coffee" style="width: 14px; height: 14px;"></i> {{ test.fasting_requirement }}</span> 
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="lab-options">
-                            <script>
-                                var pData = {{ pricing | safe }};
-                                var testId = {{ test.id }};
-                                var matches = pData.filter(p => p.test_id === testId);
-                                if(matches.length === 0) {
-                                    document.write('<span style="font-size:13px; color:#EF4444; font-weight:800;">Price not assigned yet</span>');
-                                }
-                                matches.forEach(m => {
-                                    document.write(`
-                                        <div class="lab-option-row">
-                                            <div class="lab-option-name">
-                                                <span><i data-lucide="microscope" style="width: 14px; height: 14px; vertical-align:middle; color:#64748B;"></i> ${m.lab_name}</span>
-                                                <span class="lab-badge-text">★ ${m.rating} | ${m.cert_badge}</span>
+                            
+                            <div class="lab-options">
+                                <script>
+                                    var pData = {{ pricing | safe }};
+                                    var testId = {{ test.id }};
+                                    var matches = pData.filter(p => p.test_id === testId);
+                                    if(matches.length === 0) {
+                                        document.write('<span style="font-size:13px; color:#EF4444; font-weight:800;">Price not assigned yet</span>');
+                                    }
+                                    matches.forEach(m => {
+                                        document.write(`
+                                            <div class="lab-option-row">
+                                                <div class="lab-option-name">
+                                                    <span><i data-lucide="microscope" style="width: 14px; height: 14px; vertical-align:middle; color:#64748B;"></i> ${m.lab_name}</span>
+                                                    <span class="lab-badge-text">★ ${m.rating} | ${m.cert_badge}</span>
+                                                </div>
+                                                <button class="btn-add" onclick="triggerRecommendationEngine('${testId}', '${"{{ test.name }}"}', '${m.lab_id}', '${m.lab_name}', '${m.price}')">+ ₹${m.price} Add</button>
                                             </div>
-                                            <button class="btn-add" onclick="triggerRecommendationEngine('${testId}', '${"{{ test.name }}"}', '${m.lab_id}', '${m.lab_name}', '${m.price}')">+ ₹${m.price} Add</button>
-                                        </div>
-                                    `);
-                                });
-                            </script>
+                                        `);
+                                    });
+                                </script>
+                            </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
             {% endfor %}
         </div>
@@ -187,7 +198,7 @@
         </div>
     </div>
 
-  <!-- STICKY CART BAR -->
+   <!-- STICKY CART BAR -->
     <div class="cart-float" id="cartFloat" style="display: none;" onclick="window.location.href='/book'">
         <div>
             <span id="cartCount" style="margin-right: 10px;">0 Items</span> | 
