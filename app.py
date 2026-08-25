@@ -62,6 +62,9 @@ def auto_migrate_db():
     safe_migrate("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
     safe_migrate("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
     safe_migrate("CREATE TABLE IF NOT EXISTS patient_feedback (id SERIAL PRIMARY KEY, order_id INTEGER, patient_email VARCHAR(255), message TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+    safe_migrate("ALTER TABLE lab_test_pricing ADD COLUMN IF NOT EXISTS parameter_count INTEGER DEFAULT 1")
+    safe_migrate("CREATE TABLE IF NOT EXISTS phlebotomists (id SERIAL PRIMARY KEY, name VARCHAR(150), phone VARCHAR(50), vehicle_number VARCHAR(50), active_status BOOLEAN DEFAULT TRUE)")
+
 
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
