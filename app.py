@@ -11,10 +11,10 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
 load_dotenv()
-
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
+
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_size': 5,
     'max_overflow': 2,
@@ -22,15 +22,13 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True
 }
 
-
-
 @app.errorhandler(Exception)
 def handle_exception(e):
     error_trace = traceback.format_exc()
-    return f"<h2>CareDrop System Diagnostics</h2><pre style='color:red; background:#F8FAFC; padding:20px; border:1px solid #CBD5E1; border-radius:8px;'>{error_trace}</pre>", 500
+    return f"<h2>CareDrop System Diagnostics</h2><pre style='color:red; background: #F8FAFC; padding: 20px; border:1px solid #CBD5E1; border-radius: 8px;'>{error_trace}</pre>", 500
 
 def get_db(): return psycopg2.connect(os.environ.get("DATABASE_URL"))
-def release_db(conn): 
+def release_db(conn):
     if conn: conn.close()
 
 def safe_migrate(query):
@@ -65,7 +63,6 @@ def auto_migrate_db():
     safe_migrate("ALTER TABLE lab_test_pricing ADD COLUMN IF NOT EXISTS parameter_count INTEGER DEFAULT 1")
     safe_migrate("CREATE TABLE IF NOT EXISTS phlebotomists (id SERIAL PRIMARY KEY, name VARCHAR(150), phone VARCHAR(50), vehicle_number VARCHAR(50), active_status BOOLEAN DEFAULT TRUE)")
 
-
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
     if not api_key: return "Missing BREVO_API_KEY"
@@ -80,9 +77,6 @@ def send_email_api(recipient, subject, text_body):
 
 def send_email_async(recipient, subject, body):
     threading.Thread(target=send_email_api, args=(recipient, subject, body)).start()
-
-
-
 
 @app.route('/ping')
 def ping(): return "OK", 200
@@ -117,9 +111,9 @@ def home():
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
             SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.id as lab_id, l.name as lab_name,
-                   string_agg(t.name, ', ') as features,
-                   so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
-                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
+            string_agg(t.name, ', ') as features,
+            so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
+            CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
             FROM health_packages hp
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
@@ -147,16 +141,14 @@ def tests_catalog():
             cat = t['category']
             if cat not in grouped_tests: grouped_tests[cat] = []
             grouped_tests[cat].append(t)
-            
         cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS INTEGER) as price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
         pricing_list = cursor.fetchall()
-        
         cursor.execute("""
             SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge,
-                   COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
-                   string_agg(t.name, ', ') as features,
-                   so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
-                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
+            COALESCE(array_remove(array_agg(t.id), NULL), '{}') as test_ids,
+            string_agg(t.name, ', ') as features,
+            so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
+            CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
             FROM health_packages hp
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
@@ -188,11 +180,11 @@ def my_bookings():
             if orders:
                 for order in orders:
                     cursor.execute("""
-                        SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS INTEGER) as price 
-                        FROM order_items oi 
+                        SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS INTEGER) as price
+                        FROM order_items oi
                         LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test'
                         LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package'
-                        JOIN labs l ON oi.lab_id = l.id 
+                        JOIN labs l ON oi.lab_id = l.id
                         WHERE oi.order_id = %s
                     """, (order['id'],))
                     order['test_list'] = cursor.fetchall()
@@ -226,7 +218,7 @@ def download_report(order_id):
     except Exception as e: pass
     finally: release_db(conn)
     return "Report not found.", 404
-    
+
 @app.route('/admin/download-prescription/<int:order_id>')
 def download_prescription(order_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -244,9 +236,11 @@ def download_prescription(order_id):
 def admin_login():
     error = None
     if request.method == 'POST':
-        if request.form.get('password') == ADMIN_PASSWORD: session['admin_logged_in'] = True; return redirect(url_for('admin_dashboard'))
+        if request.form.get('password') == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
         else: error = "Access Denied."
-    return f'<html><body style="background:#F1F5F9; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><div style="background:white; padding:40px; border-radius:12px; text-align:center;"><form method="POST"><input type="password" name="password" placeholder="Master Password" required style="padding:14px; margin-bottom:15px; width:100%; border:1px solid #ccc; border-radius:8px;"><button type="submit" style="width:100%; background:#0F172A; color:white; padding:14px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Login</button></form><div style="color:red; margin-top:10px;">{error if error else ""}</div></div></body></html>'
+    return f'<html><body style="background:#F1F5F9; display: flex; justify-content:center; align-items:center; height: 100vh; font-family: sans-serif;"><div style="background: white; padding:40px; border-radius: 12px; text-align:center;"><form method="POST"><input type="password" name="password" placeholder="Master Password" required style="padding: 14px; margin-bottom: 15px; width:100%; border:1px solid #ccc; border-radius:8px;"><button type="submit" style="width:100%; background: #0F172A; color: white; padding: 14px; border: none; border-radius: 8px; font-weight:bold; cursor:pointer;">Login</button></form><div style="color:red; margin-top:10px;">{error if error else ""}</div></div></body></html>'
 
 @app.route('/admin')
 def admin_dashboard():
@@ -257,6 +251,7 @@ def admin_dashboard():
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS INTEGER) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
+        
         cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS INTEGER) as price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
         db_items = cursor.fetchall()
         items_map = {}
@@ -270,24 +265,32 @@ def admin_dashboard():
         
         cursor.execute("SELECT id, name, CAST(rating AS FLOAT) as rating, cert_badge, is_active FROM labs ORDER BY name")
         all_labs = cursor.fetchall()
+        
         cursor.execute("SELECT id, name FROM labs WHERE is_active = TRUE ORDER BY name")
         active_labs = cursor.fetchall()
+        
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
-        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS INTEGER) as price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
+        
+        # ADDED PARAMETER COUNT TO SQL QUERY
+        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS INTEGER) as price, COALESCE(ltp.parameter_count, 1) as parameter_count FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         inventory = cursor.fetchall()
+        
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
         
-        # FETCH MASTER TESTS FOR DELETION
         cursor.execute("SELECT t.id, t.name, c.name as category_name, t.fasting_requirement FROM tests t JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         master_tests = cursor.fetchall()
         
+        # ADDED PHLEBOTOMISTS FETCH
+        cursor.execute("SELECT * FROM phlebotomists ORDER BY id DESC")
+        phlebotomists = cursor.fetchall()
+
         cursor.execute("""
             SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.name as lab_name,
-                   string_agg(t.name, ', ') as features,
-                   so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'YYYY-MM-DD') as end_date,
-                   CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
+            string_agg(t.name, ', ') as features,
+            so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'YYYY-MM-DD') as end_date,
+            CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
             FROM health_packages hp
             JOIN labs l ON hp.lab_id = l.id
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
@@ -297,9 +300,10 @@ def admin_dashboard():
             ORDER BY hp.id DESC
         """)
         packages = cursor.fetchall()
-    except Exception as e: raise e 
+    except Exception as e: raise e
     finally: release_db(conn)
-    return render_template('admin.html', orders=orders, feedbacks=feedbacks, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests, master_tests=master_tests)
+    # ADDED PHLEBOTOMISTS TO RENDER_TEMPLATE
+    return render_template('admin.html', orders=orders, feedbacks=feedbacks, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests, master_tests=master_tests, phlebotomists=phlebotomists)
 
 @app.route('/admin/upload-report', methods=['POST'])
 def upload_report():
@@ -315,7 +319,7 @@ def upload_report():
             cursor.execute("SELECT u.email, o.patient_name FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
             user = cursor.fetchone()
             conn.commit()
-            if user: send_email_async(user[0], f"Your Test Report is Ready - #{order_id}", f"Hello {user[1]},\n\nYour test report for CareDrop Order #{order_id} is now available!\nPlease visit our website, click 'My Bookings', verify your email, and download your PDF.")
+            if user: send_email_async(user[0], f"Your Test Report is Ready #{order_id}", f"Hello {user[1]},\n\nYour test report for CareDrop Order #{order_id} is now available!\nPlease visit our website, click 'My Bookings', verify your email, and download your PDF.")
         except Exception as e: pass
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
@@ -347,7 +351,7 @@ def admin_add_category():
 @app.route('/admin/add-test', methods=['POST'])
 def admin_add_test():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    test_name, category_id, fasting, price, lab_ids = request.form.get('test_name').strip(), request.form.get('category_id'), request.form.get('fasting').strip(), request.form.get('price'), request.form.getlist('lab_ids') 
+    test_name, category_id, fasting, price, param_count, lab_ids = request.form.get('test_name').strip(), request.form.get('category_id'), request.form.get('fasting').strip(), request.form.get('price'), request.form.get('parameter_count', 1), request.form.getlist('lab_ids')
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor()
@@ -356,8 +360,23 @@ def admin_add_test():
         test_id = existing[0] if existing else cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting)) or cursor.fetchone()[0]
         for lab_id in lab_ids:
             cursor.execute("SELECT id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
-            if cursor.fetchone(): cursor.execute("UPDATE lab_test_pricing SET price = %s WHERE test_id = %s AND lab_id = %s", (price, test_id, lab_id))
-            else: cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, tat) VALUES (%s, %s, %s, '24 Hours')", (test_id, lab_id, price))
+            if cursor.fetchone(): 
+                cursor.execute("UPDATE lab_test_pricing SET price = %s, parameter_count = %s WHERE test_id = %s AND lab_id = %s", (price, param_count, test_id, lab_id))
+            else: 
+                cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, parameter_count, tat) VALUES (%s, %s, %s, %s, '24 Hours')", (test_id, lab_id, price, param_count))
+        conn.commit()
+    except: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add-phlebotomist', methods=['POST'])
+def add_phlebotomist():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        name, phone, vehicle = request.form.get('name').strip(), request.form.get('phone').strip(), request.form.get('vehicle_number', '').strip()
+        cursor.execute("INSERT INTO phlebotomists (name, phone, vehicle_number) VALUES (%s, %s, %s)", (name, phone, vehicle))
         conn.commit()
     except: pass
     finally: release_db(conn)
@@ -500,8 +519,8 @@ def place_order():
     cart = json.loads(cart_json)
     
     if not session.get(f'verified_{email}'): return jsonify({"success": False, "message": "Email not verified. Please complete OTP verification."})
-    prescription = request.files.get('prescription')
     
+    prescription = request.files.get('prescription')
     final_patient_name = patient_name if patient_name else name
     
     if not all([name, phone, final_patient_name, address, date, age, gender]): return jsonify({"success": False, "message": "Missing required patient fields."})
@@ -521,16 +540,19 @@ def place_order():
             cursor.execute("INSERT INTO orders (user_id, patient_name, age, gender, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'Pending') RETURNING id", (user_id, final_patient_name, age, gender, address, date, request.form.get('time_slot', 'Morning'), request.form.get('total', 0)))
         
         order_id = cursor.fetchone()[0]
-        for item in cart: 
+        
+        for item in cart:
             is_pkg = 'PKG_' in str(item['id'])
             clean_id = str(item['id']).replace('PKG_','')
             item_type = 'package' if is_pkg else 'test'
             cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price, item_type) VALUES (%s, %s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice'], item_type))
         conn.commit()
-        send_email_async(email, f"CareDrop Booking Confirmed - #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {final_patient_name} ({age} {gender})\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
-        send_email_async("ihcdiagnostics.ynr@gmail.com", f"🚨 NEW ORDER #{order_id}", f"🚨 NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {final_patient_name} ({age} {gender})\nAddress: {address}\nDate: {date}")
+        
+        send_email_async(email, f"CareDrop Booking Confirmed #{order_id}", f"Your Booking #{order_id} is confirmed!\nPatient: {final_patient_name} ({age} {gender})\nDate: {date}\nTotal: Rs. {request.form.get('total', 0)}")
+        send_email_async("ihcdiagnostics.ynr@gmail.com", f"NEW ORDER #{order_id}", f"NEW BOOKING #{order_id}!\nPhone: {phone}\nPatient: {final_patient_name} ({age} {gender})\nAddress: {address}\nDate: {date}")
+        
         return jsonify({"success": True, "order_id": order_id})
-    except Exception as e: 
+    except Exception as e:
         if conn: conn.rollback()
         return jsonify({"success": False, "message": str(e)})
     finally: release_db(conn)
