@@ -77,29 +77,7 @@ def send_email_async(recipient, subject, body):
     threading.Thread(target=send_email_api, args=(recipient, subject, body)).start()
 
 
-class Lab(db.Model):
-    __tablename__ = 'labs'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    nabl_certified = db.Column(db.Boolean, default=False)
-    lab_tests = db.relationship('LabTest', backref='lab', lazy=True)
 
-class MasterTest(db.Model):
-    __tablename__ = 'master_tests'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    fasting_rules = db.Column(db.String(100), nullable=True) 
-    sample_type = db.Column(db.String(100), nullable=True)   
-    lab_pricing = db.relationship('LabTest', backref='master_test', lazy=True)
-
-class LabTest(db.Model):
-    __tablename__ = 'lab_tests'
-    id = db.Column(db.Integer, primary_key=True)
-    lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=False)
-    master_test_id = db.Column(db.Integer, db.ForeignKey('master_tests.id'), nullable=False)
-    price = db.Column(db.Integer, nullable=False)
-    parameter_count = db.Column(db.Integer, default=1) 
-    tat_hours = db.Column(db.Integer, nullable=True)
 
 @app.route('/ping')
 def ping(): return "OK", 200
