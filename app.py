@@ -15,6 +15,12 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 5,
+    'max_overflow': 2,
+    'pool_recycle': 300,
+    'pool_pre_ping': True
+}
 
 @app.errorhandler(Exception)
 def handle_exception(e):
