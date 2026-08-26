@@ -60,8 +60,6 @@ def auto_migrate_db():
     safe_migrate("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
     safe_migrate("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
     safe_migrate("CREATE TABLE IF NOT EXISTS patient_feedback (id SERIAL PRIMARY KEY, order_id INTEGER, patient_email VARCHAR(255), message TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-    
-    # New Operations Columns
     safe_migrate("ALTER TABLE lab_test_pricing ADD COLUMN IF NOT EXISTS parameter_count INTEGER DEFAULT 1")
     safe_migrate("CREATE TABLE IF NOT EXISTS phlebotomists (id SERIAL PRIMARY KEY, name VARCHAR(150), phone VARCHAR(50), vehicle_number VARCHAR(50), active_status BOOLEAN DEFAULT TRUE)")
     safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS phlebotomist_id INTEGER REFERENCES phlebotomists(id)")
@@ -139,10 +137,10 @@ def tests_catalog():
     packages_list = []
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
+        cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t LEFT JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
         raw_tests = cursor.fetchall()
         for t in raw_tests:
-            cat = t['category']
+            cat = t['category'] or 'Uncategorized'
             if cat not in grouped_tests: grouped_tests[cat] = []
             grouped_tests[cat].append(t)
         cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS INTEGER) as price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, l.cert_badge FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
@@ -254,7 +252,6 @@ def admin_dashboard():
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        # Updated to fetch phlebotomist assignment data
         cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS INTEGER) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription, o.phlebotomist_id, CAST(o.payout_amount AS INTEGER) as payout_amount FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
         
@@ -278,17 +275,17 @@ def admin_dashboard():
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
         
-        # Updated to fetch parameter counts
-        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS INTEGER) as price, COALESCE(ltp.parameter_count, 1) as parameter_count FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
+        # FIXED: Changed to LEFT JOIN so tests appear even if category matching fails
+        cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS INTEGER) as price, COALESCE(ltp.parameter_count, 1) as parameter_count FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id LEFT JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         inventory = cursor.fetchall()
         
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
         
-        cursor.execute("SELECT t.id, t.name, c.name as category_name, t.fasting_requirement FROM tests t JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
+        # FIXED: Changed to LEFT JOIN so the Master Dictionary is never blank
+        cursor.execute("SELECT t.id, t.name, c.name as category_name, t.fasting_requirement FROM tests t LEFT JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         master_tests = cursor.fetchall()
         
-        # Fetch Phlebotomists
         cursor.execute("SELECT * FROM phlebotomists ORDER BY id DESC")
         phlebotomists = cursor.fetchall()
 
@@ -385,12 +382,15 @@ def admin_add_test():
     
     if not category_id or category_id == "":
         category_id = None
+        
+    # FIXED: Rejects the save if a lab isn't checked
+    if not lab_ids:
+        return f"<div style='padding:50px; background: #FEF2F2; color: #991B1B; font-family: sans-serif;'><h2>Missing Information</h2><p>You must check at least one Partner Lab box before saving this test.</p><a href='/admin' style='display:inline-block; margin-top:20px; padding:10px 20px; background:#0F172A; color:white; text-decoration:none; border-radius:6px;'>Go Back</a></div>"
 
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor()
         
-        # Check if test exists, or create it
         cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (test_name,))
         existing = cursor.fetchone()
         
@@ -400,7 +400,6 @@ def admin_add_test():
             cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting))
             test_id = cursor.fetchone()[0]
             
-        # Assign prices to checked labs
         for lab_id in lab_ids:
             cursor.execute("SELECT test_id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
             if cursor.fetchone(): 
@@ -413,38 +412,10 @@ def admin_add_test():
         
     except Exception as e:
         if conn: conn.rollback()
-        # THIS WILL FORCE THE ERROR TO SHOW ON SCREEN
-        return f"<div style='padding:50px; background: #FEF2F2; color: #991B1B; font-family: sans-serif;'><h2>System Crash: Cannot Add Test</h2><p><b>Error Details:</b> {str(e)}</p><a href='/admin' style='display:inline-block; margin-top:20px; padding:10px 20px; background:#0F172A; color:white; text-decoration:none; border-radius:6px;'>Go Back</a></div>"
+        return f"<div style='padding:50px; background: #FEF2F2; color: #991B1B; font-family: sans-serif;'><h2>System Crash</h2><p><b>Details:</b> {str(e)}</p><a href='/admin' style='display:inline-block; margin-top:20px; padding:10px 20px; background:#0F172A; color:white; text-decoration:none; border-radius:6px;'>Go Back</a></div>"
     finally: 
         release_db(conn)
-        
-        # 1. Check if test exists, or create it
-        cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (test_name,))
-        existing = cursor.fetchone()
-        
-        if existing:
-            test_id = existing[0]
-        else:
-            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting))
-            test_id = cursor.fetchone()[0]
-            
-        # 2. Assign prices to checked labs
-        for lab_id in lab_ids:
-            # FIXED: Searching for test_id instead of a non-existent 'id' column
-            cursor.execute("SELECT test_id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
-            if cursor.fetchone(): 
-                cursor.execute("UPDATE lab_test_pricing SET price = %s, parameter_count = %s WHERE test_id = %s AND lab_id = %s", (price, param_count, test_id, lab_id))
-            else: 
-                cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, parameter_count, tat) VALUES (%s, %s, %s, %s, '24 Hours')", (test_id, lab_id, price, param_count))
-        
-        conn.commit()
-    except Exception as e:
-        if conn: conn.rollback()
-        print("CRASH ADDING TEST:", str(e)) # If it fails again, it will log the exact reason in Render!
-    finally: 
-        release_db(conn)
-        
-    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/add-phlebotomist', methods=['POST'])
 def add_phlebotomist():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
