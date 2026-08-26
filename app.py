@@ -324,6 +324,25 @@ def upload_report():
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/assign-order', methods=['POST'])
+def admin_assign_order():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        order_id = request.form.get('order_id')
+        phleb_id = request.form.get('phlebotomist_id')
+        payout = request.form.get('payout_amount', 0)
+        
+        if not phleb_id:
+            cursor.execute("UPDATE orders SET phlebotomist_id = NULL, payout_amount = 0 WHERE id = %s", (order_id,))
+        else:
+            cursor.execute("UPDATE orders SET phlebotomist_id = %s, payout_amount = %s WHERE id = %s", (phleb_id, payout, order_id))
+        conn.commit()
+    except Exception: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/update-order', methods=['POST'])
 def admin_update_order():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
