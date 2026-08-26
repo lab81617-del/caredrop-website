@@ -95,6 +95,21 @@
                         </td>
                         <td style="font-weight: 800; font-size: 18px;">₹{{ order.total_amount }}</td>
                         <td>
+    <form action="/admin/assign-order" method="POST" style="margin:0; display: flex; flex-direction: column; gap: 8px;">
+        <input type="hidden" name="order_id" value="{{ order.id }}">
+        <select name="phlebotomist_id" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; font-size: 12px; width: 100%; outline: none; cursor: pointer;">
+            <option value="">Unassigned</option>
+            {% for p in phlebotomists %}
+            <option value="{{ p.id }}" {% if order.phlebotomist_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+        </select>
+        <div style="display: flex; gap: 5px;">
+            <input type="number" name="payout_amount" value="{{ order.payout_amount or 0 }}" placeholder="Pay (₹)" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; font-size: 12px; width: 70px; outline: none;">
+            <button type="submit" style="background: #0F172A; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight: 800; font-size: 11px; flex-grow: 1;">Save</button>
+        </div>
+    </form>
+</td>
+                        <td>
                             <form action="/admin/update-order" method="POST" style="margin:0; margin-bottom:10px;">
                                 <input type="hidden" name="order_id" value="{{ order.id }}">
                                 <select name="status" onchange="this.form.submit()" style="padding: 10px; border-radius: 8px; border: 1px solid #94A3B8; outline: none; font-weight: 800; font-size: 13px; cursor:pointer; width: 100%;">
