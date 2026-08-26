@@ -60,8 +60,12 @@ def auto_migrate_db():
     safe_migrate("CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, test_id INTEGER, lab_id INTEGER, price NUMERIC)")
     safe_migrate("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(20) DEFAULT 'test'")
     safe_migrate("CREATE TABLE IF NOT EXISTS patient_feedback (id SERIAL PRIMARY KEY, order_id INTEGER, patient_email VARCHAR(255), message TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+    
+    # New Operations Columns
     safe_migrate("ALTER TABLE lab_test_pricing ADD COLUMN IF NOT EXISTS parameter_count INTEGER DEFAULT 1")
     safe_migrate("CREATE TABLE IF NOT EXISTS phlebotomists (id SERIAL PRIMARY KEY, name VARCHAR(150), phone VARCHAR(50), vehicle_number VARCHAR(50), active_status BOOLEAN DEFAULT TRUE)")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS phlebotomist_id INTEGER REFERENCES phlebotomists(id)")
+    safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payout_amount NUMERIC DEFAULT 0")
 
 def send_email_api(recipient, subject, text_body):
     api_key = os.environ.get("BREVO_API_KEY")
@@ -249,6 +253,8 @@ def admin_dashboard():
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Updated to fetch phlebotomist assignment data
         cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS INTEGER) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription, o.phlebotomist_id, CAST(o.payout_amount AS INTEGER) as payout_amount FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
         
@@ -272,7 +278,7 @@ def admin_dashboard():
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
         
-        # ADDED PARAMETER COUNT TO SQL QUERY
+        # Updated to fetch parameter counts
         cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS INTEGER) as price, COALESCE(ltp.parameter_count, 1) as parameter_count FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         inventory = cursor.fetchall()
         
@@ -282,7 +288,7 @@ def admin_dashboard():
         cursor.execute("SELECT t.id, t.name, c.name as category_name, t.fasting_requirement FROM tests t JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         master_tests = cursor.fetchall()
         
-        # ADDED PHLEBOTOMISTS FETCH
+        # Fetch Phlebotomists
         cursor.execute("SELECT * FROM phlebotomists ORDER BY id DESC")
         phlebotomists = cursor.fetchall()
 
@@ -302,7 +308,7 @@ def admin_dashboard():
         packages = cursor.fetchall()
     except Exception as e: raise e
     finally: release_db(conn)
-    # ADDED PHLEBOTOMISTS TO RENDER_TEMPLATE
+    
     return render_template('admin.html', orders=orders, feedbacks=feedbacks, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests, master_tests=master_tests, phlebotomists=phlebotomists)
 
 @app.route('/admin/upload-report', methods=['POST'])
@@ -324,6 +330,18 @@ def upload_report():
         finally: release_db(conn)
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/update-order', methods=['POST'])
+def admin_update_order():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = None
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (request.form.get('status'), request.form.get('order_id')))
+        conn.commit()
+    except Exception: pass
+    finally: release_db(conn)
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/assign-order', methods=['POST'])
 def admin_assign_order():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -333,23 +351,10 @@ def admin_assign_order():
         order_id = request.form.get('order_id')
         phleb_id = request.form.get('phlebotomist_id')
         payout = request.form.get('payout_amount', 0)
-        
         if not phleb_id:
             cursor.execute("UPDATE orders SET phlebotomist_id = NULL, payout_amount = 0 WHERE id = %s", (order_id,))
         else:
             cursor.execute("UPDATE orders SET phlebotomist_id = %s, payout_amount = %s WHERE id = %s", (phleb_id, payout, order_id))
-        conn.commit()
-    except Exception: pass
-    finally: release_db(conn)
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/update-order', methods=['POST'])
-def admin_update_order():
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    conn = None
-    try:
-        conn = get_db(); cursor = conn.cursor()
-        cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (request.form.get('status'), request.form.get('order_id')))
         conn.commit()
     except Exception: pass
     finally: release_db(conn)
