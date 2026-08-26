@@ -249,7 +249,7 @@ def admin_dashboard():
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS INTEGER) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
+        cursor.execute("SELECT o.id, o.patient_name, o.age, o.gender, o.address, o.collection_date, o.time_slot, CAST(o.total_amount AS INTEGER) as total_amount, o.status, u.phone, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report, CASE WHEN o.prescription_file IS NOT NULL THEN TRUE ELSE FALSE END as has_prescription, o.phlebotomist_id, CAST(o.payout_amount AS INTEGER) as payout_amount FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
         orders = cursor.fetchall()
         
         cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name, CAST(oi.price AS INTEGER) as price FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
