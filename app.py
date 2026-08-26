@@ -383,13 +383,40 @@ def admin_add_test():
     param_count = request.form.get('parameter_count', 1)
     lab_ids = request.form.getlist('lab_ids')
     
-    # Prevents a crash if you try to add a test before creating a category
     if not category_id or category_id == "":
         category_id = None
 
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor()
+        
+        # Check if test exists, or create it
+        cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (test_name,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            test_id = existing[0]
+        else:
+            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting))
+            test_id = cursor.fetchone()[0]
+            
+        # Assign prices to checked labs
+        for lab_id in lab_ids:
+            cursor.execute("SELECT test_id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
+            if cursor.fetchone(): 
+                cursor.execute("UPDATE lab_test_pricing SET price = %s, parameter_count = %s WHERE test_id = %s AND lab_id = %s", (price, param_count, test_id, lab_id))
+            else: 
+                cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, parameter_count, tat) VALUES (%s, %s, %s, %s, '24 Hours')", (test_id, lab_id, price, param_count))
+        
+        conn.commit()
+        return redirect(url_for('admin_dashboard'))
+        
+    except Exception as e:
+        if conn: conn.rollback()
+        # THIS WILL FORCE THE ERROR TO SHOW ON SCREEN
+        return f"<div style='padding:50px; background: #FEF2F2; color: #991B1B; font-family: sans-serif;'><h2>System Crash: Cannot Add Test</h2><p><b>Error Details:</b> {str(e)}</p><a href='/admin' style='display:inline-block; margin-top:20px; padding:10px 20px; background:#0F172A; color:white; text-decoration:none; border-radius:6px;'>Go Back</a></div>"
+    finally: 
+        release_db(conn)
         
         # 1. Check if test exists, or create it
         cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (test_name,))
