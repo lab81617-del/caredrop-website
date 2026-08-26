@@ -375,24 +375,49 @@ def admin_add_category():
 @app.route('/admin/add-test', methods=['POST'])
 def admin_add_test():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    test_name, category_id, fasting, price, param_count, lab_ids = request.form.get('test_name').strip(), request.form.get('category_id'), request.form.get('fasting').strip(), request.form.get('price'), request.form.get('parameter_count', 1), request.form.getlist('lab_ids')
+    
+    test_name = request.form.get('test_name', '').strip()
+    category_id = request.form.get('category_id')
+    fasting = request.form.get('fasting', '').strip()
+    price = request.form.get('price')
+    param_count = request.form.get('parameter_count', 1)
+    lab_ids = request.form.getlist('lab_ids')
+    
+    # Prevents a crash if you try to add a test before creating a category
+    if not category_id or category_id == "":
+        category_id = None
+
     conn = None
     try:
         conn = get_db(); cursor = conn.cursor()
+        
+        # 1. Check if test exists, or create it
         cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (test_name,))
         existing = cursor.fetchone()
-        test_id = existing[0] if existing else cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting)) or cursor.fetchone()[0]
+        
+        if existing:
+            test_id = existing[0]
+        else:
+            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting))
+            test_id = cursor.fetchone()[0]
+            
+        # 2. Assign prices to checked labs
         for lab_id in lab_ids:
-            cursor.execute("SELECT id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
+            # FIXED: Searching for test_id instead of a non-existent 'id' column
+            cursor.execute("SELECT test_id FROM lab_test_pricing WHERE test_id = %s AND lab_id = %s", (test_id, lab_id))
             if cursor.fetchone(): 
                 cursor.execute("UPDATE lab_test_pricing SET price = %s, parameter_count = %s WHERE test_id = %s AND lab_id = %s", (price, param_count, test_id, lab_id))
             else: 
                 cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, parameter_count, tat) VALUES (%s, %s, %s, %s, '24 Hours')", (test_id, lab_id, price, param_count))
+        
         conn.commit()
-    except: pass
-    finally: release_db(conn)
+    except Exception as e:
+        if conn: conn.rollback()
+        print("CRASH ADDING TEST:", str(e)) # If it fails again, it will log the exact reason in Render!
+    finally: 
+        release_db(conn)
+        
     return redirect(url_for('admin_dashboard'))
-
 @app.route('/admin/add-phlebotomist', methods=['POST'])
 def add_phlebotomist():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
