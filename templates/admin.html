@@ -70,7 +70,7 @@
         <div class="card table-wrapper">
             <table>
                 <thead>
-                   <tr><th>Order #</th><th>Patient Details</th><th>Schedule</th><th>Tests Selected</th><th>Total</th><th>Assign Team</th><th>Order Status</th></tr>
+                    <tr><th>Order #</th><th>Patient Details</th><th>Schedule</th><th>Tests Selected</th><th>Total</th><th>Assign Team</th><th>Order Status</th></tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
@@ -94,21 +94,24 @@
                             {% endfor %}
                         </td>
                         <td style="font-weight: 800; font-size: 18px;">₹{{ order.total_amount }}</td>
+                        
+                        <!-- NEW: Assign Team & Payout Form -->
                         <td>
-    <form action="/admin/assign-order" method="POST" style="margin:0; display: flex; flex-direction: column; gap: 8px;">
-        <input type="hidden" name="order_id" value="{{ order.id }}">
-        <select name="phlebotomist_id" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; font-size: 12px; width: 100%; outline: none; cursor: pointer;">
-            <option value="">Unassigned</option>
-            {% for p in phlebotomists %}
-            <option value="{{ p.id }}" {% if order.phlebotomist_id == p.id %}selected{% endif %}>{{ p.name }}</option>
-            {% endfor %}
-        </select>
-        <div style="display: flex; gap: 5px;">
-            <input type="number" name="payout_amount" value="{{ order.payout_amount or 0 }}" placeholder="Pay (₹)" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; font-size: 12px; width: 70px; outline: none;">
-            <button type="submit" style="background: #0F172A; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight: 800; font-size: 11px; flex-grow: 1;">Save</button>
-        </div>
-    </form>
-</td>
+                            <form action="/admin/assign-order" method="POST" style="margin:0; display: flex; flex-direction: column; gap: 8px;">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <select name="phlebotomist_id" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; font-size: 12px; width: 100%; outline: none; cursor: pointer;">
+                                    <option value="">Unassigned</option>
+                                    {% for p in phlebotomists %}
+                                    <option value="{{ p.id }}" {% if order.phlebotomist_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="number" name="payout_amount" value="{{ order.payout_amount or 0 }}" placeholder="Pay (₹)" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; font-size: 12px; width: 70px; outline: none;">
+                                    <button type="submit" style="background: #0F172A; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight: 800; font-size: 11px; flex-grow: 1;">Save</button>
+                                </div>
+                            </form>
+                        </td>
+
                         <td>
                             <form action="/admin/update-order" method="POST" style="margin:0; margin-bottom:10px;">
                                 <input type="hidden" name="order_id" value="{{ order.id }}">
@@ -208,7 +211,7 @@
             </div>
         </div>
 
-        <div class="card table-wrapper" style="margin-bottom: 30px;">
+     <div class="card table-wrapper" style="margin-bottom: 30px;">
             <div class="form-title" style="padding: 20px 20px 0 20px; border:none; margin:0; color: #DC2626;">
                 <i data-lucide="database" style="width: 20px; height: 20px;"></i> 3. Master Test Dictionary (Delete Typos Here)
             </div>
@@ -232,26 +235,40 @@
             </table>
         </div>
 
-       <div class="card form-container">
+        <!-- FIXED LAYOUT FOR ADDING TESTS -->
+        <div class="card form-container">
             <div class="form-title"><i data-lucide="flask-conical" style="width: 20px; height: 20px;"></i> 4. Add New Test & Assign Prices</div>
             <form action="/admin/add-test" method="POST">
+                <!-- Row 1: Details -->
                 <div class="form-grid">
                     <div class="input-group"><label>Test Name</label><input type="text" name="test_name" required></div>
                     <div class="input-group"><label>Category</label><select name="category_id">{% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}</select></div>
                 </div>
+                
+                <!-- Row 2: Pricing & Params -->
                 <div class="form-grid">
-                    <div class="input-group"><label>Fasting/Condition (Leave blank or type 'None' to hide)</label><input type="text" name="fasting" placeholder="e.g. 10 Hours Fasting"></div>
-                    <div class="input-group"><label>Base Price (₹)</label><input type="number" name="price" required></div>
                     <div class="input-group"><label>Parameter Count</label><input type="number" name="parameter_count" value="1" required></div>
+                    <div class="input-group"><label>Base Price (₹)</label><input type="number" name="price" required></div>
                 </div>
+
+                <!-- Row 3: Fasting -->
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label>Fasting/Condition (Leave blank or type 'None' to hide)</label>
+                    <input type="text" name="fasting" placeholder="e.g. 10 Hours Fasting">
+                </div>
+
+                <!-- Row 4: Lab Select View -->
                 <div class="input-group" style="margin-bottom: 20px;">
                     <label>Select Partner Labs to assign this test</label>
                     <div style="display: flex; gap:15px; flex-wrap:wrap; padding: 10px 0;">
                         {% for lab in active_labs %}
-                        <label style="background: white; padding: 10px 16px; border:1px solid #94A3B8; border-radius: 8px; font-size: 14px; font-weight:800; cursor:pointer; display: flex; align-items:center; gap:8px; text-transform: capitalize;"><input type="checkbox" name="lab_ids" value="{{ lab.id }}" style="accent-color: #0D9488; width: 16px; height: 16px; margin:0; border:none !important;"> {{ lab.name }}</label>
+                        <label style="background: white; padding: 10px 16px; border:1px solid #94A3B8; border-radius: 8px; font-size: 14px; font-weight:800; cursor:pointer; display: flex; align-items:center; gap:8px; text-transform: capitalize;">
+                            <input type="checkbox" name="lab_ids" value="{{ lab.id }}" style="accent-color: #0D9488; width: 16px; height: 16px; margin:0; border:none !important;"> {{ lab.name }}
+                        </label>
                         {% endfor %}
                     </div>
                 </div>
+                
                 <button type="submit" class="btn-save" style="width: 100%;">+ Save Test & Price</button>
             </form>
         </div>
@@ -371,7 +388,7 @@
         </div>
     </div>
 
-    <!-- NEW PHLEBOTOMIST TEAM TAB -->
+    <!-- PHLEBOTOMIST TEAM TAB -->
     <div id="team" class="tab-content">
         <div class="card form-container">
             <div class="form-title"><i data-lucide="users" style="width: 20px; height: 20px;"></i> Register New Phlebotomist</div>
