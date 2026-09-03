@@ -158,14 +158,24 @@
     </div>
 
     <div id="inventory" class="tab-content">
-        <div class="card form-container" style="background: #F0FDF4; border: 1px solid #BBF7D0;">
-            <div class="form-title" style="color: #166534; border-bottom: 1px solid #86EFAC;"><i data-lucide="folder-plus" style="width: 20px; height: 20px;"></i> 1. Create a New Category</div>
+       <!-- NEW MASS CSV UPLOAD FEATURE -->
+        <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4; margin-bottom: 30px;">
+            <div class="form-title" style="color: #0D9488; border-bottom: none; margin-bottom: 10px; padding-bottom: 0;"><i data-lucide="upload-cloud"></i> Mass Import Catalog (CSV)</div>
+            <p style="font-size: 13px; color: #166534; margin-bottom: 20px; font-weight: 600;">Upload an Excel/CSV file to instantly add thousands of tests to your Master Dictionary. <br><b>Format your columns exactly like this:</b> <i>Test Name | Category | Fasting Rule | Symptoms</i></p>
+            <form action="/admin/bulk-upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 8px; background: white; min-width: 250px;">
+                <button type="submit" class="btn-save" style="background: #0D9488 !important; padding: 12px 24px;">Upload & Inject Tests</button>
+            </form>
+        </div>
+
+        <div class="card form-container" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
+            <div class="form-title" style="border-bottom: 1px solid #CBD5E1;"><i data-lucide="folder-plus" style="width: 20px; height: 20px;"></i> 1. Create a New Category</div>
             <form action="/admin/add-category" method="POST" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
                 <div class="input-group" style="flex: 1; min-width: 200px;">
-                    <label style="color: #166534;">Category Name (e.g. Heart Health)</label>
-                    <input type="text" name="category_name" required style="border-color: #86EFAC;">
+                    <label>Category Name (e.g. Heart Health)</label>
+                    <input type="text" name="category_name" required>
                 </div>
-                <button type="submit" class="btn-save" style="background: #166534 !important; padding: 14px 24px; margin-bottom: 2px;">+ Add Category</button>
+                <button type="submit" class="btn-save" style="background: #0F172A !important; padding: 14px 24px; margin-bottom: 2px;">+ Add Category</button>
             </form>
         </div>
 
@@ -210,54 +220,67 @@
             </div>
         </div>
 
-       <div class="card table-wrapper" style="margin-bottom: 30px;">
-            <div class="form-title" style="padding: 20px 20px 0 20px; border:none; margin:0; color: #DC2626;">
-                <i data-lucide="database" style="width: 20px; height: 20px;"></i> 3. Master Test Dictionary (Delete Typos Here)
+        <div class="card table-wrapper" style="margin-bottom: 30px;">
+            <div class="form-title" style="padding: 20px 20px 0 20px; border:none; margin:0; color: #0F172A;">
+                <i data-lucide="database" style="width: 20px; height: 20px;"></i> 3. Master Test Dictionary
             </div>
-            <div style="padding: 10px 20px; font-size: 13px; color: #475569; font-weight: 600;">If a deleted test still shows up in your package builder, delete it completely from this master list below.</div>
-            <table>
-                <thead><tr><th>Test Name</th><th>Category</th><th>Fasting</th><th>Action</th></tr></thead>
-                <tbody>
-                    {% for t in master_tests %}
-                    <tr>
-                        <td style="font-weight: 800; text-transform: capitalize;">{{ t.name }}</td>
-                        <td style="font-size: 13px; font-weight: 700;">{{ t.category_name or 'Uncategorized' }}</td>
-                        <td style="font-size: 13px; color: #B45309; font-weight: 700;">{{ t.fasting_requirement }}</td>
-                        <td>
-                            <form action="/admin/delete-master-test/{{ t.id }}" method="POST" style="margin:0;" onsubmit="return confirm('WARNING: This will permanently delete this test from ALL labs and packages. Continue?');">
-                                <button type="submit" class="btn-delete" style="background: #FEF2F2 !important; color: #DC2626 !important; border: 1px solid #FCA5A5 !important;"><i data-lucide="trash-2" style="width: 14px; height: 14px; vertical-align: middle;"></i> Delete Completely</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div style="padding: 10px 20px; font-size: 13px; color: #475569; font-weight: 600;">This is your raw database of tests. Add to this via the CSV Upload above, or by manually typing a new one below.</div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <thead><tr><th>Test Name</th><th>Category</th><th>Fasting</th><th>Symptoms</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for t in master_tests %}
+                        <tr>
+                            <td style="font-weight: 800; text-transform: capitalize;">{{ t.name }}</td>
+                            <td style="font-size: 13px; font-weight: 700;">{{ t.category_name or 'Uncategorized' }}</td>
+                            <td style="font-size: 13px; color: #B45309; font-weight: 700;">{{ t.fasting_requirement }}</td>
+                            <td style="font-size: 12px; color: #64748B;">{{ t.symptoms }}</td>
+                            <td>
+                                <form action="/admin/delete-master-test/{{ t.id }}" method="POST" style="margin:0;" onsubmit="return confirm('WARNING: This will permanently delete this test from ALL labs and packages. Continue?');">
+                                    <button type="submit" class="btn-delete" style="background: #FEF2F2 !important; color: #DC2626 !important; border: 1px solid #FCA5A5 !important;"><i data-lucide="trash-2" style="width: 14px; height: 14px; vertical-align: middle;"></i> Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="card form-container">
-            <div class="form-title"><i data-lucide="flask-conical" style="width: 20px; height: 20px;"></i> 4. Add New Test & Assign Prices</div>
-            <!-- FIXED: Added form validation below -->
+            <div class="form-title"><i data-lucide="flask-conical" style="width: 20px; height: 20px;"></i> 4. Assign Lab Prices to Master Tests</div>
             <form action="/admin/add-test" method="POST" onsubmit="return validateTestForm(this)">
-                <!-- Row 1: Details -->
                 <div class="form-grid">
-                    <div class="input-group"><label>Test Name</label><input type="text" name="test_name" required></div>
+                    <!-- NEW: Searchable Datalist for existing tests -->
+                    <div class="input-group">
+                        <label>Test Name (Type to search existing dictionary)</label>
+                        <input type="text" name="test_name" list="master_test_list" autocomplete="off" required>
+                        <datalist id="master_test_list">
+                            {% for t in master_tests %}
+                            <option value="{{ t.name }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
                     <div class="input-group"><label>Category</label><select name="category_id"><option value="">No Category</option>{% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}</select></div>
                 </div>
                 
-                <!-- Row 2: Pricing & Params -->
                 <div class="form-grid">
                     <div class="input-group"><label>Parameter Count</label><input type="number" name="parameter_count" value="1" required></div>
                     <div class="input-group"><label>Base Price (₹)</label><input type="number" name="price" required></div>
                 </div>
 
-                <!-- Row 3: Fasting -->
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label>Fasting/Condition (Leave blank or type 'None' to hide)</label>
-                    <input type="text" name="fasting" placeholder="e.g. 10 Hours Fasting">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Fasting/Condition (Optional)</label>
+                        <input type="text" name="fasting" placeholder="e.g. 10 Hours Fasting">
+                    </div>
+                    <div class="input-group">
+                        <label>Symptoms Tags (Comma separated, Optional)</label>
+                        <input type="text" name="symptoms" placeholder="e.g. Fever, Fatigue">
+                    </div>
                 </div>
 
-                <!-- Row 4: Lab Select View -->
-                <div class="input-group" style="margin-bottom: 20px;">
+                <div class="input-group" style="margin-bottom: 20px; margin-top: 15px;">
                     <label>Select Partner Labs to assign this test</label>
                     <div style="display: flex; gap:15px; flex-wrap:wrap; padding: 10px 0;">
                         {% for lab in active_labs %}
@@ -387,7 +410,7 @@
         </div>
     </div>
 
-    <!-- PHLEBOTOMIST TEAM TAB -->
+  <!-- PHLEBOTOMIST TEAM TAB -->
     <div id="team" class="tab-content">
         <div class="card form-container">
             <div class="form-title"><i data-lucide="users" style="width: 20px; height: 20px;"></i> Register New Phlebotomist</div>
@@ -425,7 +448,6 @@
 <script>
     lucide.createIcons();
     
-    // NEW FORM VALIDATION TO PREVENT EMPTY CHECKBOX SAVES
     function validateTestForm(form) {
         const checkboxes = form.querySelectorAll('input[name="lab_ids"]:checked');
         if(checkboxes.length === 0) {
