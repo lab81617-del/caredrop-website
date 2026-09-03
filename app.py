@@ -2,6 +2,7 @@ import os
 import threading
 import json
 import io
+import csv
 import random
 import traceback
 import urllib.request
@@ -48,7 +49,9 @@ def auto_migrate_db():
     safe_migrate("ALTER TABLE labs ADD CONSTRAINT labs_name_key UNIQUE (name)")
     safe_migrate("ALTER TABLE labs ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 4.5")
     safe_migrate("ALTER TABLE labs ADD COLUMN IF NOT EXISTS cert_badge VARCHAR(100) DEFAULT 'Verified Partner'")
-    safe_migrate("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL)")
+    safe_migrate("ALTER TABLE tests ADD COLUMN IF NOT EXISTS symptoms TEXT")
+    safe_migrate("ALTER TABLE tests ADD CONSTRAINT tests_name_key UNIQUE (name)")
+    safe_migrate("CREATE TABLE IF NOT EXISTS health_packages (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, lab_id INTEGER REFERENCES labs(id) ON DELETE CASCADE, price NUMERIC NOT NULL, description TEXT)")
     safe_migrate("CREATE TABLE IF NOT EXISTS package_tests (package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, PRIMARY KEY (package_id, test_id))")
     safe_migrate("CREATE TABLE IF NOT EXISTS special_offers (id SERIAL PRIMARY KEY, package_id INTEGER REFERENCES health_packages(id) ON DELETE CASCADE UNIQUE, discount_percent NUMERIC NOT NULL, badge VARCHAR(50), end_date DATE NOT NULL)")
     safe_migrate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS report_file BYTEA")
@@ -112,7 +115,7 @@ def home():
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
-            SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.id as lab_id, l.name as lab_name,
+            SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.id as lab_id, l.name as lab_name, l.rating,
             string_agg(t.name, ', ') as features,
             so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, so.badge, TO_CHAR(so.end_date, 'DD Mon YYYY') as end_date,
             CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
@@ -121,7 +124,7 @@ def home():
             LEFT JOIN package_tests pt ON hp.id = pt.package_id
             LEFT JOIN tests t ON pt.test_id = t.id
             JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
-            GROUP BY hp.id, l.id, l.name, so.id, so.discount_percent, so.badge, so.end_date
+            GROUP BY hp.id, l.id, l.name, l.rating, so.id, so.discount_percent, so.badge, so.end_date
             ORDER BY hp.id DESC
         """)
         packages = cursor.fetchall()
@@ -137,7 +140,7 @@ def tests_catalog():
     packages_list = []
     try:
         conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, c.name as category FROM tests t LEFT JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
+        cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, t.symptoms, c.name as category FROM tests t LEFT JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
         raw_tests = cursor.fetchall()
         for t in raw_tests:
             cat = t['category'] or 'Uncategorized'
@@ -275,15 +278,13 @@ def admin_dashboard():
         cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
         categories = cursor.fetchall()
         
-        # FIXED: Changed to LEFT JOIN so tests appear even if category matching fails
         cursor.execute("SELECT t.id as test_id, t.name as test_name, c.name as category_name, l.id as lab_id, l.name as lab_name, CAST(ltp.price AS INTEGER) as price, COALESCE(ltp.parameter_count, 1) as parameter_count FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id JOIN labs l ON ltp.lab_id = l.id LEFT JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         inventory = cursor.fetchall()
         
         cursor.execute("SELECT id, name FROM tests WHERE is_active = TRUE ORDER BY name")
         all_tests = cursor.fetchall()
         
-        # FIXED: Changed to LEFT JOIN so the Master Dictionary is never blank
-        cursor.execute("SELECT t.id, t.name, c.name as category_name, t.fasting_requirement FROM tests t LEFT JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
+        cursor.execute("SELECT t.id, t.name, c.name as category_name, t.fasting_requirement, t.symptoms FROM tests t LEFT JOIN test_categories c ON t.category_id = c.id ORDER BY t.name ASC")
         master_tests = cursor.fetchall()
         
         cursor.execute("SELECT * FROM phlebotomists ORDER BY id DESC")
@@ -307,6 +308,46 @@ def admin_dashboard():
     finally: release_db(conn)
     
     return render_template('admin.html', orders=orders, feedbacks=feedbacks, active_labs=active_labs, all_labs=all_labs, categories=categories, inventory=inventory, packages=packages, all_tests=all_tests, master_tests=master_tests, phlebotomists=phlebotomists)
+
+# NEW BULK UPLOAD ENGINE
+@app.route('/admin/bulk-upload', methods=['POST'])
+def bulk_upload():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    file = request.files.get('csv_file')
+    if not file or file.filename == '':
+        return redirect(url_for('admin_dashboard'))
+
+    conn = None
+    try:
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_input = csv.reader(stream)
+        next(csv_input, None) # Skip the header row
+
+        conn = get_db(); cursor = conn.cursor()
+
+        for row in csv_input:
+            if len(row) < 4: continue
+            name, cat_name, fasting, symptoms = [str(r).strip() for r in row[:4]]
+            if not name: continue
+
+            cursor.execute("INSERT INTO test_categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING", (cat_name,))
+            cursor.execute("SELECT id FROM test_categories WHERE name = %s", (cat_name,))
+            cat_id = cursor.fetchone()[0]
+
+            cursor.execute("""
+                INSERT INTO tests (name, category_id, fasting_requirement, is_active, symptoms)
+                VALUES (%s, %s, %s, TRUE, %s)
+                ON CONFLICT (name) DO NOTHING
+            """, (name, cat_id, fasting, symptoms))
+
+        conn.commit()
+    except Exception as e:
+        if conn: conn.rollback()
+        return f"<div style='padding:50px; background:#FEF2F2; color:#991B1B;'><h2>CSV Upload Failed</h2><p>{str(e)}</p><a href='/admin'>Go Back</a></div>"
+    finally:
+        release_db(conn)
+
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/upload-report', methods=['POST'])
 def upload_report():
@@ -379,11 +420,10 @@ def admin_add_test():
     price = request.form.get('price')
     param_count = request.form.get('parameter_count', 1)
     lab_ids = request.form.getlist('lab_ids')
+    symptoms = request.form.get('symptoms', '').strip()
     
-    if not category_id or category_id == "":
-        category_id = None
+    if not category_id or category_id == "": category_id = None
         
-    # FIXED: Rejects the save if a lab isn't checked
     if not lab_ids:
         return f"<div style='padding:50px; background: #FEF2F2; color: #991B1B; font-family: sans-serif;'><h2>Missing Information</h2><p>You must check at least one Partner Lab box before saving this test.</p><a href='/admin' style='display:inline-block; margin-top:20px; padding:10px 20px; background:#0F172A; color:white; text-decoration:none; border-radius:6px;'>Go Back</a></div>"
 
@@ -396,8 +436,10 @@ def admin_add_test():
         
         if existing:
             test_id = existing[0]
+            # Update symptoms if provided during price assignment
+            if symptoms: cursor.execute("UPDATE tests SET symptoms = %s WHERE id = %s", (symptoms, test_id))
         else:
-            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (test_name, category_id, fasting))
+            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active, symptoms) VALUES (%s, %s, %s, TRUE, %s) RETURNING id", (test_name, category_id, fasting, symptoms))
             test_id = cursor.fetchone()[0]
             
         for lab_id in lab_ids:
