@@ -1,9 +1,11 @@
-import os, threading, json, io, csv, random, traceback, urllib.request
+import os, threading, json, io, csv, random, traceback, urllib.request, tempfile
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, send_file
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
+from fpdf import FPDF
+import qrcode
 
 load_dotenv()
 app = Flask(__name__)
@@ -13,7 +15,6 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_size': 5, 'max_overflow': 2, 'p
 
 def get_db(): return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
-# Generic Database Executor to save space and prevent missing routes
 def safe_execute(query, params=None):
     conn = get_db()
     try: 
@@ -127,32 +128,13 @@ def admin_dashboard():
     items_map = {}
     for row in cursor.fetchall(): items_map.setdefault(row['order_id'], []).append(row)
 
-    cursor.execute("""
-        SELECT oi.order_id, t.id as test_id, t.name as test_name FROM order_items oi JOIN tests t ON oi.test_id = t.id WHERE oi.item_type = 'test'
-        UNION
-        SELECT oi.order_id, t.id as test_id, t.name as test_name FROM order_items oi JOIN package_tests pt ON oi.test_id = pt.package_id JOIN tests t ON pt.test_id = t.id WHERE oi.item_type = 'package'
-    """)
-    order_tests_raw = cursor.fetchall()
-    
-    cursor.execute("SELECT id, test_id, parameter_name, unit, reference_range FROM test_parameters")
-    param_map = {}
-    for p in cursor.fetchall(): param_map.setdefault(p['test_id'], []).append(p)
-        
-    order_test_map = {}
-    for row in order_tests_raw:
-        row['parameters'] = param_map.get(row['test_id'], [])
-        order_test_map.setdefault(row['order_id'], []).append(row)
-        
-    for order in orders: 
-        order['test_list'] = items_map.get(order['id'], [])
-        order['lims_tests'] = order_test_map.get(order['id'], [])
+    for order in orders: order['test_list'] = items_map.get(order['id'], [])
         
     cursor.execute("SELECT tp.id, tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id ORDER BY t.name")
     test_parameters = cursor.fetchall()
 
     cursor.execute("SELECT id, name, is_active, CAST(rating AS FLOAT) as rating, cert_badge FROM labs ORDER BY name")
-    all_labs = cursor.fetchall()
-    active_labs = [l for l in all_labs if l['is_active']]
+    all_labs = cursor.fetchall(); active_labs = [l for l in all_labs if l['is_active']]
     
     cursor.execute("SELECT id, name FROM test_categories ORDER BY name")
     categories = cursor.fetchall()
@@ -177,7 +159,71 @@ def admin_dashboard():
     
     return render_template('admin.html', orders=orders, all_labs=all_labs, active_labs=active_labs, categories=categories, inventory=inventory, packages=packages, master_tests=master_tests, phlebotomists=phlebotomists, test_parameters=test_parameters)
 
-# --- RESTORED ADMIN & LIMS ROUTES ---
+# ==========================================
+# THE PYTHON LIMS AUTO-SEEDER (ONE-CLICK FIX)
+# ==========================================
+@app.route('/admin/auto-seed-lims')
+def auto_seed_lims():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        master_params = {
+            'Complete Blood Count': [
+                ('Hemoglobin', 'g/dL', '13.0 - 17.0'), ('RBC Count', 'mill/cumm', '4.5 - 5.5'), 
+                ('Total WBC Count (TLC)', 'cells/cumm', '4000 - 11000'), ('Platelet Count', 'lakhs/cumm', '1.5 - 4.5'),
+                ('Neutrophils', '%', '40 - 80'), ('Lymphocytes', '%', '20 - 40'),
+                ('Eosinophils', '%', '1 - 6'), ('Monocytes', '%', '2 - 10'), ('PCV / Hematocrit', '%', '40 - 50')
+            ],
+            'Liver Function': [
+                ('Bilirubin (Total)', 'mg/dL', '0.2 - 1.2'), ('Bilirubin (Direct)', 'mg/dL', '0.0 - 0.3'),
+                ('SGOT / AST', 'U/L', '5 - 40'), ('SGPT / ALT', 'U/L', '7 - 56'), ('Alkaline Phosphatase (ALP)', 'U/L', '40 - 129'),
+                ('Total Protein', 'g/dL', '6.0 - 8.3'), ('Albumin', 'g/dL', '3.5 - 5.2')
+            ],
+            'Kidney Function': [
+                ('Urea', 'mg/dL', '17 - 43'), ('Creatinine', 'mg/dL', '0.6 - 1.2'), ('Uric Acid', 'mg/dL', '3.5 - 7.2'),
+                ('Sodium', 'mEq/L', '135 - 145'), ('Potassium', 'mEq/L', '3.5 - 5.1')
+            ],
+            'Lipid Profile': [
+                ('Total Cholesterol', 'mg/dL', '< 200'), ('Triglycerides', 'mg/dL', '< 150'),
+                ('HDL Cholesterol', 'mg/dL', '40 - 60'), ('LDL Cholesterol', 'mg/dL', '< 100')
+            ],
+            'Thyroid Profile': [
+                ('Total T3', 'ng/dL', '80 - 200'), ('Total T4', 'ug/dL', '4.5 - 12.0'), ('TSH', 'uIU/mL', '0.4 - 4.0')
+            ]
+        }
+        
+        for search_name, params in master_params.items():
+            cursor.execute("SELECT id FROM tests WHERE name ILIKE %s LIMIT 1", (f"%{search_name}%",))
+            test = cursor.fetchone()
+            if test:
+                for p_name, unit, ref in params:
+                    cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range) VALUES (%s, %s, %s, %s)", (test[0], p_name, unit, ref))
+        conn.commit()
+        return "<h2 style='color:green; padding:50px;'>SUCCESS! All LIMS Parameters have been injected and locked to your tests. You can now close this tab and fill Aman's report!</h2>"
+    except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
+    finally: conn.close()
+
+# ==========================================
+# LIMS REPORT BUILDER & A4 PDF GENERATOR
+# ==========================================
+class LIMS_PDF(FPDF):
+    def header(self):
+        self.set_font("helvetica", "B", 24)
+        self.set_text_color(13, 148, 136)
+        self.cell(0, 10, "CAREDROP DIAGNOSTICS", ln=True, align="C")
+        self.set_font("helvetica", "I", 11)
+        self.set_text_color(100, 100, 100)
+        self.cell(0, 6, "Precision & Care in Every Drop", ln=True, align="C")
+        self.ln(5)
+        self.line(10, 32, 200, 32)
+        self.ln(8)
+        
+    def footer(self):
+        self.set_y(-15)
+        self.set_font("helvetica", "I", 8)
+        self.set_text_color(150, 150, 150)
+        self.cell(0, 10, "This is a computer-generated medical report. Authorized via CareDrop LIMS.", align="C")
 
 @app.route('/admin/fill-report/<int:order_id>')
 def admin_fill_report(order_id):
@@ -185,7 +231,7 @@ def admin_fill_report(order_id):
     conn = get_db()
     try:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT o.*, u.patient_uid, u.phone FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
+        cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
         order = cursor.fetchone()
         
         cursor.execute("""
@@ -200,31 +246,120 @@ def admin_fill_report(order_id):
         for t in tests:
             cursor.execute("SELECT id, parameter_name, unit, reference_range FROM test_parameters WHERE test_id = %s", (t['test_id'],))
             t['parameters'] = cursor.fetchall()
-            
     except Exception as e: return str(e)
     finally: conn.close()
     return render_template('lims_report.html', order=order, tests=tests)
-@app.route('/admin/add-test', methods=['POST'])
-def admin_add_test():
+
+@app.route('/admin/save-results/<int:order_id>', methods=['POST'])
+def save_results(order_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    name, cat_id, fasting, price, params = request.form.get('test_name'), request.form.get('category_id'), request.form.get('fasting'), request.form.get('price'), request.form.get('parameter_count', 1)
-    lab_ids = request.form.getlist('lab_ids')
     conn = get_db()
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (name,))
-        existing = cursor.fetchone()
-        if existing: test_id = existing[0]
-        else:
-            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (name, cat_id or None, fasting))
-            test_id = cursor.fetchone()[0]
-        for lid in lab_ids:
-            cursor.execute("SELECT test_id FROM lab_test_pricing WHERE test_id=%s AND lab_id=%s", (test_id, lid))
-            if cursor.fetchone(): cursor.execute("UPDATE lab_test_pricing SET price=%s, parameter_count=%s WHERE test_id=%s AND lab_id=%s", (price, params, test_id, lid))
-            else: cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, parameter_count) VALUES (%s, %s, %s, %s)", (test_id, lid, price, params))
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # 1. Save results to Database
+        cursor.execute("DELETE FROM order_results WHERE order_id = %s", (order_id,)) 
+        results_data = []
+        
+        for key, value in request.form.items():
+            if key.startswith('param_') and value.strip() != '':
+                param_id = key.split('_')[1]
+                val = value.strip()
+                cursor.execute("INSERT INTO order_results (order_id, parameter_id, result_value) VALUES (%s, %s, %s)", (order_id, param_id, val))
+                
+                cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id WHERE tp.id = %s", (param_id,))
+                p_info = cursor.fetchone()
+                if p_info: results_data.append({'test': p_info['test_name'], 'param': p_info['parameter_name'], 'val': val, 'unit': p_info['unit'], 'ref': p_info['reference_range']})
+
+        # 2. Get Order Info for PDF
+        cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
+        order = cursor.fetchone()
+
+        # 3. Generate A4 PDF
+        pdf = LIMS_PDF()
+        pdf.add_page()
+        
+        # Patient Details Box
+        pdf.set_fill_color(248, 250, 252)
+        pdf.set_font("helvetica", "B", 10)
+        pdf.set_text_color(15, 23, 42)
+        pdf.cell(95, 8, f" Patient Name: {order['patient_name']} ({order['age']} {order['gender']})", border=1, fill=True)
+        pdf.cell(95, 8, f" Patient UID: {order['patient_uid']}", border=1, ln=True, fill=True)
+        pdf.cell(95, 8, f" Order Ref: {order['order_ref']}", border=1, fill=True)
+        pdf.cell(95, 8, f" Date: {order['collection_date']}", border=1, ln=True, fill=True)
+        pdf.ln(10)
+        
+        # Results Table Header
+        pdf.set_font("helvetica", "B", 11)
+        pdf.set_fill_color(13, 148, 136)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(80, 10, 'Test Parameter', 1, 0, 'L', fill=True)
+        pdf.cell(30, 10, 'Result', 1, 0, 'C', fill=True)
+        pdf.cell(30, 10, 'Unit', 1, 0, 'C', fill=True)
+        pdf.cell(50, 10, 'Reference Range', 1, 1, 'C', fill=True)
+        
+        # Print Results
+        current_test = ""
+        pdf.set_text_color(15, 23, 42)
+        for r in results_data:
+            if r['test'] != current_test:
+                pdf.set_font("helvetica", "B", 10)
+                pdf.set_fill_color(241, 245, 249)
+                pdf.cell(190, 8, r['test'].upper(), 1, 1, 'L', fill=True)
+                current_test = r['test']
+            
+            pdf.set_font("helvetica", "", 10)
+            pdf.cell(80, 8, f" {r['param']}", 1)
+            pdf.set_font("helvetica", "B", 10)
+            pdf.cell(30, 8, r['val'], 1, 0, 'C')
+            pdf.set_font("helvetica", "", 10)
+            pdf.cell(30, 8, r['unit'], 1, 0, 'C')
+            pdf.cell(50, 8, r['ref'], 1, 1, 'C')
+
+       # 4. Generate QR Code Image
+        qr = qrcode.QRCode(box_size=3, border=1)
+        qr.add_data(f"https://caredrop.in/download-report/{order_id}")
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tf:
+            img.save(tf, 'PNG')
+            tf_path = tf.name
+            
+        pdf.ln(15)
+        pdf.set_font("helvetica", "B", 10)
+        pdf.cell(0, 5, 'Scan to Verify & Download Document:', ln=True)
+        pdf.image(tf_path, x=10, w=25)
+        os.remove(tf_path)
+
+        # 5. Save PDF to Database
+        pdf_bytes = pdf.output()
+        filename = f"CareDrop_Report_{order['patient_uid']}.pdf"
+        cursor.execute("UPDATE orders SET report_file = %s, report_filename = %s, status = 'Completed', report_type = 'System' WHERE id = %s", (psycopg2.Binary(pdf_bytes), filename, order_id))
         conn.commit()
-    except Exception as e: conn.rollback(); print(e)
+    except Exception as e: conn.rollback(); print(str(e))
     finally: conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+# --- OTHER ROUTES ---
+@app.route('/admin/add-test', methods=['POST'])
+def admin_add_test():
+    if session.get('admin_logged_in'):
+        name, cat_id, fasting, price, params = request.form.get('test_name'), request.form.get('category_id'), request.form.get('fasting'), request.form.get('price'), request.form.get('parameter_count', 1)
+        lab_ids = request.form.getlist('lab_ids')
+        conn = get_db()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM tests WHERE name ILIKE %s", (name,))
+            existing = cursor.fetchone()
+            test_id = existing[0] if existing else cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id", (name, cat_id or None, fasting)) or cursor.fetchone()[0]
+            for lid in lab_ids:
+                if cursor.execute("SELECT test_id FROM lab_test_pricing WHERE test_id=%s AND lab_id=%s", (test_id, lid)) or cursor.fetchone():
+                    cursor.execute("UPDATE lab_test_pricing SET price=%s, parameter_count=%s WHERE test_id=%s AND lab_id=%s", (price, params, test_id, lid))
+                else: cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price, parameter_count) VALUES (%s, %s, %s, %s)", (test_id, lid, price, params))
+            conn.commit()
+        except: conn.rollback()
+        finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add-category', methods=['POST'])
@@ -259,16 +394,16 @@ def delete_master_test(test_id):
 
 @app.route('/admin/add-health-package', methods=['POST'])
 def add_health_package():
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    conn = get_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO health_packages (title, lab_id, price) VALUES (%s, %s, %s) RETURNING id", (request.form.get('title'), request.form.get('lab_id'), request.form.get('price')))
-        pkg_id = cursor.fetchone()[0]
-        for tid in request.form.getlist('test_ids'): cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
-        conn.commit()
-    except Exception as e: conn.rollback()
-    finally: conn.close()
+    if session.get('admin_logged_in'):
+        conn = get_db()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO health_packages (title, lab_id, price) VALUES (%s, %s, %s) RETURNING id", (request.form.get('title'), request.form.get('lab_id'), request.form.get('price')))
+            pkg_id = cursor.fetchone()[0]
+            for tid in request.form.getlist('test_ids'): cursor.execute("INSERT INTO package_tests (package_id, test_id) VALUES (%s, %s)", (pkg_id, tid))
+            conn.commit()
+        except: conn.rollback()
+        finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete-health-package/<int:pkg_id>', methods=['POST'])
@@ -303,37 +438,21 @@ def assign_order():
 
 @app.route('/admin/add-parameter', methods=['POST'])
 def add_parameter():
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    conn = get_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM tests WHERE name = %s", (request.form.get('test_name'),))
-        test = cursor.fetchone()
-        if test: cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range) VALUES (%s, %s, %s, %s)", (test[0], request.form.get('parameter_name'), request.form.get('unit'), request.form.get('reference_range')))
-        conn.commit()
-    except Exception as e: conn.rollback()
-    finally: conn.close()
+    if session.get('admin_logged_in'):
+        conn = get_db()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM tests WHERE name = %s", (request.form.get('test_name'),))
+            test = cursor.fetchone()
+            if test: cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range) VALUES (%s, %s, %s, %s)", (test[0], request.form.get('parameter_name'), request.form.get('unit'), request.form.get('reference_range')))
+            conn.commit()
+        except: conn.rollback()
+        finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete-parameter/<int:param_id>', methods=['POST'])
 def delete_parameter(param_id):
     if session.get('admin_logged_in'): safe_execute("DELETE FROM test_parameters WHERE id=%s", (param_id,))
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/save-results/<int:order_id>', methods=['POST'])
-def save_results(order_id):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    conn = get_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM order_results WHERE order_id = %s", (order_id,)) 
-        for key, value in request.form.items():
-            if key.startswith('param_') and value.strip() != '':
-                cursor.execute("INSERT INTO order_results (order_id, parameter_id, result_value) VALUES (%s, %s, %s)", (order_id, key.split('_')[1], value.strip()))
-        cursor.execute("UPDATE orders SET status = 'Completed', report_type = 'System' WHERE id = %s", (order_id,))
-        conn.commit()
-    except Exception as e: conn.rollback()
-    finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/walk-in', methods=['POST'])
@@ -353,42 +472,42 @@ def admin_walk_in():
             user_id = cursor.fetchone()[0]
             cursor.execute("UPDATE users SET patient_uid = %s WHERE id = %s", (f"CD-PAT-{1000 + user_id}", user_id))
             
-        cursor.execute("INSERT INTO orders (user_id, patient_name, age, gender, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, 'Walk-In Clinic', %s, 'Immediate', %s, 'Completed') RETURNING id", (user_id, patient_name, age, gender, datetime.today().strftime('%Y-%m-%d'), total))
+        cursor.execute("INSERT INTO orders (user_id, patient_name, age, gender, address, collection_date, time_slot, total_amount, status) VALUES (%s, %s, %s, %s, 'Walk-In Clinic', %s, 'Immediate', %s, 'Pending') RETURNING id", (user_id, patient_name, age, gender, datetime.today().strftime('%Y-%m-%d'), total))
         order_id = cursor.fetchone()[0]
         cursor.execute("UPDATE orders SET order_ref = %s WHERE id = %s", (f"ORD-{datetime.today().strftime('%y%m')}-{order_id:04d}", order_id))
         cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price, item_type) VALUES (%s, %s, %s, %s, 'test')", (order_id, test_id, lab_id, total))
         conn.commit()
-    except Exception as e: conn.rollback()
+    except Exception as e: conn.rollback(); print(e)
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/bulk-upload', methods=['POST'])
 def bulk_upload():
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    file = request.files.get('csv_file')
-    if not file or file.filename == '': return redirect(url_for('admin_dashboard'))
-    conn = get_db()
-    try:
-        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-        csv_input = csv.reader(stream); next(csv_input, None)
-        cursor = conn.cursor()
-        for row in csv_input:
-            if len(row) < 4: continue
-            name, cat_name, fasting, symptoms = [str(r).strip() for r in row[:4]]
-            if not name: continue
-            cursor.execute("INSERT INTO test_categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING", (cat_name,))
-            cursor.execute("SELECT id FROM test_categories WHERE name = %s", (cat_name,))
-            cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active, symptoms) VALUES (%s, %s, %s, TRUE, %s) ON CONFLICT (name) DO NOTHING", (name, cursor.fetchone()[0], fasting, symptoms))
-        conn.commit()
-    except Exception as e: conn.rollback()
-    finally: conn.close()
+    if session.get('admin_logged_in'):
+        file = request.files.get('csv_file')
+        if file and file.filename != '':
+            conn = get_db()
+            try:
+                stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+                csv_input = csv.reader(stream); next(csv_input, None)
+                cursor = conn.cursor()
+                for row in csv_input:
+                    if len(row) < 4: continue
+                    name, cat_name, fasting, symptoms = [str(r).strip() for r in row[:4]]
+                    if not name: continue
+                    cursor.execute("INSERT INTO test_categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING", (cat_name,))
+                    cursor.execute("SELECT id FROM test_categories WHERE name = %s", (cat_name,))
+                    cursor.execute("INSERT INTO tests (name, category_id, fasting_requirement, is_active, symptoms) VALUES (%s, %s, %s, TRUE, %s) ON CONFLICT (name) DO NOTHING", (name, cursor.fetchone()[0], fasting, symptoms))
+                conn.commit()
+            except: conn.rollback()
+            finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/upload-report', methods=['POST'])
 def upload_report():
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    file = request.files.get('report_file')
-    if file and file.filename: safe_execute("UPDATE orders SET report_file=%s, report_filename=%s, status='Completed', report_type='Manual' WHERE id=%s", (psycopg2.Binary(file.read()), file.filename, request.form.get('order_id')))
+    if session.get('admin_logged_in'):
+        file = request.files.get('report_file')
+        if file and file.filename: safe_execute("UPDATE orders SET report_file=%s, report_filename=%s, status='Completed', report_type='Manual' WHERE id=%s", (psycopg2.Binary(file.read()), file.filename, request.form.get('order_id')))
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/api/place-order', methods=['POST'])
