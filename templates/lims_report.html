@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIMS Report Builder | CareDrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
+        body { background: #F1F5F9; margin: 0; padding: 40px 20px; color: #0F172A; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { border-bottom: 2px solid #E2E8F0; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 30px; }
+        .info-label { font-size: 12px; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .info-value { font-size: 15px; font-weight: 700; color: #0F172A; }
+        .test-section { margin-bottom: 40px; }
+        .test-title { font-size: 18px; font-weight: 800; color: #0D9488; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px dashed #CBD5E1; text-transform: uppercase; }
+        .param-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; align-items: center; margin-bottom: 15px; background: #F8FAFC; padding: 15px; border-radius: 8px; border: 1px solid #F1F5F9; }
+        .param-name { font-weight: 800; font-size: 14px; color: #334155; }
+        .param-ref { font-size: 13px; color: #64748B; font-weight: 600; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #94A3B8; border-radius: 6px; font-weight: 700; font-size: 15px; outline: none; }
+        input[type="text"]:focus { border-color: #0D9488; }
+        .btn-save { background: #0F172A; color: white; padding: 16px; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; width: 100%; cursor: pointer; transition: 0.2s; }
+        .btn-save:hover { background: #1E293B; }
+        .back-link { text-decoration: none; color: #64748B; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="/admin" class="back-link"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Dashboard</a>
+        
+        <div class="header">
+            <div>
+                <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #0F172A;">LIMS Report Builder</h1>
+                <div style="color: #64748B; font-weight: 600; margin-top: 5px;">Enter clinical results to generate the final PDF report.</div>
+            </div>
+        </div>
+
+        <div class="patient-info">
+            <div>
+                <div class="info-label">Patient Name</div>
+                <div class="info-value" style="text-transform: capitalize;">{{ order.patient_name }} ({{ order.age }} Yrs, {{ order.gender }})</div>
+            </div>
+            <div>
+                <div class="info-label">Patient UID</div>
+                <div class="info-value">{{ order.patient_uid }}</div>
+            </div>
+            <div>
+                <div class="info-label">Order Reference</div>
+                <div class="info-value">{{ order.order_ref }}</div>
+            </div>
+            <div>
+                <div class="info-label">Collection Date</div>
+                <div class="info-value">{{ order.collection_date }}</div>
+            </div>
+        </div>
+
+        <form action="/admin/save-results/{{ order.id }}" method="POST">
+            {% if not tests %}
+                <div style="color: #B45309; font-weight: 700; background: #FEF3C7; padding: 15px; border-radius: 6px; text-align: center;">No tests found for this order.</div>
+            {% else %}
+                {% for t in tests %}
+                    {% if t.parameters %}
+                    <div class="test-section">
+                        <div class="test-title">{{ t.test_name }}</div>
+                        {% for p in t.parameters %}
+                        <div class="param-grid">
+                            <div class="param-name">{{ p.parameter_name }}</div>
+                            <div class="param-ref">Ref: {{ p.reference_range }} {{ p.unit }}</div>
+                            <div><input type="text" name="param_{{ p.id }}" placeholder="Result..." required></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="test-section">
+                        <div class="test-title">{{ t.test_name }}</div>
+                        <div style="color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 15px; border-radius: 6px; border: 1px solid #FCA5A5;">
+                            ⚠️ You haven't defined any LIMS parameters for this test yet. Go to your Admin Dashboard -> Inventory Tab -> "Define LIMS Parameters" to set them up.
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- We will hook the PDF generator to this button in the next step -->
+                <button type="submit" class="btn-save"><i data-lucide="check-circle" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 5px;"></i> Save Results & Generate PDF</button>
+            {% endif %}
+        </form>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
