@@ -130,7 +130,7 @@
                                 </select>
                             </form>
                             
-                            {% if not order.has_report %}
+                           {% if not order.has_report %}
                             <!-- OUTSOURCED: UPLOAD PDF -->
                             <form action="/admin/upload-report" method="POST" enctype="multipart/form-data" style="background: #FFFBEB; padding: 10px; border: 1px dashed #FCD34D; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
                                 <input type="hidden" name="order_id" value="{{ order.id }}">
@@ -141,7 +141,15 @@
                             <!-- LIMS: OPEN FULL PAGE BUILDER -->
                             <a href="/admin/fill-report/{{ order.id }}" class="btn-lims">Open LIMS Report Builder &rarr;</a>
                             {% else %}
-                            <div style="background: #F0FDF4; color: #166534; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid #86EFAC;">Report Sent</div>
+                            
+                            <!-- THE NEW DOWNLOAD & ACTION BUTTONS -->
+                            <div style="background: #F0FDF4; color: #166534; padding: 6px; border-radius: 6px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid #86EFAC; margin-bottom: 8px;">✓ Report Generated</div>
+                            
+                            <a href="/download-report/{{ order.id }}" target="_blank" style="background: #0D9488; color: white; padding: 8px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; border: none; margin-bottom: 5px; transition: 0.2s;">📥 Download PDF Report</a>
+                            
+                            <!-- Optional: Quick button to re-edit if a mistake was made -->
+                            <a href="/admin/fill-report/{{ order.id }}" style="background: #F1F5F9; color: #475569; padding: 6px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; border: 1px solid #CBD5E1;">Edit Results</a>
+                            
                             {% endif %}
                         </td>
                     </tr>
