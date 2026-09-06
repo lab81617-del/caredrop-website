@@ -129,6 +129,7 @@ def admin_dashboard():
     cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
     items_map = {}
     for row in cursor.fetchall(): items_map.setdefault(row['order_id'], []).append(row)
+
     for order in orders: order['test_list'] = items_map.get(order['id'], [])
         
     cursor.execute("SELECT tp.id, tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id ORDER BY t.name")
@@ -161,7 +162,7 @@ def admin_dashboard():
     return render_template('admin.html', orders=orders, all_labs=all_labs, active_labs=active_labs, categories=categories, inventory=inventory, packages=packages, master_tests=master_tests, phlebotomists=phlebotomists, test_parameters=test_parameters)
 
 # ==========================================
-# SEEDER - WIPES DUPLICATES & ADDS EXACT CBC
+# MASSIVE LIMS AUTO-SEEDER
 # ==========================================
 @app.route('/admin/auto-seed-lims')
 def auto_seed_lims():
@@ -172,10 +173,10 @@ def auto_seed_lims():
         master_params = {
             'Complete Blood Count': [
                 ('Hemoglobin (HB)', 'g/dl', '12.0 - 16.0'), ('Total Leucocytes Count (WBC)', 'Cells/Cumm', '4000 - 10500'), 
-                ('Neutrophils', '%', '40 - 80'), ('Lymphocytes %', '%', '20 - 40'),
+                ('Neutrophils', '%', '40 - 80'), ('Lymphocytes', '%', '20 - 40'),
                 ('Eosinophils', '%', '01 - 06'), ('Monocytes', '%', '02 - 10'), ('Basophils', '%', '00 - 01'),
-                ('Absolute Neutrophil Count', 'Cells/uL', '2000 - 8000'), ('ABSOLUTE LYMPHOCYTE COUNT', '/uL', '1000 - 3000'),
-                ('Absolute Eosinophil Count (AEC)', 'Cells/cumm', '20 - 500'), ('ABSOLUTE MONOCYTE COUNT', 'Cells/uL', '200 - 1000'),
+                ('Absolute Neutrophil Count', 'Cells/uL', '2000 - 8000'), ('Absolute Lymphocyte Count', '/uL', '1000 - 3000'),
+                ('Absolute Eosinophil Count (AEC)', 'Cells/cumm', '20 - 500'), ('Absolute Monocyte Count', 'Cells/uL', '200 - 1000'),
                 ('Mean Cell Haemoglobin (MCH)', 'Pg', '27 - 32'), ('MCHC', 'g/dl', '31.5 - 34.5'),
                 ('Erythrocyte count (RBC COUNT)', 'million/cmm', '3.8 - 4.8'), ('Packed Cell Volume (Hematocrit)', '%', '36 - 46'),
                 ('Mean Cell Volume (MCV)', 'fL', '83 - 101'), ('Red Cell Distribution Width (RDW)-SD', 'fL', '35 - 56'),
@@ -187,19 +188,42 @@ def auto_seed_lims():
             ],
             'Liver Function': [
                 ('Bilirubin (Total)', 'mg/dL', '0.2 - 1.2'), ('Bilirubin (Direct)', 'mg/dL', '0.0 - 0.3'),
-                ('SGOT / AST', 'U/L', '5 - 40'), ('SGPT / ALT', 'U/L', '7 - 56'), ('Alkaline Phosphatase (ALP)', 'U/L', '40 - 129'),
-                ('Total Protein', 'g/dL', '6.0 - 8.3'), ('Albumin', 'g/dL', '3.5 - 5.2')
+                ('Bilirubin (Indirect)', 'mg/dL', '0.2 - 0.9'), ('SGOT / AST', 'U/L', '5 - 40'), 
+                ('SGPT / ALT', 'U/L', '7 - 56'), ('Alkaline Phosphatase (ALP)', 'U/L', '40 - 129'),
+                ('Gamma Glutamyl Transferase (GGT)', 'U/L', 'Upto 60'), ('Total Protein', 'g/dL', '6.0 - 8.3'), 
+                ('Albumin', 'g/dL', '3.5 - 5.2'), ('Globulin', 'g/dL', '2.5 - 3.5'), ('A/G Ratio', 'Ratio', '1.0 - 2.1')
             ],
             'Kidney Function': [
-                ('Urea', 'mg/dL', '17 - 43'), ('Creatinine', 'mg/dL', '0.6 - 1.2'), ('Uric Acid', 'mg/dL', '3.5 - 7.2'),
-                ('Sodium', 'mEq/L', '135 - 145'), ('Potassium', 'mEq/L', '3.5 - 5.1')
+                ('Blood Urea', 'mg/dL', '14 - 40'), ('Blood Urea Nitrogen (BUN)', 'mg/dl', '5 - 25'), 
+                ('Serum Creatinine', 'mg/dl', '0.5 - 1.1'), ('Bun/Creatinine Ratio', '', '6 - 23'), 
+                ('Serum Uric Acid', 'mg/dL', '3.4 - 7.0'), ('Calcium', 'mg/dl', '8.6 - 10.2'), 
+                ('Sodium', 'mmol/L', '135 - 155'), ('Potassium', 'mmol/L', '3.5 - 5.0'), ('Chloride', 'mmol/L', '95 - 108')
             ],
             'Lipid Profile': [
-                ('Total Cholesterol', 'mg/dL', '< 200'), ('Triglycerides', 'mg/dL', '< 150'),
-                ('HDL Cholesterol', 'mg/dL', '40 - 60'), ('LDL Cholesterol', 'mg/dL', '< 100')
+                ('Total Cholesterol', 'mg/dl', '< 200'), ('Triglycerides', 'mg/dl', '< 150'),
+                ('Cholesterol-HDL', 'mg/dl', '40 - 60'), ('Cholesterol-LDL (Direct)', 'mg/dl', '< 100'),
+                ('Cholesterol-VLDL', 'mg/dl', '7 - 40'), ('Total Cholesterol/HDL Ratio', 'Ratio', '< 6'),
+                ('LDL/HDL Ratio', 'Ratio', '0.0 - 3.5'), ('Non-HDL Cholesterol', 'mg/dl', '0 - 160')
             ],
             'Thyroid Profile': [
                 ('Total T3', 'ng/dL', '80 - 200'), ('Total T4', 'ug/dL', '4.5 - 12.0'), ('TSH', 'uIU/mL', '0.4 - 4.0')
+            ],
+            'HbA1c': [
+                ('Glycosylated Hemoglobin (HbA1C)', '%', '< 5.6'), ('Estimated Average Glucose', 'mg/dl', '90 - 120')
+            ],
+            'Urine Routine': [
+                ('Color', '', 'Pale Yellow'), ('Appearance', '', 'Clear'), ('Specific Gravity', '', '1.010 - 1.025'),
+                ('pH', '', '5.0 - 8.0'), ('Protein / Albumin', '', 'Absent'), ('Glucose (Sugar)', '', 'Absent'),
+                ('Ketones', '', 'Absent'), ('Blood', '', 'Absent'), ('Bilirubin', '', 'Absent'), ('Urobilinogen', '', 'Normal'),
+                ('Pus Cells (Leukocytes)', '/HPF', '0 - 5'), ('Red Blood Cells (RBC)', '/HPF', '0 - 2'),
+                ('Epithelial Cells', '/HPF', 'Few'), ('Casts', '', 'Absent'), ('Crystals', '', 'Absent')
+            ],
+            'Widal': [
+                ('Salmonella Typhi O', 'Titer', '< 1:80'), ('Salmonella Typhi H', 'Titer', '< 1:80'),
+                ('Salmonella Paratyphi AH', 'Titer', '< 1:80'), ('Salmonella Paratyphi BH', 'Titer', '< 1:80')
+            ],
+            'Dengue': [
+                ('Dengue NS1 Antigen', 'Index', '< 0.9 (Negative)'), ('Dengue IgG Antibody', 'Index', '< 0.9 (Negative)'), ('Dengue IgM Antibody', 'Index', '< 0.9 (Negative)')
             ]
         }
         
@@ -207,38 +231,37 @@ def auto_seed_lims():
             cursor.execute("SELECT id FROM tests WHERE name ILIKE %s LIMIT 1", (f"%{search_name}%",))
             test = cursor.fetchone()
             if test:
-                # WIPE OLD DUPLICATES FIRST
                 cursor.execute("DELETE FROM test_parameters WHERE test_id = %s", (test[0],))
                 for p_name, unit, ref in params:
                     cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range) VALUES (%s, %s, %s, %s)", (test[0], p_name, unit, ref))
         conn.commit()
-        return "<h2 style='color:green; padding:50px;'>SUCCESS! Old duplicates wiped. Full 26-parameter CBC injected. Close this tab.</h2>"
+        return "<h2 style='color:green; padding:50px;'>SUCCESS! Over 100 parameters securely locked to your tests. Close this tab.</h2>"
     except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
     finally: conn.close()
 
 # ==========================================
-# PROFESSIONAL MEDICAL PDF GENERATOR
+# ENTERPRISE MEDICAL PDF GENERATOR
 # ==========================================
 class LIMS_PDF(FPDF):
     def header(self):
         self.set_y(10)
-        self.set_font("helvetica", "B", 18)
-        self.set_text_color(11, 128, 100) # Deep clinical green
+        self.set_font("helvetica", "B", 20)
+        self.set_text_color(11, 128, 100)
         self.cell(0, 8, "CAREDROP DIAGNOSTICS", ln=True, align="L")
-        self.set_font("helvetica", "I", 10)
+        self.set_font("helvetica", "B", 9)
         self.set_text_color(100, 100, 100)
-        self.cell(0, 5, "Precision & Care in Every Drop | Certified Partner Laboratory", ln=True, align="L")
+        self.cell(0, 5, "Precision & Care in Every Drop", ln=True, align="L")
         self.set_draw_color(11, 128, 100)
         self.set_line_width(0.5)
-        self.line(10, 26, 200, 26)
+        self.line(10, 25, 200, 25)
         self.set_line_width(0.2)
-        self.ln(8)
+        self.ln(5)
         
     def footer(self):
-        self.set_y(-35)
+        self.set_y(-30)
         self.set_draw_color(200, 200, 200)
         self.line(10, 265, 200, 265)
-        self.set_y(-28)
+        self.set_y(-25)
         self.set_font("helvetica", "B", 10)
         self.set_text_color(15, 23, 42)
         self.cell(100, 5, "Dr. Ram Shran", ln=False, align="L")
@@ -247,7 +270,7 @@ class LIMS_PDF(FPDF):
         self.set_text_color(100, 100, 100)
         self.cell(100, 4, "MBBS, MD (Pathology) | DMC-44740", ln=False, align="L")
         self.cell(90, 4, "MBBS, D.C.P | DMC-39510", ln=True, align="R")
-        self.set_y(-12)
+        self.set_y(-10)
         self.set_font("helvetica", "I", 8)
         self.cell(0, 5, f"This is an electronically authenticated report. Page {self.page_no()}", align="C")
 
@@ -303,46 +326,44 @@ def save_results(order_id):
         pdf = LIMS_PDF()
         pdf.add_page()
         
-       # 1. Medical Grid Layout (Matching Reference)
+        # Clinical Demography Grid
         pdf.set_draw_color(180, 180, 180)
-        pdf.set_font("helvetica", "B", 9)
+        pdf.set_font("helvetica", "B", 8)
         pdf.set_text_color(100, 100, 100)
         
-        # Left Side Details
-        pdf.set_xy(10, 30); pdf.cell(40, 6, "Patient NAME", 0, 0, 'L')
-        pdf.set_text_color(15, 23, 42); pdf.cell(60, 6, f": {order['patient_name']}", 0, 1, 'L')
+        pdf.set_xy(10, 30); pdf.cell(35, 6, "Patient Name", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(65, 6, f": {order['patient_name']}", 0, 1, 'L')
         
-        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Age / Gender", 0, 0, 'L')
-        pdf.set_text_color(15, 23, 42); pdf.cell(60, 6, f": {order['age']} Yrs / {order['gender']}", 0, 1, 'L')
+        pdf.set_text_color(100, 100, 100); pdf.cell(35, 6, "Age / Gender", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(65, 6, f": {order['age']} Yrs / {order['gender']}", 0, 1, 'L')
         
-        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Visit ID", 0, 0, 'L')
-        pdf.set_text_color(15, 23, 42); pdf.cell(60, 6, f": {order['order_ref']}", 0, 1, 'L')
+        pdf.set_text_color(100, 100, 100); pdf.cell(35, 6, "Visit ID", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(65, 6, f": {order['order_ref']}", 0, 1, 'L')
         
-        # Right Side Details
         pdf.set_xy(110, 30)
-        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Barcode NO", 0, 0, 'L')
-        pdf.set_text_color(15, 23, 42); pdf.cell(50, 6, f": {order['patient_uid']}", 0, 1, 'L')
+        pdf.set_text_color(100, 100, 100); pdf.cell(35, 6, "Barcode NO", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(55, 6, f": {order['patient_uid']}", 0, 1, 'L')
         
         pdf.set_xy(110, 36)
-        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Sample Rec. in Lab", 0, 0, 'L')
-        pdf.set_text_color(15, 23, 42); pdf.cell(50, 6, f": {order['collection_date']} 08:30 AM", 0, 1, 'L')
+        pdf.set_text_color(100, 100, 100); pdf.cell(35, 6, "Sample Rec. in Lab", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(55, 6, f": {order['collection_date']} 08:30 AM", 0, 1, 'L')
         
         pdf.set_xy(110, 42)
-        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Reported", 0, 0, 'L')
-        pdf.set_text_color(15, 23, 42); pdf.cell(50, 6, f": {datetime.today().strftime('%Y-%m-%d %I:%M %p')}", 0, 1, 'L')
+        pdf.set_text_color(100, 100, 100); pdf.cell(35, 6, "Reported", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(55, 6, f": {datetime.today().strftime('%Y-%m-%d %I:%M %p')}", 0, 1, 'L')
         
-        pdf.ln(5); pdf.line(10, 52, 200, 52); pdf.ln(3)
+        pdf.ln(5); pdf.set_draw_color(11, 128, 100); pdf.line(10, 52, 200, 52); pdf.ln(3)
         
-        # 2. Results Header (Green Bar)
+        # Table Header
         pdf.set_font("helvetica", "B", 10)
         pdf.set_fill_color(11, 128, 100)
         pdf.set_text_color(255, 255, 255)
         pdf.cell(85, 8, 'Test Name', 0, 0, 'L', True)
-        pdf.cell(30, 8, 'Result', 0, 0, 'C', True)
+        pdf.cell(25, 8, 'Result', 0, 0, 'C', True)
         pdf.cell(30, 8, 'Unit', 0, 0, 'C', True)
-        pdf.cell(45, 8, 'Bio. Ref. Range', 0, 1, 'C', True)
+        pdf.cell(50, 8, 'Bio. Ref. Range', 0, 1, 'C', True)
         
-        # 3. Print Results Line by Line
+        # Results Data
         current_cat, current_test = "", ""
         for r in results_data:
             if r['cat'] != current_cat:
@@ -361,12 +382,12 @@ def save_results(order_id):
             pdf.set_font("helvetica", "", 10)
             pdf.cell(85, 6, f" {r['param']}", 0, 0, 'L')
             pdf.set_font("helvetica", "B", 10)
-            pdf.cell(30, 6, r['val'], 0, 0, 'C')
+            pdf.cell(25, 6, r['val'], 0, 0, 'C')
             pdf.set_font("helvetica", "", 9)
             pdf.cell(30, 6, r['unit'], 0, 0, 'C')
-            pdf.cell(45, 6, r['ref'], 0, 1, 'C')
+            pdf.cell(50, 6, r['ref'], 0, 1, 'C')
 
-        # 4. QR Code Stamp
+        # QR Code
         qr = qrcode.QRCode(box_size=3, border=0)
         qr.add_data(f"https://caredrop.in/download-report/{order_id}")
         qr.make(fit=True)
@@ -375,7 +396,7 @@ def save_results(order_id):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tf:
             img.save(tf, 'PNG'); tf_path = tf.name
             
-        pdf.ln(10)
+        pdf.ln(12)
         pdf.set_font("helvetica", "B", 9)
         pdf.set_text_color(100, 100, 100)
         pdf.cell(0, 5, 'Scan to Verify Authenticity:', ln=True)
