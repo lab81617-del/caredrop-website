@@ -7,14 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important; }
+        * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important; box-sizing: border-box;}
         body { background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; font-size: 15px; }
         input, select, textarea, button { font-family: inherit; background-color: #fff; border: 1px solid #d1d5db; }
         .container { max-width: 1200px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 25px; border: none !important; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0D9488; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; color: #475569; transition: 0.2s; font-size: 15px; white-space: nowrap; font-family: inherit; }
+        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; color: #475569; transition: 0.2s; font-size: 15px; white-space: nowrap; }
         .tab-btn.active { background: #0F172A !important; color: white !important; border-color: #0F172A !important; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -22,13 +22,13 @@
         .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; text-align: left; min-width: 900px; }
         th, td { padding: 16px 20px; border-bottom: 1px solid #F1F5F9; white-space: nowrap; }
-        th { background: #F8FAFC; font-weight: 800; color: #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-        .badge { background: #F0FDF4; color: #166534; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; display: inline-block; margin-bottom: 4px; border: 1px solid #BBF7D0; text-transform: capitalize; }
+        th { background: #F8FAFC; font-weight: 800; color: #334155; font-size: 13px; text-transform: uppercase; }
+        .badge { background: #F0FDF4; color: #166534; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; display: inline-block; margin-bottom: 4px; border: 1px solid #BBF7D0; }
         .form-container { padding: 30px; }
         .form-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; border-bottom: 2px solid #F1F5F9; padding-bottom: 15px; color: #0F172A; display: flex; align-items: center; gap: 10px; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
         .input-group label { display: block; font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #334155; }
-        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; font-weight: 600; color: #0F172A; }
+        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; font-weight: 600; color: #0F172A; }
         .btn-save { background: #0D9488 !important; color: white !important; padding: 14px 24px; border: none !important; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 15px; transition: 0.2s; }
         .btn-delete { background: #FEF2F2 !important; color: #DC2626 !important; border: 1px solid #FCA5A5 !important; padding: 8px 14px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 13px; }
     </style>
@@ -43,12 +43,12 @@
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('orders')"> Live & Walk-In Orders</button>
-        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')"> Manage Inventory & Labs</button>
+        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')"> Manage Inventory & LIMS</button>
         <button id="teamTabBtn" class="tab-btn" onclick="switchTab('team')"> Phlebotomist Team</button>
     </div>
 
     <div id="orders" class="tab-content active">
-        <!-- NEW: WALK-IN BOOKING ENGINE -->
+        <!-- WALK-IN BOOKING ENGINE -->
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
             <div class="form-title" style="color: #0F172A; border-bottom: 2px solid #E2E8F0;"><i data-lucide="user-plus"></i> Register New Walk-In Patient</div>
             <form action="/admin/walk-in" method="POST">
@@ -61,15 +61,12 @@
                         <select name="gender" required><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
                     </div>
                 </div>
-                
                 <div class="form-grid">
                     <div class="input-group">
                         <label>Select Test (from Live Inventory)</label>
                         <select name="test_id" required>
                             <option value="">Choose Test...</option>
-                            {% for item in inventory %}
-                            <option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>
-                            {% endfor %}
+                            {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}
                         </select>
                     </div>
                     <div class="input-group">
@@ -87,7 +84,7 @@
         <div class="card table-wrapper">
             <table>
                 <thead>
-                    <tr><th>Reference & UID</th><th>Patient Details</th><th>Schedule</th><th>Tests Selected</th><th>Total</th><th>Assign Team</th><th>Order Status</th></tr>
+                    <tr><th>Reference & UID</th><th>Patient Details</th><th>Schedule</th><th>Tests Selected</th><th>Total</th><th>Assign Team</th><th>Order Actions</th></tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
@@ -103,13 +100,12 @@
                         </td>
                         <td>
                             <div style="font-weight: 800; font-size: 14px;">{{ order.collection_date }}</div>
-                            <div style="font-size: 13px; color: #0F766E; font-weight: 700; margin-top: 4px;">{{ order.time_slot }}</div>
+                            <div style="font-size: 13px; color: #0F766E; font-weight: 700; margin-top: 4px;">{{ order.status }}</div>
                         </td>
                         <td>
                             {% for test in order.test_list %}<div class="badge">{{ test.test_name }} ({{ test.lab_name }})</div><br>{% endfor %}
                         </td>
                         <td style="font-weight: 800; font-size: 18px;">₹{{ order.total_amount }}</td>
-                        
                         <td>
                             <form action="/admin/assign-order" method="POST" style="margin:0; display: flex; flex-direction: column; gap: 8px;">
                                 <input type="hidden" name="order_id" value="{{ order.id }}">
@@ -118,30 +114,55 @@
                                     {% for p in phlebotomists %}<option value="{{ p.id }}" {% if order.phlebotomist_id == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
                                 </select>
                                 <div style="display: flex; gap: 5px;">
-                                    <input type="number" name="payout_amount" value="{{ order.payout_amount or 0 }}" placeholder="Pay (₹)" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; font-size: 12px; width: 70px;">
                                     <button type="submit" style="background: #0F172A; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight: 800; font-size: 11px; flex-grow: 1;">Save</button>
                                 </div>
                             </form>
                         </td>
-
                         <td>
-                            <form action="/admin/update-order" method="POST" style="margin:0; margin-bottom:10px;">
-                                <input type="hidden" name="order_id" value="{{ order.id }}">
-                                <select name="status" onchange="this.form.submit()" style="padding: 10px; border-radius: 8px; border: 1px solid #94A3B8; outline: none; font-weight: 800; font-size: 13px; cursor:pointer; width: 100%;">
-                                    <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}> Pending</option>
-                                    <option value="Sample Collected" {% if order.status == 'Sample Collected' %}selected{% endif %}> Sample Collected</option>
-                                    <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}> Completed</option>
-                                </select>
-                            </form>
+                            <!-- OUTSOURCED: UPLOAD PDF -->
                             {% if not order.has_report %}
                             <form action="/admin/upload-report" method="POST" enctype="multipart/form-data" style="background: #FFFBEB; padding: 10px; border: 1px dashed #FCD34D; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
                                 <input type="hidden" name="order_id" value="{{ order.id }}">
                                 <input type="file" name="report_file" accept=".pdf" required style="font-size: 11px; padding: 4px; border: none !important; background: transparent;">
-                                <button type="submit" style="background: #D97706 !important; color: white !important; border: none !important; padding: 6px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 11px; font-family: inherit;">Upload PDF</button>
+                                <button type="submit" style="background: #D97706 !important; color: white !important; border: none !important; padding: 6px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 11px;">Upload Outsourced PDF</button>
                             </form>
+                            <!-- LIMS: FILL IN HOUSE RESULTS -->
+                            <button onclick="document.getElementById('lims-row-{{ order.id }}').style.display = document.getElementById('lims-row-{{ order.id }}').style.display === 'none' ? 'table-row' : 'none'" style="background: #0F172A; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 11px; margin-top: 8px; width: 100%;">Fill Results (In-House LIMS)</button>
                             {% else %}
                             <div style="background: #F0FDF4; color: #166534; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid #86EFAC;">Report Sent</div>
                             {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <!-- THE LIMS FILL REPORT DROP-DOWN ROW -->
+                    <tr id="lims-row-{{ order.id }}" style="display: none; background: #F8FAFC; border-top: 2px dashed #CBD5E1;">
+                        <td colspan="7" style="padding: 20px;">
+                            <div style="background: white; border: 1px solid #E2E8F0; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                                <h3 style="margin-top: 0; color: #0F172A; font-weight: 800; font-size: 18px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px;">Enter Patient Results</h3>
+                                <form action="/admin/save-results/{{ order.id }}" method="POST">
+                                    {% for t in order.lims_tests %}
+                                        {% if t.parameters %}
+                                        <div style="margin-bottom: 20px;">
+                                            <div style="font-weight: 800; color: #0D9488; margin-bottom: 15px; font-size: 15px; text-transform: uppercase;">{{ t.test_name }}</div>
+                                            <div class="form-grid">
+                                                {% for p in t.parameters %}
+                                                <div class="input-group">
+                                                    <label>{{ p.parameter_name }} <span style="color: #64748B; font-weight: 600;">(Ref: {{ p.reference_range }} {{ p.unit }})</span></label>
+                                                    <input type="text" name="param_{{ p.id }}" placeholder="Enter Result">
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if not order.lims_tests or order.lims_tests|length == 0 or not order.lims_tests[0].parameters %}
+                                        <p style="color: #B45309; font-weight: 700; background: #FEF3C7; padding: 10px; border-radius: 6px;">You haven't defined any parameters for these tests yet. Add them in the Inventory Tab below.</p>
+                                    {% else %}
+                                        <button type="submit" class="btn-save" style="background: #166534 !important; width: 100%;">Save Results (PDF Generator Coming Next)</button>
+                                    {% endif %}
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -150,23 +171,61 @@
         </div>
     </div>
 
-    <!-- INVENTORY TAB WITH CSV UPLOAD KEEPT INTACT -->
+    <!-- INVENTORY TAB WITH NEW LIMS PARAMETER ENGINE -->
     <div id="inventory" class="tab-content">
+        <!-- MASS UPLOAD -->
         <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4; margin-bottom: 30px;">
             <div class="form-title" style="color: #0D9488; border-bottom: none; margin-bottom: 10px; padding-bottom: 0;"><i data-lucide="upload-cloud"></i> Mass Import Catalog (CSV)</div>
-            <p style="font-size: 13px; color: #166534; margin-bottom: 20px; font-weight: 600;">Upload an Excel/CSV file to instantly add thousands of tests to your Master Dictionary.</p>
             <form action="/admin/bulk-upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 8px; background: white; min-width: 250px;">
-                <button type="submit" class="btn-save" style="background: #0D9488 !important; padding: 12px 24px;">Upload & Inject Tests</button>
+                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 8px; background: white;">
+                <button type="submit" class="btn-save" style="background: #0D9488 !important; padding: 12px 24px;">Upload & Inject</button>
             </form>
         </div>
 
+        <!-- NEW LIMS PARAMETER MANAGER -->
+        <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC; margin-bottom: 30px;">
+            <div class="form-title" style="color: #0F172A; border-bottom: 2px solid #E2E8F0;"><i data-lucide="flask-conical"></i> Define LIMS Parameters & Reference Ranges</div>
+            <p style="font-size: 13px; color: #475569; margin-bottom: 20px; font-weight: 600;">Example: Select "Complete Blood Count", Name: "Hemoglobin", Unit: "g/dL", Ref Range: "13.0 - 17.0"</p>
+            <form action="/admin/add-parameter" method="POST">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Test Name</label>
+                        <input type="text" name="test_name" list="master_test_list" autocomplete="off" required>
+                    </div>
+                    <div class="input-group"><label>Parameter (e.g. RBC Count)</label><input type="text" name="parameter_name" required></div>
+                    <div class="input-group"><label>Unit (e.g. g/dL)</label><input type="text" name="unit"></div>
+                    <div class="input-group"><label>Reference Range (e.g. 13-17)</label><input type="text" name="reference_range"></div>
+                </div>
+                <button type="submit" class="btn-save" style="background: #0F172A !important; width: 100%;">+ Save Parameter to Test</button>
+            </form>
+            
+            <div style="margin-top: 25px; max-height: 400px; overflow-y: auto;">
+                <table>
+                    <thead><tr><th>Test Category</th><th>Parameter Name</th><th>Range / Unit</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for tp in test_parameters %}
+                        <tr>
+                            <td style="font-weight: 800; font-size: 13px; color: #0D9488;">{{ tp.test_name }}</td>
+                            <td style="font-weight: 700; font-size: 14px; color: #0F172A;">{{ tp.parameter_name }}</td>
+                            <td style="font-size: 13px; font-weight: 700; color: #64748B;">{{ tp.reference_range }} <span style="font-size: 11px;">{{ tp.unit }}</span></td>
+                            <td>
+                                <form action="/admin/delete-parameter/{{ tp.id }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete parameter?');">
+                                    <button type="submit" class="btn-delete" style="padding: 6px 12px; font-size: 11px;">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="card form-container">
-            <div class="form-title"><i data-lucide="flask-conical"></i> Assign Lab Prices to Master Tests</div>
+            <div class="form-title"><i data-lucide="tag"></i> Assign Partner Lab Prices to Tests</div>
             <form action="/admin/add-test" method="POST">
                 <div class="form-grid">
                     <div class="input-group">
-                        <label>Test Name (Type to search existing dictionary)</label>
+                        <label>Test Name</label>
                         <input type="text" name="test_name" list="master_test_list" autocomplete="off" required>
                         <datalist id="master_test_list">
                             {% for t in master_tests %}<option value="{{ t.name }}"></option>{% endfor %}
@@ -174,23 +233,34 @@
                     </div>
                     <div class="input-group"><label>Category</label><select name="category_id"><option value="">No Category</option>{% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}</select></div>
                 </div>
-                
                 <div class="form-grid">
                     <div class="input-group"><label>Parameter Count</label><input type="number" name="parameter_count" value="1" required></div>
                     <div class="input-group"><label>Base Price (₹)</label><input type="number" name="price" required></div>
                 </div>
-
                 <div class="input-group" style="margin-bottom: 20px; margin-top: 15px;">
-                    <label>Select Partner Labs to assign this test</label>
+                    <label>Select Partner Labs</label>
                     <div style="display: flex; gap:15px; flex-wrap:wrap; padding: 10px 0;">
                         {% for lab in active_labs %}
-                        <label style="background: white; padding: 10px 16px; border:1px solid #94A3B8; border-radius: 8px; font-size: 14px; font-weight:800; cursor:pointer; display: flex; align-items:center; gap:8px;">
-                            <input type="checkbox" name="lab_ids" value="{{ lab.id }}" style="accent-color: #0D9488; width: 16px; height: 16px; margin:0; border:none !important;"> {{ lab.name }}
-                        </label>
+                        <label style="background: white; padding: 10px 16px; border:1px solid #94A3B8; border-radius: 8px; font-size: 14px; font-weight:800; cursor:pointer;"><input type="checkbox" name="lab_ids" value="{{ lab.id }}" style="accent-color: #0D9488; margin:0;"> {{ lab.name }}</label>
                         {% endfor %}
                     </div>
                 </div>
                 <button type="submit" class="btn-save" style="width: 100%;">+ Save Test & Price</button>
+            </form>
+        </div>
+    </div>
+
+  <!-- PHLEBOTOMIST TEAM TAB -->
+    <div id="team" class="tab-content">
+        <div class="card form-container">
+            <div class="form-title"><i data-lucide="users" style="width: 20px; height: 20px;"></i> Register New Phlebotomist</div>
+            <form action="/admin/add-phlebotomist" method="POST">
+                <div class="form-grid">
+                    <div class="input-group"><label>Full Name</label><input type="text" name="name" required></div>
+                    <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
+                    <div class="input-group"><label>Vehicle Number (Optional)</label><input type="text" name="vehicle_number"></div>
+                </div>
+                <button type="submit" class="btn-save" style="width: 100%;">+ Add to Fleet</button>
             </form>
         </div>
     </div>
