@@ -179,6 +179,31 @@ def admin_dashboard():
 
 # --- RESTORED ADMIN & LIMS ROUTES ---
 
+@app.route('/admin/fill-report/<int:order_id>')
+def admin_fill_report(order_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = get_db()
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT o.*, u.patient_uid, u.phone FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
+        order = cursor.fetchone()
+        
+        cursor.execute("""
+            SELECT oi.order_id, t.id as test_id, t.name as test_name 
+            FROM order_items oi JOIN tests t ON oi.test_id = t.id WHERE oi.item_type = 'test' AND oi.order_id = %s
+            UNION
+            SELECT oi.order_id, t.id as test_id, t.name as test_name 
+            FROM order_items oi JOIN package_tests pt ON oi.test_id = pt.package_id JOIN tests t ON pt.test_id = t.id WHERE oi.item_type = 'package' AND oi.order_id = %s
+        """, (order_id, order_id))
+        tests = cursor.fetchall()
+        
+        for t in tests:
+            cursor.execute("SELECT id, parameter_name, unit, reference_range FROM test_parameters WHERE test_id = %s", (t['test_id'],))
+            t['parameters'] = cursor.fetchall()
+            
+    except Exception as e: return str(e)
+    finally: conn.close()
+    return render_template('lims_report.html', order=order, tests=tests)
 @app.route('/admin/add-test', methods=['POST'])
 def admin_add_test():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
