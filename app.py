@@ -107,6 +107,33 @@ def download_report(order_id):
         return send_file(io.BytesIO(record['report_file']), download_name=record['report_filename'], as_attachment=True)
     return "Not found", 404
 
+# --- FINANCIAL INVOICE ROUTE ---
+from pdf_engine import generate_invoice_report
+
+@app.route('/download-invoice/<int:order_id>')
+def download_invoice(order_id):
+    conn = get_db()
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
+        order = cursor.fetchone()
+        
+        cursor.execute("""
+            SELECT oi.price, t.name as test_name FROM order_items oi JOIN tests t ON oi.test_id = t.id WHERE oi.item_type = 'test' AND oi.order_id = %s
+            UNION
+            SELECT oi.price, hp.title as test_name FROM order_items oi JOIN health_packages hp ON oi.test_id = hp.id WHERE oi.item_type = 'package' AND oi.order_id = %s
+        """, (order_id, order_id))
+        items = cursor.fetchall()
+        
+        if order and items:
+            pdf_bytes = generate_invoice_report(order, items)
+            return send_file(io.BytesIO(pdf_bytes), download_name=f"CareDrop_Invoice_{order['order_ref']}.pdf", as_attachment=True)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+    return "Invoice generation failed.", 500
+
 # --- ADMIN ROUTES ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
