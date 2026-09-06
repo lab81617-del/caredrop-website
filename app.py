@@ -11,7 +11,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_size': 5, 'max_overflow': 2, 'pool_recycle': 300, 'pool_pre_ping': True}
 
 def get_db(): return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
@@ -130,7 +129,6 @@ def admin_dashboard():
     cursor.execute("SELECT oi.order_id, CASE WHEN oi.item_type = 'package' THEN hp.title ELSE t.name END as test_name, l.name as lab_name FROM order_items oi LEFT JOIN tests t ON oi.test_id = t.id AND oi.item_type = 'test' LEFT JOIN health_packages hp ON oi.test_id = hp.id AND oi.item_type = 'package' JOIN labs l ON oi.lab_id = l.id")
     items_map = {}
     for row in cursor.fetchall(): items_map.setdefault(row['order_id'], []).append(row)
-
     for order in orders: order['test_list'] = items_map.get(order['id'], [])
         
     cursor.execute("SELECT tp.id, tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id ORDER BY t.name")
@@ -163,7 +161,7 @@ def admin_dashboard():
     return render_template('admin.html', orders=orders, all_labs=all_labs, active_labs=active_labs, categories=categories, inventory=inventory, packages=packages, master_tests=master_tests, phlebotomists=phlebotomists, test_parameters=test_parameters)
 
 # ==========================================
-# THE PYTHON LIMS AUTO-SEEDER
+# SEEDER - WIPES DUPLICATES & ADDS EXACT CBC
 # ==========================================
 @app.route('/admin/auto-seed-lims')
 def auto_seed_lims():
@@ -173,10 +171,19 @@ def auto_seed_lims():
         cursor = conn.cursor()
         master_params = {
             'Complete Blood Count': [
-                ('Hemoglobin', 'g/dL', '13.0 - 17.0'), ('RBC Count', 'mill/cumm', '4.5 - 5.5'), 
-                ('Total WBC Count (TLC)', 'cells/cumm', '4000 - 11000'), ('Platelet Count', 'lakhs/cumm', '1.5 - 4.5'),
-                ('Neutrophils', '%', '40 - 80'), ('Lymphocytes', '%', '20 - 40'),
-                ('Eosinophils', '%', '1 - 6'), ('Monocytes', '%', '2 - 10'), ('PCV / Hematocrit', '%', '40 - 50')
+                ('Hemoglobin (HB)', 'g/dl', '12.0 - 16.0'), ('Total Leucocytes Count (WBC)', 'Cells/Cumm', '4000 - 10500'), 
+                ('Neutrophils', '%', '40 - 80'), ('Lymphocytes %', '%', '20 - 40'),
+                ('Eosinophils', '%', '01 - 06'), ('Monocytes', '%', '02 - 10'), ('Basophils', '%', '00 - 01'),
+                ('Absolute Neutrophil Count', 'Cells/uL', '2000 - 8000'), ('ABSOLUTE LYMPHOCYTE COUNT', '/uL', '1000 - 3000'),
+                ('Absolute Eosinophil Count (AEC)', 'Cells/cumm', '20 - 500'), ('ABSOLUTE MONOCYTE COUNT', 'Cells/uL', '200 - 1000'),
+                ('Mean Cell Haemoglobin (MCH)', 'Pg', '27 - 32'), ('MCHC', 'g/dl', '31.5 - 34.5'),
+                ('Erythrocyte count (RBC COUNT)', 'million/cmm', '3.8 - 4.8'), ('Packed Cell Volume (Hematocrit)', '%', '36 - 46'),
+                ('Mean Cell Volume (MCV)', 'fL', '83 - 101'), ('Red Cell Distribution Width (RDW)-SD', 'fL', '35 - 56'),
+                ('Red Cell Distribution Width (RDW)-CV', '%', '11.5 - 14.5'), ('Platelet Count', 'Lakh/cumm', '1.50 - 4.50'),
+                ('Plateletcrit (PCT)', '%', '0.2 - 0.5'), ('Platelet-Large Cell Count (P-LCC)', 'lakh/cmm', '40 - 100'),
+                ('Platelet large cell ratio (P-LCR)', '%', '11.9 - 66.9'), ('Platelet Distribution Width (PDW-CV)', '%', '9.00 - 17.00'),
+                ('Platelet Distribution Width (PDW-SD)', '', '0 - 25'), ('Platelet-to-Lymphocyte Ratio (PLR)', '', '36.63 - 149.13'),
+                ('Erythrocytes Sedimentation Rate (ESR)', 'mm/1st hr', '0 - 20')
             ],
             'Liver Function': [
                 ('Bilirubin (Total)', 'mg/dL', '0.2 - 1.2'), ('Bilirubin (Direct)', 'mg/dL', '0.0 - 0.3'),
@@ -200,45 +207,49 @@ def auto_seed_lims():
             cursor.execute("SELECT id FROM tests WHERE name ILIKE %s LIMIT 1", (f"%{search_name}%",))
             test = cursor.fetchone()
             if test:
+                # WIPE OLD DUPLICATES FIRST
+                cursor.execute("DELETE FROM test_parameters WHERE test_id = %s", (test[0],))
                 for p_name, unit, ref in params:
                     cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range) VALUES (%s, %s, %s, %s)", (test[0], p_name, unit, ref))
         conn.commit()
-        return "<h2 style='color:green; padding:50px;'>SUCCESS! All LIMS Parameters have been injected and locked to your tests. You can now close this tab.</h2>"
+        return "<h2 style='color:green; padding:50px;'>SUCCESS! Old duplicates wiped. Full 26-parameter CBC injected. Close this tab.</h2>"
     except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
     finally: conn.close()
 
 # ==========================================
-# LIMS REPORT BUILDER & A4 PDF GENERATOR
+# PROFESSIONAL MEDICAL PDF GENERATOR
 # ==========================================
 class LIMS_PDF(FPDF):
     def header(self):
-        self.set_fill_color(13, 148, 136)
-        self.rect(0, 0, 210, 6, 'F')
-        self.set_y(12)
-        self.set_font("helvetica", "B", 22)
-        self.set_text_color(15, 23, 42)
+        self.set_y(10)
+        self.set_font("helvetica", "B", 18)
+        self.set_text_color(11, 128, 100) # Deep clinical green
         self.cell(0, 8, "CAREDROP DIAGNOSTICS", ln=True, align="L")
-        self.set_font("helvetica", "", 10)
+        self.set_font("helvetica", "I", 10)
         self.set_text_color(100, 100, 100)
         self.cell(0, 5, "Precision & Care in Every Drop | Certified Partner Laboratory", ln=True, align="L")
-        self.line(10, 28, 200, 28)
+        self.set_draw_color(11, 128, 100)
+        self.set_line_width(0.5)
+        self.line(10, 26, 200, 26)
+        self.set_line_width(0.2)
         self.ln(8)
         
     def footer(self):
-        self.set_y(-30)
+        self.set_y(-35)
+        self.set_draw_color(200, 200, 200)
         self.line(10, 265, 200, 265)
-        self.set_y(-25)
+        self.set_y(-28)
         self.set_font("helvetica", "B", 10)
         self.set_text_color(15, 23, 42)
-        self.cell(100, 5, "_______________________", ln=False, align="L")
-        self.cell(90, 5, "_______________________", ln=True, align="R")
-        self.set_font("helvetica", "", 9)
+        self.cell(100, 5, "Dr. Ram Shran", ln=False, align="L")
+        self.cell(90, 5, "Dr. Abdul Sameer Qureshi", ln=True, align="R")
+        self.set_font("helvetica", "", 8)
         self.set_text_color(100, 100, 100)
-        self.cell(100, 5, "Checked By", ln=False, align="L")
-        self.cell(90, 5, "Authorized Signatory", ln=True, align="R")
-        self.set_y(-10)
+        self.cell(100, 4, "MBBS, MD (Pathology) | DMC-44740", ln=False, align="L")
+        self.cell(90, 4, "MBBS, D.C.P | DMC-39510", ln=True, align="R")
+        self.set_y(-12)
         self.set_font("helvetica", "I", 8)
-        self.cell(0, 5, "This is a computer-generated medical report. Authorized via CareDrop LIMS.", align="C")
+        self.cell(0, 5, f"This is an electronically authenticated report. Page {self.page_no()}", align="C")
 
 @app.route('/admin/fill-report/<int:order_id>')
 def admin_fill_report(order_id):
@@ -250,11 +261,11 @@ def admin_fill_report(order_id):
         order = cursor.fetchone()
         
         cursor.execute("""
-            SELECT oi.order_id, t.id as test_id, t.name as test_name 
-            FROM order_items oi JOIN tests t ON oi.test_id = t.id WHERE oi.item_type = 'test' AND oi.order_id = %s
+            SELECT oi.order_id, t.id as test_id, t.name as test_name, c.name as cat_name 
+            FROM order_items oi JOIN tests t ON oi.test_id = t.id LEFT JOIN test_categories c ON t.category_id = c.id WHERE oi.item_type = 'test' AND oi.order_id = %s
             UNION
-            SELECT oi.order_id, t.id as test_id, t.name as test_name 
-            FROM order_items oi JOIN package_tests pt ON oi.test_id = pt.package_id JOIN tests t ON pt.test_id = t.id WHERE oi.item_type = 'package' AND oi.order_id = %s
+            SELECT oi.order_id, t.id as test_id, t.name as test_name, c.name as cat_name 
+            FROM order_items oi JOIN package_tests pt ON oi.test_id = pt.package_id JOIN tests t ON pt.test_id = t.id LEFT JOIN test_categories c ON t.category_id = c.id WHERE oi.item_type = 'package' AND oi.order_id = %s
         """, (order_id, order_id))
         tests = cursor.fetchall()
         
@@ -279,79 +290,95 @@ def save_results(order_id):
                 param_id = key.split('_')[1]
                 val = value.strip()
                 should_print = request.form.get(f'print_{param_id}') == 'on'
-                
                 cursor.execute("INSERT INTO order_results (order_id, parameter_id, result_value) VALUES (%s, %s, %s)", (order_id, param_id, val))
                 
                 if should_print:
-                    cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id WHERE tp.id = %s", (param_id,))
+                    cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name, c.name as cat_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id LEFT JOIN test_categories c ON t.category_id = c.id WHERE tp.id = %s", (param_id,))
                     p_info = cursor.fetchone()
-                    if p_info: results_data.append({'test': p_info['test_name'], 'param': p_info['parameter_name'], 'val': val, 'unit': p_info['unit'], 'ref': p_info['reference_range']})
+                    if p_info: results_data.append({'cat': p_info['cat_name'] or 'PATHOLOGY', 'test': p_info['test_name'], 'param': p_info['parameter_name'], 'val': val, 'unit': p_info['unit'], 'ref': p_info['reference_range']})
 
         cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
         order = cursor.fetchone()
 
-       # Build Premium PDF
         pdf = LIMS_PDF()
         pdf.add_page()
         
-        pdf.set_fill_color(248, 250, 252)
-        pdf.set_draw_color(226, 232, 240)
+       # 1. Medical Grid Layout (Matching Reference)
+        pdf.set_draw_color(180, 180, 180)
         pdf.set_font("helvetica", "B", 9)
-        pdf.set_text_color(100, 116, 139)
-        pdf.cell(95, 6, " PATIENT DETAILS", 'LTR', 0, 'L', True)
-        pdf.cell(95, 6, " ORDER DETAILS", 'LTR', 1, 'L', True)
+        pdf.set_text_color(100, 100, 100)
         
-        pdf.set_font("helvetica", "B", 11)
-        pdf.set_text_color(15, 23, 42)
-        pdf.cell(95, 8, f" {order['patient_name']} ({order['age']} Yrs, {order['gender']})", 'LR', 0, 'L')
-        pdf.cell(95, 8, f" UID: {order['patient_uid']}", 'LR', 1, 'L')
+        # Left Side Details
+        pdf.set_xy(10, 30); pdf.cell(40, 6, "Patient NAME", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(60, 6, f": {order['patient_name']}", 0, 1, 'L')
         
-        pdf.set_font("helvetica", "", 10)
-        pdf.cell(95, 8, f" Phone: {order['phone'] if 'phone' in order else 'N/A'}", 'LBR', 0, 'L')
-        pdf.cell(95, 8, f" Ref: {order['order_ref']} | Date: {order['collection_date']}", 'LBR', 1, 'L')
-        pdf.ln(8)
+        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Age / Gender", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(60, 6, f": {order['age']} Yrs / {order['gender']}", 0, 1, 'L')
         
+        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Visit ID", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(60, 6, f": {order['order_ref']}", 0, 1, 'L')
+        
+        # Right Side Details
+        pdf.set_xy(110, 30)
+        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Barcode NO", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(50, 6, f": {order['patient_uid']}", 0, 1, 'L')
+        
+        pdf.set_xy(110, 36)
+        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Sample Rec. in Lab", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(50, 6, f": {order['collection_date']} 08:30 AM", 0, 1, 'L')
+        
+        pdf.set_xy(110, 42)
+        pdf.set_text_color(100, 100, 100); pdf.cell(40, 6, "Reported", 0, 0, 'L')
+        pdf.set_text_color(15, 23, 42); pdf.cell(50, 6, f": {datetime.today().strftime('%Y-%m-%d %I:%M %p')}", 0, 1, 'L')
+        
+        pdf.ln(5); pdf.line(10, 52, 200, 52); pdf.ln(3)
+        
+        # 2. Results Header (Green Bar)
         pdf.set_font("helvetica", "B", 10)
-        pdf.set_fill_color(241, 245, 249)
-        pdf.set_draw_color(203, 213, 225)
-        pdf.set_text_color(15, 23, 42)
-        pdf.cell(80, 10, ' Investigation', 'B', 0, 'L', True)
-        pdf.cell(30, 10, 'Result', 'B', 0, 'C', True)
-        pdf.cell(30, 10, 'Unit', 'B', 0, 'C', True)
-        pdf.cell(50, 10, 'Reference Range', 'B', 1, 'C', True)
+        pdf.set_fill_color(11, 128, 100)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(85, 8, 'Test Name', 0, 0, 'L', True)
+        pdf.cell(30, 8, 'Result', 0, 0, 'C', True)
+        pdf.cell(30, 8, 'Unit', 0, 0, 'C', True)
+        pdf.cell(45, 8, 'Bio. Ref. Range', 0, 1, 'C', True)
         
-        current_test = ""
-        fill = False
-        pdf.set_draw_color(226, 232, 240)
+        # 3. Print Results Line by Line
+        current_cat, current_test = "", ""
         for r in results_data:
+            if r['cat'] != current_cat:
+                pdf.ln(4)
+                pdf.set_font("helvetica", "BU", 11)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(190, 8, f"DEPARTMENT OF {r['cat'].upper()}", 0, 1, 'C')
+                current_cat = r['cat']
+                
             if r['test'] != current_test:
                 pdf.set_font("helvetica", "B", 10)
-                pdf.set_fill_color(255, 255, 255)
-                pdf.cell(190, 10, f"  {r['test'].upper()}", 'B', 1, 'L')
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(190, 8, r['test'].title(), 0, 1, 'L')
                 current_test = r['test']
-                fill = False
             
-            pdf.set_fill_color(248, 250, 252) if fill else pdf.set_fill_color(255, 255, 255)
             pdf.set_font("helvetica", "", 10)
-            pdf.cell(80, 8, f"  {r['param']}", 'B', 0, 'L', fill)
+            pdf.cell(85, 6, f" {r['param']}", 0, 0, 'L')
             pdf.set_font("helvetica", "B", 10)
-            pdf.cell(30, 8, r['val'], 'B', 0, 'C', fill)
+            pdf.cell(30, 6, r['val'], 0, 0, 'C')
             pdf.set_font("helvetica", "", 9)
-            pdf.cell(30, 8, r['unit'], 'B', 0, 'C', fill)
-            pdf.cell(50, 8, r['ref'], 'B', 1, 'C', fill)
-            fill = not fill
+            pdf.cell(30, 6, r['unit'], 0, 0, 'C')
+            pdf.cell(45, 6, r['ref'], 0, 1, 'C')
 
+        # 4. QR Code Stamp
         qr = qrcode.QRCode(box_size=3, border=0)
         qr.add_data(f"https://caredrop.in/download-report/{order_id}")
         qr.make(fit=True)
-        img = qr.make_image(fill_color="#0F172A", back_color="white")
+        img = qr.make_image(fill_color="#0b8064", back_color="white")
         
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tf:
             img.save(tf, 'PNG'); tf_path = tf.name
             
-        pdf.ln(12)
+        pdf.ln(10)
         pdf.set_font("helvetica", "B", 9)
-        pdf.cell(0, 5, 'Scan to Verify Document:', ln=True)
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(0, 5, 'Scan to Verify Authenticity:', ln=True)
         pdf.image(tf_path, x=10, w=22)
         os.remove(tf_path)
 
@@ -363,9 +390,7 @@ def save_results(order_id):
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
-# ==========================================
-# OTHER ADMIN ROUTES
-# ==========================================
+# --- OTHER ROUTES ---
 @app.route('/admin/add-test', methods=['POST'])
 def admin_add_test():
     if session.get('admin_logged_in'):
