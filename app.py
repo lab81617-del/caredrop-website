@@ -68,7 +68,7 @@ def home():
 @app.route('/tests')
 def tests_catalog():
     conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-    grouped_tests = {}; pricing = []; packages = []
+    grouped_tests = {}; pricing = []; packages = []; param_dict = {}
     
     cursor.execute("SELECT DISTINCT t.id, t.name, t.fasting_requirement, t.symptoms, c.name as category FROM tests t LEFT JOIN test_categories c ON t.category_id = c.id JOIN lab_test_pricing ltp ON t.id = ltp.test_id JOIN labs l ON ltp.lab_id = l.id WHERE t.is_active = TRUE AND l.is_active = TRUE ORDER BY c.name, t.name")
     for t in cursor.fetchall(): grouped_tests.setdefault(t['category'] or 'Uncategorized', []).append(t)
@@ -76,13 +76,16 @@ def tests_catalog():
     cursor.execute("SELECT ltp.test_id, CAST(ltp.price AS INTEGER) as price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating FROM lab_test_pricing ltp JOIN labs l ON ltp.lab_id = l.id WHERE l.is_active = TRUE")
     pricing = cursor.fetchall()
     
+    cursor.execute("SELECT test_id, parameter_name FROM test_parameters")
+    for p in cursor.fetchall(): param_dict.setdefault(p['test_id'], []).append(p['parameter_name'])
+    
     cursor.execute("""
         SELECT hp.id, hp.title, CAST(hp.price AS INTEGER) as original_price, l.id as lab_id, l.name as lab_name, CAST(l.rating AS FLOAT) as rating, string_agg(t.name, ', ') as features, so.id as offer_id, CAST(so.discount_percent AS INTEGER) as discount_percent, CAST(ROUND(hp.price * (1 - (COALESCE(so.discount_percent, 0) / 100.0))) AS INTEGER) as discounted_price
         FROM health_packages hp JOIN labs l ON hp.lab_id = l.id LEFT JOIN package_tests pt ON hp.id = pt.package_id LEFT JOIN tests t ON pt.test_id = t.id LEFT JOIN special_offers so ON hp.id = so.package_id AND so.end_date >= CURRENT_DATE
         GROUP BY hp.id, l.id, l.name, l.rating, so.id, so.discount_percent ORDER BY hp.id DESC
     """)
     packages = cursor.fetchall(); conn.close()
-    return render_template('tests.html', grouped_tests=grouped_tests, pricing=json.dumps(pricing, default=str), packages=json.dumps(packages, default=str), raw_packages=packages)
+    return render_template('tests.html', grouped_tests=grouped_tests, pricing=json.dumps(pricing, default=str), packages=json.dumps(packages, default=str), raw_packages=packages, param_dict=json.dumps(param_dict))
 
 @app.route('/book')
 def checkout_page(): return render_template('checkout.html')
@@ -160,7 +163,7 @@ def admin_dashboard():
     return render_template('admin.html', orders=orders, all_labs=all_labs, active_labs=active_labs, categories=categories, inventory=inventory, packages=packages, master_tests=master_tests, phlebotomists=phlebotomists, test_parameters=test_parameters)
 
 # ==========================================
-# THE PYTHON LIMS AUTO-SEEDER (ONE-CLICK FIX)
+# THE PYTHON LIMS AUTO-SEEDER
 # ==========================================
 @app.route('/admin/auto-seed-lims')
 def auto_seed_lims():
@@ -200,7 +203,7 @@ def auto_seed_lims():
                 for p_name, unit, ref in params:
                     cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range) VALUES (%s, %s, %s, %s)", (test[0], p_name, unit, ref))
         conn.commit()
-        return "<h2 style='color:green; padding:50px;'>SUCCESS! All LIMS Parameters have been injected and locked to your tests. You can now close this tab and fill Aman's report!</h2>"
+        return "<h2 style='color:green; padding:50px;'>SUCCESS! All LIMS Parameters have been injected and locked to your tests. You can now close this tab.</h2>"
     except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
     finally: conn.close()
 
@@ -209,21 +212,33 @@ def auto_seed_lims():
 # ==========================================
 class LIMS_PDF(FPDF):
     def header(self):
-        self.set_font("helvetica", "B", 24)
-        self.set_text_color(13, 148, 136)
-        self.cell(0, 10, "CAREDROP DIAGNOSTICS", ln=True, align="C")
-        self.set_font("helvetica", "I", 11)
+        self.set_fill_color(13, 148, 136)
+        self.rect(0, 0, 210, 6, 'F')
+        self.set_y(12)
+        self.set_font("helvetica", "B", 22)
+        self.set_text_color(15, 23, 42)
+        self.cell(0, 8, "CAREDROP DIAGNOSTICS", ln=True, align="L")
+        self.set_font("helvetica", "", 10)
         self.set_text_color(100, 100, 100)
-        self.cell(0, 6, "Precision & Care in Every Drop", ln=True, align="C")
-        self.ln(5)
-        self.line(10, 32, 200, 32)
+        self.cell(0, 5, "Precision & Care in Every Drop | Certified Partner Laboratory", ln=True, align="L")
+        self.line(10, 28, 200, 28)
         self.ln(8)
         
     def footer(self):
-        self.set_y(-15)
+        self.set_y(-30)
+        self.line(10, 265, 200, 265)
+        self.set_y(-25)
+        self.set_font("helvetica", "B", 10)
+        self.set_text_color(15, 23, 42)
+        self.cell(100, 5, "_______________________", ln=False, align="L")
+        self.cell(90, 5, "_______________________", ln=True, align="R")
+        self.set_font("helvetica", "", 9)
+        self.set_text_color(100, 100, 100)
+        self.cell(100, 5, "Checked By", ln=False, align="L")
+        self.cell(90, 5, "Authorized Signatory", ln=True, align="R")
+        self.set_y(-10)
         self.set_font("helvetica", "I", 8)
-        self.set_text_color(150, 150, 150)
-        self.cell(0, 10, "This is a computer-generated medical report. Authorized via CareDrop LIMS.", align="C")
+        self.cell(0, 5, "This is a computer-generated medical report. Authorized via CareDrop LIMS.", align="C")
 
 @app.route('/admin/fill-report/<int:order_id>')
 def admin_fill_report(order_id):
@@ -256,83 +271,90 @@ def save_results(order_id):
     conn = get_db()
     try:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # 1. Save results to Database
         cursor.execute("DELETE FROM order_results WHERE order_id = %s", (order_id,)) 
-        results_data = []
         
+        results_data = []
         for key, value in request.form.items():
             if key.startswith('param_') and value.strip() != '':
                 param_id = key.split('_')[1]
                 val = value.strip()
+                should_print = request.form.get(f'print_{param_id}') == 'on'
+                
                 cursor.execute("INSERT INTO order_results (order_id, parameter_id, result_value) VALUES (%s, %s, %s)", (order_id, param_id, val))
                 
-                cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id WHERE tp.id = %s", (param_id,))
-                p_info = cursor.fetchone()
-                if p_info: results_data.append({'test': p_info['test_name'], 'param': p_info['parameter_name'], 'val': val, 'unit': p_info['unit'], 'ref': p_info['reference_range']})
+                if should_print:
+                    cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, t.name as test_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id WHERE tp.id = %s", (param_id,))
+                    p_info = cursor.fetchone()
+                    if p_info: results_data.append({'test': p_info['test_name'], 'param': p_info['parameter_name'], 'val': val, 'unit': p_info['unit'], 'ref': p_info['reference_range']})
 
-        # 2. Get Order Info for PDF
         cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
         order = cursor.fetchone()
 
-        # 3. Generate A4 PDF
+       # Build Premium PDF
         pdf = LIMS_PDF()
         pdf.add_page()
         
-        # Patient Details Box
         pdf.set_fill_color(248, 250, 252)
-        pdf.set_font("helvetica", "B", 10)
-        pdf.set_text_color(15, 23, 42)
-        pdf.cell(95, 8, f" Patient Name: {order['patient_name']} ({order['age']} {order['gender']})", border=1, fill=True)
-        pdf.cell(95, 8, f" Patient UID: {order['patient_uid']}", border=1, ln=True, fill=True)
-        pdf.cell(95, 8, f" Order Ref: {order['order_ref']}", border=1, fill=True)
-        pdf.cell(95, 8, f" Date: {order['collection_date']}", border=1, ln=True, fill=True)
-        pdf.ln(10)
+        pdf.set_draw_color(226, 232, 240)
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_text_color(100, 116, 139)
+        pdf.cell(95, 6, " PATIENT DETAILS", 'LTR', 0, 'L', True)
+        pdf.cell(95, 6, " ORDER DETAILS", 'LTR', 1, 'L', True)
         
-        # Results Table Header
         pdf.set_font("helvetica", "B", 11)
-        pdf.set_fill_color(13, 148, 136)
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(80, 10, 'Test Parameter', 1, 0, 'L', fill=True)
-        pdf.cell(30, 10, 'Result', 1, 0, 'C', fill=True)
-        pdf.cell(30, 10, 'Unit', 1, 0, 'C', fill=True)
-        pdf.cell(50, 10, 'Reference Range', 1, 1, 'C', fill=True)
-        
-        # Print Results
-        current_test = ""
         pdf.set_text_color(15, 23, 42)
+        pdf.cell(95, 8, f" {order['patient_name']} ({order['age']} Yrs, {order['gender']})", 'LR', 0, 'L')
+        pdf.cell(95, 8, f" UID: {order['patient_uid']}", 'LR', 1, 'L')
+        
+        pdf.set_font("helvetica", "", 10)
+        pdf.cell(95, 8, f" Phone: {order['phone'] if 'phone' in order else 'N/A'}", 'LBR', 0, 'L')
+        pdf.cell(95, 8, f" Ref: {order['order_ref']} | Date: {order['collection_date']}", 'LBR', 1, 'L')
+        pdf.ln(8)
+        
+        pdf.set_font("helvetica", "B", 10)
+        pdf.set_fill_color(241, 245, 249)
+        pdf.set_draw_color(203, 213, 225)
+        pdf.set_text_color(15, 23, 42)
+        pdf.cell(80, 10, ' Investigation', 'B', 0, 'L', True)
+        pdf.cell(30, 10, 'Result', 'B', 0, 'C', True)
+        pdf.cell(30, 10, 'Unit', 'B', 0, 'C', True)
+        pdf.cell(50, 10, 'Reference Range', 'B', 1, 'C', True)
+        
+        current_test = ""
+        fill = False
+        pdf.set_draw_color(226, 232, 240)
         for r in results_data:
             if r['test'] != current_test:
                 pdf.set_font("helvetica", "B", 10)
-                pdf.set_fill_color(241, 245, 249)
-                pdf.cell(190, 8, r['test'].upper(), 1, 1, 'L', fill=True)
+                pdf.set_fill_color(255, 255, 255)
+                pdf.cell(190, 10, f"  {r['test'].upper()}", 'B', 1, 'L')
                 current_test = r['test']
+                fill = False
             
+            pdf.set_fill_color(248, 250, 252) if fill else pdf.set_fill_color(255, 255, 255)
             pdf.set_font("helvetica", "", 10)
-            pdf.cell(80, 8, f" {r['param']}", 1)
+            pdf.cell(80, 8, f"  {r['param']}", 'B', 0, 'L', fill)
             pdf.set_font("helvetica", "B", 10)
-            pdf.cell(30, 8, r['val'], 1, 0, 'C')
-            pdf.set_font("helvetica", "", 10)
-            pdf.cell(30, 8, r['unit'], 1, 0, 'C')
-            pdf.cell(50, 8, r['ref'], 1, 1, 'C')
+            pdf.cell(30, 8, r['val'], 'B', 0, 'C', fill)
+            pdf.set_font("helvetica", "", 9)
+            pdf.cell(30, 8, r['unit'], 'B', 0, 'C', fill)
+            pdf.cell(50, 8, r['ref'], 'B', 1, 'C', fill)
+            fill = not fill
 
-       # 4. Generate QR Code Image
-        qr = qrcode.QRCode(box_size=3, border=1)
+        qr = qrcode.QRCode(box_size=3, border=0)
         qr.add_data(f"https://caredrop.in/download-report/{order_id}")
         qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
+        img = qr.make_image(fill_color="#0F172A", back_color="white")
         
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tf:
-            img.save(tf, 'PNG')
-            tf_path = tf.name
+            img.save(tf, 'PNG'); tf_path = tf.name
             
-        pdf.ln(15)
-        pdf.set_font("helvetica", "B", 10)
-        pdf.cell(0, 5, 'Scan to Verify & Download Document:', ln=True)
-        pdf.image(tf_path, x=10, w=25)
+        pdf.ln(12)
+        pdf.set_font("helvetica", "B", 9)
+        pdf.cell(0, 5, 'Scan to Verify Document:', ln=True)
+        pdf.image(tf_path, x=10, w=22)
         os.remove(tf_path)
 
-        # 5. Save PDF to Database
         pdf_bytes = pdf.output()
         filename = f"CareDrop_Report_{order['patient_uid']}.pdf"
         cursor.execute("UPDATE orders SET report_file = %s, report_filename = %s, status = 'Completed', report_type = 'System' WHERE id = %s", (psycopg2.Binary(pdf_bytes), filename, order_id))
@@ -341,7 +363,9 @@ def save_results(order_id):
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
-# --- OTHER ROUTES ---
+# ==========================================
+# OTHER ADMIN ROUTES
+# ==========================================
 @app.route('/admin/add-test', methods=['POST'])
 def admin_add_test():
     if session.get('admin_logged_in'):
