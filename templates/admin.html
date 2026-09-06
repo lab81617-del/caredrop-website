@@ -31,6 +31,8 @@
         .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; font-weight: 600; color: #0F172A; }
         .btn-save { background: #0D9488 !important; color: white !important; padding: 14px 24px; border: none !important; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 15px; transition: 0.2s; }
         .btn-delete { background: #FEF2F2 !important; color: #DC2626 !important; border: 1px solid #FCA5A5 !important; padding: 8px 14px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 13px; }
+        .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; margin-top: 8px; text-align: center; border: none; transition: 0.2s; }
+        .btn-lims:hover { background: #1E293B; }
     </style>
 </head>
 <body>
@@ -119,50 +121,28 @@
                             </form>
                         </td>
                         <td>
-                            <!-- OUTSOURCED: UPLOAD PDF -->
+                            <form action="/admin/update-order" method="POST" style="margin:0; margin-bottom:10px;">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <select name="status" onchange="this.form.submit()" style="padding: 8px; border-radius: 6px; border: 1px solid #94A3B8; outline: none; font-weight: 800; font-size: 12px; cursor:pointer; width: 100%;">
+                                    <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}> Pending</option>
+                                    <option value="Sample Collected" {% if order.status == 'Sample Collected' %}selected{% endif %}> Sample Collected</option>
+                                    <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}> Completed</option>
+                                </select>
+                            </form>
+                            
                             {% if not order.has_report %}
+                            <!-- OUTSOURCED: UPLOAD PDF -->
                             <form action="/admin/upload-report" method="POST" enctype="multipart/form-data" style="background: #FFFBEB; padding: 10px; border: 1px dashed #FCD34D; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
                                 <input type="hidden" name="order_id" value="{{ order.id }}">
                                 <input type="file" name="report_file" accept=".pdf" required style="font-size: 11px; padding: 4px; border: none !important; background: transparent;">
                                 <button type="submit" style="background: #D97706 !important; color: white !important; border: none !important; padding: 6px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 11px;">Upload Outsourced PDF</button>
                             </form>
-                            <!-- LIMS: FILL IN HOUSE RESULTS -->
-                            <button onclick="document.getElementById('lims-row-{{ order.id }}').style.display = document.getElementById('lims-row-{{ order.id }}').style.display === 'none' ? 'table-row' : 'none'" style="background: #0F172A; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 11px; margin-top: 8px; width: 100%;">Fill Results (In-House LIMS)</button>
+                            
+                            <!-- LIMS: OPEN FULL PAGE BUILDER -->
+                            <a href="/admin/fill-report/{{ order.id }}" class="btn-lims">Open LIMS Report Builder &rarr;</a>
                             {% else %}
                             <div style="background: #F0FDF4; color: #166534; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid #86EFAC;">Report Sent</div>
                             {% endif %}
-                        </td>
-                    </tr>
-                    
-                    <!-- THE LIMS FILL REPORT DROP-DOWN ROW -->
-                    <tr id="lims-row-{{ order.id }}" style="display: none; background: #F8FAFC; border-top: 2px dashed #CBD5E1;">
-                        <td colspan="7" style="padding: 20px;">
-                            <div style="background: white; border: 1px solid #E2E8F0; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-                                <h3 style="margin-top: 0; color: #0F172A; font-weight: 800; font-size: 18px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px;">Enter Patient Results</h3>
-                                <form action="/admin/save-results/{{ order.id }}" method="POST">
-                                    {% for t in order.lims_tests %}
-                                        {% if t.parameters %}
-                                        <div style="margin-bottom: 20px;">
-                                            <div style="font-weight: 800; color: #0D9488; margin-bottom: 15px; font-size: 15px; text-transform: uppercase;">{{ t.test_name }}</div>
-                                            <div class="form-grid">
-                                                {% for p in t.parameters %}
-                                                <div class="input-group">
-                                                    <label>{{ p.parameter_name }} <span style="color: #64748B; font-weight: 600;">(Ref: {{ p.reference_range }} {{ p.unit }})</span></label>
-                                                    <input type="text" name="param_{{ p.id }}" placeholder="Enter Result">
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                    
-                                    {% if not order.lims_tests or order.lims_tests|length == 0 or not order.lims_tests[0].parameters %}
-                                        <p style="color: #B45309; font-weight: 700; background: #FEF3C7; padding: 10px; border-radius: 6px;">You haven't defined any parameters for these tests yet. Add them in the Inventory Tab below.</p>
-                                    {% else %}
-                                        <button type="submit" class="btn-save" style="background: #166534 !important; width: 100%;">Save Results (PDF Generator Coming Next)</button>
-                                    {% endif %}
-                                </form>
-                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -171,7 +151,7 @@
         </div>
     </div>
 
-    <!-- INVENTORY TAB WITH NEW LIMS PARAMETER ENGINE -->
+    <!-- INVENTORY TAB WITH LIMS PARAMETER ENGINE -->
     <div id="inventory" class="tab-content">
         <!-- MASS UPLOAD -->
         <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4; margin-bottom: 30px;">
@@ -182,7 +162,7 @@
             </form>
         </div>
 
-        <!-- NEW LIMS PARAMETER MANAGER -->
+        <!-- LIMS PARAMETER MANAGER -->
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC; margin-bottom: 30px;">
             <div class="form-title" style="color: #0F172A; border-bottom: 2px solid #E2E8F0;"><i data-lucide="flask-conical"></i> Define LIMS Parameters & Reference Ranges</div>
             <p style="font-size: 13px; color: #475569; margin-bottom: 20px; font-weight: 600;">Example: Select "Complete Blood Count", Name: "Hemoglobin", Unit: "g/dL", Ref Range: "13.0 - 17.0"</p>
@@ -250,7 +230,7 @@
         </div>
     </div>
 
-  <!-- PHLEBOTOMIST TEAM TAB -->
+ <!-- PHLEBOTOMIST TEAM TAB -->
     <div id="team" class="tab-content">
         <div class="card form-container">
             <div class="form-title"><i data-lucide="users" style="width: 20px; height: 20px;"></i> Register New Phlebotomist</div>
