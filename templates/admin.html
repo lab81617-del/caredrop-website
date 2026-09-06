@@ -3,34 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | CareDrop</title>
+    <title>LIMS Control Panel | CareDrop</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * { font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important; box-sizing: border-box;}
-        body { background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; font-size: 15px; }
-        input, select, button { font-family: inherit; background-color: #fff; border: 1px solid #d1d5db; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 25px; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0D9488; }
+        body { background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; font-size: 14px; }
+        input, select, button { font-family: inherit; background-color: #fff; border: 1px solid #cbd5e1; outline: none; }
+        input:focus, select:focus { border-color: #0D9488; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 25px; border-top: 4px solid #0D9488; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0F172A; }
+        
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; color: #475569; transition: 0.2s; font-size: 15px; white-space: nowrap; }
+        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; color: #475569; transition: 0.2s; font-size: 14px; white-space: nowrap; }
         .tab-btn.active { background: #0F172A !important; color: white !important; border-color: #0F172A !important; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .card { background: white; border-radius: 12px; margin-bottom: 30px; border: 1px solid #CBD5E1; overflow: hidden; }
+        
+        .card { background: white; border-radius: 12px; margin-bottom: 30px; border: 1px solid #CBD5E1; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        
         .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 900px; }
-        th, td { padding: 16px 20px; border-bottom: 1px solid #F1F5F9; white-space: nowrap; }
-        th { background: #F8FAFC; font-weight: 800; color: #334155; font-size: 13px; text-transform: uppercase; }
-        .badge { background: #F0FDF4; color: #166534; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; display: inline-block; margin-bottom: 4px; border: 1px solid #BBF7D0; }
-        .form-container { padding: 30px; }
-        .form-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; border-bottom: 2px solid #F1F5F9; padding-bottom: 15px; color: #0F172A; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #334155; }
-        .input-group input, .input-group select { width: 100%; padding: 14px 16px; border: 1px solid #94A3B8; border-radius: 8px; font-size: 15px; outline: none; font-weight: 600; color: #0F172A; }
-        .btn-save { background: #0D9488 !important; color: white !important; padding: 14px 24px; border: none !important; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 15px; width: 100%; }
-        .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; margin-top: 8px; text-align: center; transition: 0.2s; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1000px; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        th { background: #F8FAFC; font-weight: 800; color: #334155; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .badge { background: #F0FDF4; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; margin-bottom: 4px; border: 1px solid #BBF7D0; text-transform: uppercase; }
+        
+        .form-container { padding: 25px; }
+        .form-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; color: #0F172A; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        
+        .input-group label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 6px; color: #475569; text-transform: uppercase; }
+        .input-group input, .input-group select { width: 100%; padding: 12px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: #0F172A; }
+        
+        .btn-save { background: #0D9488; color: white; padding: 14px 24px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
+        .btn-save:hover { background: #0F766E; }
+        
+        .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; transition: 0.2s; border: none; cursor: pointer; }
         .btn-lims:hover { background: #1E293B; }
     </style>
 </head>
@@ -38,23 +49,23 @@
 
 <div class="container">
     <div class="header">
-        <h1>CareDrop Control Panel</h1>
-        <a href="/" style="text-decoration: none; color: #64748B; font-weight: 800;">&larr; Back to Website</a>
+        <h1>CareDrop LIMS Control Panel</h1>
+        <a href="/" style="text-decoration: none; color: #0D9488; font-weight: 800;"><i data-lucide="external-link" style="width: 16px; height: 16px; vertical-align: middle;"></i> View Public Site</a>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('orders')">Live Orders</button>
-        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Inventory & LIMS</button>
-        <button class="tab-btn" onclick="switchTab('team')">Team</button>
+        <button class="tab-btn active" onclick="switchTab('orders')">Live Registration & Orders</button>
+        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Dictionary & Catalog</button>
     </div>
 
     <div id="orders" class="tab-content active">
-        <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
-            <div class="form-title" style="color: #0F172A;">Register New Walk-In Patient</div>
+        <!-- WALK-IN REGISTRATION -->
+        <div class="card form-container" style="border: 1px solid #94A3B8; background: #F8FAFC;">
+            <div class="form-title">Walk-In Patient Registration</div>
             <form action="/admin/walk-in" method="POST">
                 <div class="form-grid">
-                    <div class="input-group"><label>Patient Name</label><input type="text" name="patient_name" required></div>
-                    <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
+                    <div class="input-group"><label>Patient Name</label><input type="text" name="patient_name" placeholder="Full Name" required></div>
+                    <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" placeholder="10 Digits" required></div>
                     <div class="input-group"><label>Age</label><input type="number" name="age" required></div>
                     <div class="input-group">
                         <label>Gender</label>
@@ -63,10 +74,10 @@
                 </div>
                 <div class="form-grid">
                     <div class="input-group">
-                        <label>Select Test</label>
+                        <label>Investigation / Test</label>
                         <select name="test_id" required>
-                            <option value="">Choose Test...</option>
-                            {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}
+                            <option value="">Search Dictionary...</option>
+                            {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="input-group">
@@ -75,45 +86,47 @@
                             {% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}
                         </select>
                     </div>
-                    <div class="input-group"><label>Referred By (Doctor Name)</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma (Leave blank for Self)"></div>
-                    <div class="input-group"><label>Total Cash (₹)</label><input type="number" name="total_amount" required></div>
+                    <div class="input-group"><label>Referred By</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma (Leave blank for Self)"></div>
+                    <div class="input-group"><label>Net Amount (₹)</label><input type="number" name="total_amount" required></div>
                 </div>
-                <button type="submit" class="btn-save" style="background: #0F172A !important;">+ Generate UID & Book Order</button>
+                <button type="submit" class="btn-save" style="background: #0F172A;">+ Generate UID & Book Order</button>
             </form>
         </div>
 
+        <!-- ORDERS TABLE -->
         <div class="card table-wrapper">
             <table>
                 <thead>
-                    <tr><th>Reference & UID</th><th>Patient Details</th><th>Schedule</th><th>Tests Selected</th><th>Total</th><th>Order Actions</th></tr>
+                    <tr><th>Order Ref & UID</th><th>Demographics</th><th>Schedule</th><th>Investigations</th><th>Actions & Reporting</th></tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
                     <tr>
                         <td>
-                            <div style="font-weight: 800; color: #0D9488; font-size: 16px;">{{ order.order_ref or '# ' ~ order.id }}</div>
-                            <div style="font-size: 13px; color: #64748B; font-weight: 800; margin-top: 4px; background: #F1F5F9; padding: 4px 8px; border-radius: 4px; display:inline-block;">{{ order.patient_uid or 'N/A' }}</div>
+                            <div style="font-weight: 800; color: #0D9488; font-size: 15px;">{{ order.order_ref }}</div>
+                            <div style="font-size: 12px; color: #475569; font-weight: 800; margin-top: 4px; background: #F1F5F9; padding: 4px 6px; border-radius: 4px; display:inline-block;">{{ order.patient_uid or 'N/A' }}</div>
                         </td>
                         <td>
-                            <div style="font-weight: 800; text-transform: capitalize;">{{ order.patient_name }}</div>
-                            <div style="font-size: 13px; color: #475569; font-weight: 700; margin-top: 4px;">{{ order.age }} Yrs | {{ order.gender }}</div>
-                            <div style="font-size: 13px; color: #64748B; font-weight: 600; margin-top: 4px;">Ref: {{ order.referred_by or 'Self' }}</div>
+                            <div style="font-weight: 800; text-transform: capitalize; color: #0F172A;">{{ order.patient_name }}</div>
+                            <div style="font-size: 12px; color: #475569; font-weight: 700; margin-top: 4px;">{{ order.age }} Yrs | {{ order.gender }}</div>
+                            <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-top: 2px;">Ref: {{ order.referred_by or 'Self' }}</div>
                         </td>
                         <td>
-                            <div style="font-weight: 800; font-size: 14px;">{{ order.collection_date }}</div>
-                            <div style="font-size: 13px; color: #0F766E; font-weight: 700; margin-top: 4px;">{{ order.status }}</div>
+                            <div style="font-weight: 800; font-size: 13px; color: #0F172A;">{{ order.collection_date }}</div>
+                            <div style="font-size: 12px; color: #0D9488; font-weight: 700; margin-top: 4px;">{{ order.status }}</div>
                         </td>
                         <td>
                             {% for test in order.test_list %}<div class="badge">{{ test.test_name }}</div><br>{% endfor %}
                         </td>
-                        <td style="font-weight: 800; font-size: 18px;">₹{{ order.total_amount }}</td>
-                        <td>
+                        <td style="width: 250px;">
                             {% if not order.has_report %}
-                            <a href="/admin/fill-report/{{ order.id }}" class="btn-lims">Open LIMS Report Builder &rarr;</a>
+                                <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="background: #0D9488;"><i data-lucide="edit-3" style="width: 14px; height: 14px; vertical-align: middle;"></i> Open LIMS Result Entry</a>
                             {% else %}
-                            <div style="background: #F0FDF4; color: #166534; padding: 6px; border-radius: 6px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid #86EFAC; margin-bottom: 8px;">✓ Report Generated</div>
-                            <a href="/download-report/{{ order.id }}" target="_blank" style="background: #0D9488; color: white; padding: 8px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; margin-bottom: 5px;">📥 Download PDF</a>
-                            <a href="/admin/fill-report/{{ order.id }}" style="background: #F1F5F9; color: #475569; padding: 6px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; border: 1px solid #CBD5E1;">Edit Results</a>
+                                <div style="background: #F0FDF4; color: #166534; padding: 6px; border-radius: 6px; font-size: 11px; font-weight: 800; text-align: center; border: 1px solid #86EFAC; margin-bottom: 6px;">✓ Authorized</div>
+                                <div style="display: flex; gap: 8px;">
+                                    <a href="/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="flex: 2; margin-top: 0; background: #0F172A;">📥 Print PDF</a>
+                                    <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="flex: 1; margin-top: 0; background: white; color: #475569; border: 1px solid #CBD5E1;">Edit</a>
+                                </div>
                             {% endif %}
                         </td>
                     </tr>
@@ -123,26 +136,20 @@
         </div>
     </div>
 
-    <!-- INVENTORY TAB WITH LIMS PARAMETER ENGINE -->
+    <!-- INVENTORY TAB -->
     <div id="inventory" class="tab-content">
         <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4; margin-bottom: 30px;">
-            <div class="form-title" style="color: #0D9488; border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">Mass Import Catalog (CSV)</div>
+            <div class="form-title" style="color: #0D9488; border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">Master Dictionary Import (CSV)</div>
             <form action="/admin/bulk-upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 8px; background: white;">
-                <button type="submit" class="btn-save" style="background: #0D9488 !important; padding: 12px 24px; width: auto;">Upload & Inject</button>
+                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 6px; background: white;">
+                <button type="submit" class="btn-save" style="width: auto;">Inject Catalog</button>
             </form>
-        </div>
-    </div>
-
-    <div id="team" class="tab-content">
-        <div class="card form-container">
-            <div class="form-title">Register Phlebotomist</div>
-            <p>Coming soon...</p>
         </div>
     </div>
 </div>
 
 <script>
+    lucide.createIcons();
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
