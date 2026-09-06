@@ -123,10 +123,18 @@
                                 <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="background: #0D9488;"><i data-lucide="edit-3" style="width: 14px; height: 14px; vertical-align: middle;"></i> Open LIMS Result Entry</a>
                             {% else %}
                                 <div style="background: #F0FDF4; color: #166534; padding: 6px; border-radius: 6px; font-size: 11px; font-weight: 800; text-align: center; border: 1px solid #86EFAC; margin-bottom: 6px;">✓ Authorized</div>
-                                <div style="display: flex; gap: 8px;">
-                                    <a href="/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="flex: 2; margin-top: 0; background: #0F172A;">📥 Print PDF</a>
-                                    <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="flex: 1; margin-top: 0; background: white; color: #475569; border: 1px solid #CBD5E1;">Edit</a>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                                    <a href="/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #0F172A;">📄 Clinical PDF</a>
+                                    <a href="/download-invoice/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #475569;">🧾 Print Bill</a>
                                 </div>
+                                
+                                <!-- ONE-CLICK WHATSAPP AUTOMATION -->
+                                <a href="https://wa.me/91{{ order.phone }}?text=Hello {{ order.patient_name }}, your CareDrop Diagnostics report for {{ order.order_ref }} is ready. Download it securely here: https://caredrop.in/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #16A34A; margin-bottom: 8px;">
+                                    <i data-lucide="message-circle" style="width: 14px; height: 14px; vertical-align: middle;"></i> Send via WhatsApp
+                                </a>
+
+                                <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="margin-top: 0; background: white; color: #475569; border: 1px solid #CBD5E1;">Edit Results</a>
                             {% endif %}
                         </td>
                     </tr>
