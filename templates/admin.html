@@ -9,7 +9,6 @@
     <style>
         * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box;}
         body { background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; font-size: 14px; }
-    
         input, select, button { font-family: inherit; background-color: #fff; border: 1px solid #cbd5e1; outline: none; }
         input:focus, select:focus { border-color: #0D9488; }
         .container { max-width: 1400px; margin: 0 auto; }
@@ -31,7 +30,7 @@
         
         .badge { background: #F0FDF4; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; margin-bottom: 4px; border: 1px solid #BBF7D0; text-transform: uppercase; }
         .form-container { padding: 25px; }
-        .form-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; color: #0F172A; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
+        .form-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; color: #0F172A; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
         
         .input-group label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 6px; color: #475569; text-transform: uppercase; }
@@ -40,9 +39,18 @@
         .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; transition: 0.2s; border: none; cursor: pointer; margin-top: 8px; }
         
         .dispatch-box { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; }
-        .dispatch-box select { padding: 8px; font-size: 12px; font-weight: 700; border-radius: 4px; outline: none; }
-        .dispatch-box input { padding: 8px; font-size: 12px; font-weight: 700; border-radius: 4px; outline: none; width: 100%; }
+        .dispatch-box select, .dispatch-box input { padding: 8px; font-size: 12px; font-weight: 700; border-radius: 4px; outline: none; width: 100%; }
         .btn-assign { background: #0F172A; color: white; border: none; padding: 6px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; }
+        
+        .scan-bar { display: flex; gap: 15px; background: #0F172A; padding: 20px; border-radius: 12px; margin-bottom: 30px; align-items: center; }
+        .scan-bar input { flex: 2; padding: 15px; font-size: 18px; font-weight: 800; font-family: monospace; border-radius: 8px; border: none; }
+        .scan-bar select { flex: 1; padding: 15px; font-size: 15px; font-weight: 800; border-radius: 8px; border: none; }
+        .scan-bar button { background: #0D9488; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-weight: 800; font-size: 15px; cursor: pointer; }
+        
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #CBD5E1; }
+        .stat-card h3 { margin: 0 0 5px 0; font-size: 12px; color: #64748B; text-transform: uppercase; }
+        .stat-card .val { font-size: 24px; font-weight: 800; color: #0D9488; }
     </style>
 </head>
 <body>
@@ -50,26 +58,38 @@
 <div class="container">
     <div class="header">
         <h1>CareDrop LIMS Control Panel</h1>
-        <a href="/" style="text-decoration: none; color: #0D9488; font-weight: 800;"><i data-lucide="external-link" style="width: 16px; height: 16px; vertical-align: middle;"></i> View Public Site</a>
+        <a href="/" target="_blank" style="text-decoration: none; color: #0D9488; font-weight: 800;"><i data-lucide="external-link" style="width: 16px; height: 16px; vertical-align: middle;"></i> View Public Site</a>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('orders')">Live Orders & Logistics</button>
-        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Master Dictionary</button>
+        <button class="tab-btn active" onclick="switchTab('orders')">Live Orders & Registration</button>
+        <button id="financeTabBtn" class="tab-btn" onclick="switchTab('finance')">Financials & Commissions</button>
+        <button id="labTabBtn" class="tab-btn" onclick="switchTab('labs')">Lab Signatures & Setup</button>
         <button id="teamTabBtn" class="tab-btn" onclick="switchTab('team')">Fleet Management</button>
+        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Master Dictionary</button>
     </div>
 
-    <!-- ORDERS TAB -->
+    <!-- ORDERS & REGISTRATION TAB -->
     <div id="orders" class="tab-content active">
+        
+        <!-- ACCESSIONING / BARCODE SCANNER -->
+        <form action="/admin/scan-barcode" method="POST" class="scan-bar">
+            <i data-lucide="scan-line" style="color: white; width: 32px; height: 32px;"></i>
+            <input type="text" name="barcode" placeholder="Scan or Type Patient Barcode (e.g. CD-PAT-1001)" required autocomplete="off" autofocus>
+            <select name="new_status">
+                <option value="Sample Received in Lab">Sample Received in Lab</option>
+                <option value="Processing">Processing</option>
+            </select>
+            <button type="submit">Update Workflow</button>
+        </form>
+
         <!-- ENTERPRISE WALK-IN REGISTRATION -->
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
-            <div class="form-title" style="color: #0F172A; display: flex; justify-content: space-between;">
+            <div class="form-title">
                 <span>Walk-In Patient Registration</span>
-                <span style="font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase;">Clinical & Financial Data</span>
+                <span style="font-size: 12px; color: #64748B; font-weight: 800; text-transform: uppercase;">Clinical & Financial Data</span>
             </div>
             <form action="/admin/walk-in" method="POST">
-                
-                <!-- Patient Demographics -->
                 <div class="form-grid">
                     <div class="input-group"><label>Patient Name</label><input type="text" name="patient_name" placeholder="Full Name" required></div>
                     <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" placeholder="10 Digits" required></div>
@@ -77,27 +97,14 @@
                     <div class="input-group"><label>Gender</label><select name="gender" required><option value="Male">Male</option><option value="Female">Female</option></select></div>
                 </div>
                 
-                <!-- Clinical Information -->
                 <div style="background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #E2E8F0;">
                     <div class="form-grid" style="margin-bottom: 0;">
-                        <div class="input-group">
-                            <label>Investigation / Panel</label>
-                            <select name="test_id" required>
-                                <option value="">Search Dictionary...</option>
-                                {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Processing Lab</label>
-                            <select name="lab_id" required>
-                                {% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}
-                            </select>
-                        </div>
+                        <div class="input-group"><label>Investigation / Panel</label><select name="test_id" required><option value="">Search Dictionary...</option>{% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}</select></div>
+                        <div class="input-group"><label>Processing Lab</label><select name="lab_id" required>{% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}</select></div>
                         <div class="input-group"><label>Referred By (Doctor)</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma"></div>
                     </div>
                 </div>
 
-                <!-- Financial & Insurance (TPA) Information -->
                 <div class="form-grid">
                     <div class="input-group">
                         <label>Panel Type / Insurance</label>
@@ -113,25 +120,14 @@
                     <div class="input-group"><label>Advance Paid (₹)</label><input type="number" name="advance_amount" id="calc_advance" value="0" required oninput="calculateBalance()"></div>
                     <div class="input-group"><label>Pending Balance (₹)</label><input type="number" name="balance_amount" id="calc_balance" value="0" readonly style="background: #FEF2F2; color: #DC2626; border-color: #FCA5A5;"></div>
                 </div>
-
-                <button type="submit" class="btn-save" style="background: #0F172A; margin-top: 10px; font-size: 16px;">+ Register Patient & Generate UID</button>
+                <button type="submit" class="btn-save" style="background: #0F172A; margin-top: 10px;">+ Register Patient & Generate UID</button>
             </form>
         </div>
-
-        <script>
-            // Auto-Calculate Pending Balance
-            function calculateBalance() {
-                let total = parseFloat(document.getElementById('calc_total').value) || 0;
-                let advance = parseFloat(document.getElementById('calc_advance').value) || 0;
-                let balance = total - advance;
-                document.getElementById('calc_balance').value = balance > 0 ? balance : 0;
-            }
-        </script>
 
         <div class="card table-wrapper">
             <table>
                 <thead>
-                    <tr><th>Order Ref & UID</th><th>Patient Details</th><th>Schedule & Status</th><th>Dispatch & Payout</th><th>Actions & Reporting</th></tr>
+                    <tr><th>Order Ref & UID</th><th>Demographics</th><th>Schedule & Status</th><th>Dispatch & Payout</th><th>Actions & Reporting</th></tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
@@ -143,7 +139,7 @@
                         <td>
                             <div style="font-weight: 800; text-transform: capitalize; color: #0F172A;">{{ order.patient_name }}</div>
                             <div style="font-size: 12px; color: #475569; font-weight: 700; margin-top: 4px;">{{ order.age }} Yrs | {{ order.gender }}</div>
-                            <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-top: 2px;"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> {{ order.address }}</div>
+                            <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-top: 2px;">Ref: {{ order.referred_by or 'Self' }}</div>
                         </td>
                         <td>
                             <div style="font-weight: 800; font-size: 13px; color: #0F172A;">{{ order.collection_date }}</div>
@@ -182,18 +178,65 @@
         </div>
     </div>
 
-    <!-- INVENTORY TAB -->
-    <div id="inventory" class="tab-content">
-        <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4; margin-bottom: 30px;">
-            <div class="form-title" style="color: #0D9488; border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">Master Dictionary Import (CSV)</div>
-            <form action="/admin/bulk-upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 6px; background: white;">
-                <button type="submit" class="btn-save" style="width: auto;">Inject Catalog</button>
-            </form>
+    <!-- FINANCIALS TAB -->
+    <div id="finance" class="tab-content">
+        <div class="form-title" style="border: none;">Financial & Referral Dashboard</div>
+        <div class="card table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Referral Source (Doctor)</th><th>Total Orders</th><th>Total Revenue Generated</th><th>Pending Balance (Due from Patients)</th></tr>
+                </thead>
+                <tbody>
+                    {% for f in financials %}
+                    <tr>
+                        <td style="font-weight: 800; color: #0F172A; text-transform: capitalize;">{{ f.referred_by }}</td>
+                        <td style="font-weight: 700;">{{ f.total_orders }} Orders</td>
+                        <td style="font-weight: 800; color: #166534;">₹{{ f.total_revenue }}</td>
+                        <td style="font-weight: 800; color: #DC2626;">₹{{ f.pending_balance }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align: center; font-weight: 700; color: #64748B;">No financial data available yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- TEAM / FLEET TAB -->
+    <!-- LAB SETTINGS & SIGNATURES TAB -->
+    <div id="labs" class="tab-content">
+        <div class="form-title" style="border: none;">Partner Lab Configurations & PDF Signatures</div>
+        {% for lab in all_labs %}
+        <div class="card form-container">
+            <div style="font-size: 16px; font-weight: 800; margin-bottom: 15px; color: #0D9488;">{{ lab.name }} {% if not lab.is_active %}(Inactive){% endif %}</div>
+            <form action="/admin/update-lab-doctors" method="POST">
+                <input type="hidden" name="lab_id" value="{{ lab.id }}">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Left Signature (Doctor Name)</label>
+                        <input type="text" name="d1_name" value="{{ lab.doctor_1_name or 'Dr. Ram Shran' }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Left Signature (Degree / Reg No.)</label>
+                        <input type="text" name="d1_degree" value="{{ lab.doctor_1_degree or 'MBBS, MD (Pathology) | DMC-44740' }}" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Right Signature (Doctor Name)</label>
+                        <input type="text" name="d2_name" value="{{ lab.doctor_2_name or 'Dr. Abdul Sameer Qureshi' }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Right Signature (Degree / Reg No.)</label>
+                        <input type="text" name="d2_degree" value="{{ lab.doctor_2_degree or 'MBBS, D.C.P | DMC-39510' }}" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-save" style="width: auto;">Update Lab Signatures</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- FLEET TAB -->
     <div id="team" class="tab-content">
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
             <div class="form-title" style="color: #0F172A;">Register New Phlebotomist</div>
@@ -201,18 +244,15 @@
                 <div class="form-grid">
                     <div class="input-group"><label>Full Name</label><input type="text" name="name" required></div>
                     <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
-                    <div class="input-group"><label>Vehicle Number</label><input type="text" name="vehicle_number" placeholder="e.g. HR-02-AB-1234"></div>
-                    <div class="input-group"><label>4-Digit Login PIN</label><input type="text" name="pin" placeholder="e.g. 1234" maxlength="4" required></div>
+                    <div class="input-group"><label>Vehicle Number</label><input type="text" name="vehicle_number"></div>
+                    <div class="input-group"><label>4-Digit Login PIN</label><input type="text" name="pin" maxlength="4" required></div>
                 </div>
                 <button type="submit" class="btn-save" style="background: #0F172A !important; width: auto;">+ Register Rider & Generate PIN</button>
             </form>
         </div>
-
         <div class="card table-wrapper">
             <table>
-                <thead>
-                    <tr><th>ID</th><th>Phlebotomist Name</th><th>Contact Details</th><th>Vehicle Details</th><th>Login PIN</th></tr>
-                </thead>
+                <thead><tr><th>ID</th><th>Phlebotomist Name</th><th>Contact Details</th><th>Vehicle Details</th><th>Login PIN</th></tr></thead>
                 <tbody>
                     {% for p in phlebotomists %}
                     <tr>
@@ -222,13 +262,23 @@
                         <td style="font-weight: 700; color: #475569;">{{ p.vehicle_number or 'N/A' }}</td>
                         <td><div style="font-family: monospace; font-size: 16px; font-weight: 800; color: #dc2626; background: #fef2f2; padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid #fca5a5;">{{ p.pin }}</div></td>
                     </tr>
-                    {% else %}
-                    <tr><td colspan="5" style="text-align: center; color: #64748B; font-weight: 700;">No phlebotomists registered yet.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+
+   <!-- INVENTORY TAB -->
+    <div id="inventory" class="tab-content">
+        <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4;">
+            <div class="form-title" style="color: #0D9488; border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">Master Dictionary Import (CSV)</div>
+            <form action="/admin/bulk-upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 6px; background: white;">
+                <button type="submit" class="btn-save" style="width: auto;">Inject Catalog</button>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -239,8 +289,18 @@
         document.getElementById(tabId).classList.add('active');
         if (tabId === 'inventory') document.getElementById('inventoryTabBtn').classList.add('active');
         if (tabId === 'team') document.getElementById('teamTabBtn').classList.add('active');
+        if (tabId === 'finance') document.getElementById('financeTabBtn').classList.add('active');
+        if (tabId === 'labs') document.getElementById('labTabBtn').classList.add('active');
         localStorage.setItem('caredrop_admin_tab', tabId);
     }
+    
+    function calculateBalance() {
+        let total = parseFloat(document.getElementById('calc_total').value) || 0;
+        let advance = parseFloat(document.getElementById('calc_advance').value) || 0;
+        let balance = total - advance;
+        document.getElementById('calc_balance').value = balance > 0 ? balance : 0;
+    }
+
     window.onload = () => {
         const savedTab = localStorage.getItem('caredrop_admin_tab');
         if(savedTab) switchTab(savedTab);
