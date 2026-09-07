@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise LIMS | CareDrop</title>
+    <title>Secure LIMS Panel | CareDrop</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -16,6 +16,9 @@
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 25px; border-top: 4px solid #0D9488; }
         .header h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0F172A; }
         
+        .role-badge { background: #E0F2FE; color: #0369A1; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-left: 10px; }
+        .logout-btn { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 8px 16px; border-radius: 6px; font-weight: 800; text-decoration: none; font-size: 13px; }
+
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
         .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; color: #475569; transition: 0.2s; font-size: 14px; white-space: nowrap; }
         .tab-btn.active { background: #0F172A !important; color: white !important; border-color: #0F172A !important; }
@@ -46,27 +49,27 @@
         .scan-bar input { flex: 2; padding: 15px; font-size: 18px; font-weight: 800; font-family: monospace; border-radius: 8px; border: none; }
         .scan-bar select { flex: 1; padding: 15px; font-size: 15px; font-weight: 800; border-radius: 8px; border: none; }
         .scan-bar button { background: #0D9488; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-weight: 800; font-size: 15px; cursor: pointer; }
-        
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #CBD5E1; }
-        .stat-card h3 { margin: 0 0 5px 0; font-size: 12px; color: #64748B; text-transform: uppercase; }
-        .stat-card .val { font-size: 24px; font-weight: 800; color: #0D9488; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>CareDrop LIMS Control Panel</h1>
-        <a href="/" target="_blank" style="text-decoration: none; color: #0D9488; font-weight: 800;"><i data-lucide="external-link" style="width: 16px; height: 16px; vertical-align: middle;"></i> View Public Site</a>
+        <h1>CareDrop LIMS Control Panel <span class="role-badge">{{ user_role }}</span></h1>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="/" target="_blank" style="text-decoration: none; color: #0D9488; font-weight: 800;">View Public Site</a>
+            <a href="/logout" class="logout-btn">Secure Logout</a>
+        </div>
     </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('orders')">Live Orders & Registration</button>
-        <button id="financeTabBtn" class="tab-btn" onclick="switchTab('finance')">Financials & Commissions</button>
-        <button id="labTabBtn" class="tab-btn" onclick="switchTab('labs')">Lab Signatures & Setup</button>
-        <button id="teamTabBtn" class="tab-btn" onclick="switchTab('team')">Fleet Management</button>
-        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Master Dictionary</button>
+        {% if user_role == 'admin' %}
+            <button id="financeTabBtn" class="tab-btn" onclick="switchTab('finance')">Financials & Commissions</button>
+            <button id="labTabBtn" class="tab-btn" onclick="switchTab('labs')">Lab Signatures & Setup</button>
+            <button id="teamTabBtn" class="tab-btn" onclick="switchTab('team')">Fleet Management</button>
+            <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Master Dictionary</button>
+        {% endif %}
     </div>
 
     <!-- ORDERS & REGISTRATION TAB -->
@@ -75,7 +78,7 @@
         <!-- ACCESSIONING / BARCODE SCANNER -->
         <form action="/admin/scan-barcode" method="POST" class="scan-bar">
             <i data-lucide="scan-line" style="color: white; width: 32px; height: 32px;"></i>
-            <input type="text" name="barcode" placeholder="Scan or Type Patient Barcode (e.g. CD-PAT-1001)" required autocomplete="off" autofocus>
+            <input type="text" name="barcode" placeholder="Scan Patient Barcode (e.g. CD-PAT-1001)" required autocomplete="off" autofocus>
             <select name="new_status">
                 <option value="Sample Received in Lab">Sample Received in Lab</option>
                 <option value="Processing">Processing</option>
@@ -83,11 +86,12 @@
             <button type="submit">Update Workflow</button>
         </form>
 
-        <!-- ENTERPRISE WALK-IN REGISTRATION -->
+        {% if user_role == 'admin' or user_role == 'receptionist' %}
+        <!-- WALK-IN REGISTRATION -->
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
             <div class="form-title">
                 <span>Walk-In Patient Registration</span>
-                <span style="font-size: 12px; color: #64748B; font-weight: 800; text-transform: uppercase;">Clinical & Financial Data</span>
+                <span style="font-size: 12px; color: #64748B; font-weight: 800; text-transform: uppercase;">Reception Desk</span>
             </div>
             <form action="/admin/walk-in" method="POST">
                 <div class="form-grid">
@@ -123,6 +127,7 @@
                 <button type="submit" class="btn-save" style="background: #0F172A; margin-top: 10px;">+ Register Patient & Generate UID</button>
             </form>
         </div>
+        {% endif %}
 
         <div class="card table-wrapper">
             <table>
@@ -178,14 +183,13 @@
         </div>
     </div>
 
+    {% if user_role == 'admin' %}
     <!-- FINANCIALS TAB -->
     <div id="finance" class="tab-content">
         <div class="form-title" style="border: none;">Financial & Referral Dashboard</div>
         <div class="card table-wrapper">
             <table>
-                <thead>
-                    <tr><th>Referral Source (Doctor)</th><th>Total Orders</th><th>Total Revenue Generated</th><th>Pending Balance (Due from Patients)</th></tr>
-                </thead>
+                <thead><tr><th>Referral Source (Doctor)</th><th>Total Orders</th><th>Total Revenue Generated</th><th>Pending Balance (Due)</th></tr></thead>
                 <tbody>
                     {% for f in financials %}
                     <tr>
@@ -194,49 +198,35 @@
                         <td style="font-weight: 800; color: #166534;">₹{{ f.total_revenue }}</td>
                         <td style="font-weight: 800; color: #DC2626;">₹{{ f.pending_balance }}</td>
                     </tr>
-                    {% else %}
-                    <tr><td colspan="4" style="text-align: center; font-weight: 700; color: #64748B;">No financial data available yet.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- LAB SETTINGS & SIGNATURES TAB -->
+    <!-- LAB SETTINGS TAB -->
     <div id="labs" class="tab-content">
         <div class="form-title" style="border: none;">Partner Lab Configurations & PDF Signatures</div>
         {% for lab in all_labs %}
         <div class="card form-container">
-            <div style="font-size: 16px; font-weight: 800; margin-bottom: 15px; color: #0D9488;">{{ lab.name }} {% if not lab.is_active %}(Inactive){% endif %}</div>
+            <div style="font-size: 16px; font-weight: 800; margin-bottom: 15px; color: #0D9488;">{{ lab.name }}</div>
             <form action="/admin/update-lab-doctors" method="POST">
                 <input type="hidden" name="lab_id" value="{{ lab.id }}">
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label>Left Signature (Doctor Name)</label>
-                        <input type="text" name="d1_name" value="{{ lab.doctor_1_name or 'Dr. Ram Shran' }}" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Left Signature (Degree / Reg No.)</label>
-                        <input type="text" name="d1_degree" value="{{ lab.doctor_1_degree or 'MBBS, MD (Pathology) | DMC-44740' }}" required>
-                    </div>
+                    <div class="input-group"><label>Left Doctor Name</label><input type="text" name="d1_name" value="{{ lab.doctor_1_name }}" required></div>
+                    <div class="input-group"><label>Left Degree / Reg</label><input type="text" name="d1_degree" value="{{ lab.doctor_1_degree }}" required></div>
                 </div>
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label>Right Signature (Doctor Name)</label>
-                        <input type="text" name="d2_name" value="{{ lab.doctor_2_name or 'Dr. Abdul Sameer Qureshi' }}" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Right Signature (Degree / Reg No.)</label>
-                        <input type="text" name="d2_degree" value="{{ lab.doctor_2_degree or 'MBBS, D.C.P | DMC-39510' }}" required>
-                    </div>
+                    <div class="input-group"><label>Right Doctor Name</label><input type="text" name="d2_name" value="{{ lab.doctor_2_name }}" required></div>
+                    <div class="input-group"><label>Right Degree / Reg</label><input type="text" name="d2_degree" value="{{ lab.doctor_2_degree }}" required></div>
                 </div>
-                <button type="submit" class="btn-save" style="width: auto;">Update Lab Signatures</button>
+                <button type="submit" class="btn-save" style="width: auto;">Update Signatures</button>
             </form>
         </div>
         {% endfor %}
     </div>
 
-    <!-- FLEET TAB -->
+    <!-- TEAM TAB -->
     <div id="team" class="tab-content">
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
             <div class="form-title" style="color: #0F172A;">Register New Phlebotomist</div>
@@ -247,38 +237,22 @@
                     <div class="input-group"><label>Vehicle Number</label><input type="text" name="vehicle_number"></div>
                     <div class="input-group"><label>4-Digit Login PIN</label><input type="text" name="pin" maxlength="4" required></div>
                 </div>
-                <button type="submit" class="btn-save" style="background: #0F172A !important; width: auto;">+ Register Rider & Generate PIN</button>
+                <button type="submit" class="btn-save" style="background: #0F172A !important; width: auto;">+ Register Rider</button>
             </form>
-        </div>
-        <div class="card table-wrapper">
-            <table>
-                <thead><tr><th>ID</th><th>Phlebotomist Name</th><th>Contact Details</th><th>Vehicle Details</th><th>Login PIN</th></tr></thead>
-                <tbody>
-                    {% for p in phlebotomists %}
-                    <tr>
-                        <td><div style="font-weight: 800; color: #0D9488;">PHL-{{ p.id }}</div></td>
-                        <td style="font-weight: 800; color: #0F172A; text-transform: capitalize;">{{ p.name }}</td>
-                        <td style="font-weight: 700; color: #475569;">{{ p.phone }}</td>
-                        <td style="font-weight: 700; color: #475569;">{{ p.vehicle_number or 'N/A' }}</td>
-                        <td><div style="font-family: monospace; font-size: 16px; font-weight: 800; color: #dc2626; background: #fef2f2; padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid #fca5a5;">{{ p.pin }}</div></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
     </div>
 
    <!-- INVENTORY TAB -->
     <div id="inventory" class="tab-content">
         <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4;">
-            <div class="form-title" style="color: #0D9488; border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">Master Dictionary Import (CSV)</div>
+            <div class="form-title" style="color: #0D9488; border-bottom: none;">Master Dictionary Import (CSV)</div>
             <form action="/admin/bulk-upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                 <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 6px; background: white;">
                 <button type="submit" class="btn-save" style="width: auto;">Inject Catalog</button>
             </form>
         </div>
     </div>
-
+    {% endif %}
 </div>
 
 <script>
@@ -287,10 +261,12 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        if (tabId === 'inventory') document.getElementById('inventoryTabBtn').classList.add('active');
-        if (tabId === 'team') document.getElementById('teamTabBtn').classList.add('active');
-        if (tabId === 'finance') document.getElementById('financeTabBtn').classList.add('active');
-        if (tabId === 'labs') document.getElementById('labTabBtn').classList.add('active');
+        if(document.getElementById('inventoryTabBtn')) {
+            if (tabId === 'inventory') document.getElementById('inventoryTabBtn').classList.add('active');
+            if (tabId === 'team') document.getElementById('teamTabBtn').classList.add('active');
+            if (tabId === 'finance') document.getElementById('financeTabBtn').classList.add('active');
+            if (tabId === 'labs') document.getElementById('labTabBtn').classList.add('active');
+        }
         localStorage.setItem('caredrop_admin_tab', tabId);
     }
     
