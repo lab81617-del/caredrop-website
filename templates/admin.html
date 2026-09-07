@@ -60,24 +60,72 @@
 
     <!-- ORDERS TAB -->
     <div id="orders" class="tab-content active">
+        <!-- ENTERPRISE WALK-IN REGISTRATION -->
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
-            <div class="form-title">Walk-In Patient Registration</div>
+            <div class="form-title" style="color: #0F172A; display: flex; justify-content: space-between;">
+                <span>Walk-In Patient Registration</span>
+                <span style="font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase;">Clinical & Financial Data</span>
+            </div>
             <form action="/admin/walk-in" method="POST">
+                
+                <!-- Patient Demographics -->
                 <div class="form-grid">
                     <div class="input-group"><label>Patient Name</label><input type="text" name="patient_name" placeholder="Full Name" required></div>
                     <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" placeholder="10 Digits" required></div>
                     <div class="input-group"><label>Age</label><input type="number" name="age" required></div>
                     <div class="input-group"><label>Gender</label><select name="gender" required><option value="Male">Male</option><option value="Female">Female</option></select></div>
                 </div>
-                <div class="form-grid">
-                    <div class="input-group"><label>Investigation / Test</label><select name="test_id" required><option value="">Search Dictionary...</option>{% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}</select></div>
-                    <div class="input-group"><label>Processing Lab</label><select name="lab_id" required>{% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}</select></div>
-                    <div class="input-group"><label>Referred By</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma"></div>
-                    <div class="input-group"><label>Net Amount (₹)</label><input type="number" name="total_amount" required></div>
+                
+                <!-- Clinical Information -->
+                <div style="background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #E2E8F0;">
+                    <div class="form-grid" style="margin-bottom: 0;">
+                        <div class="input-group">
+                            <label>Investigation / Panel</label>
+                            <select name="test_id" required>
+                                <option value="">Search Dictionary...</option>
+                                {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Processing Lab</label>
+                            <select name="lab_id" required>
+                                {% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Referred By (Doctor)</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma"></div>
+                    </div>
                 </div>
-                <button type="submit" class="btn-save" style="background: #0F172A;">+ Generate UID & Book Order</button>
+
+                <!-- Financial & Insurance (TPA) Information -->
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Panel Type / Insurance</label>
+                        <select name="tpa_name" style="border-color: #3B82F6;">
+                            <option value="">Normal (Self Pay)</option>
+                            <option value="Star Health">Star Health Insurance</option>
+                            <option value="HDFC Ergo">HDFC Ergo</option>
+                            <option value="CGHS">CGHS Panel</option>
+                            <option value="Corporate">Corporate Account</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Total Amount (₹)</label><input type="number" name="total_amount" id="calc_total" value="0" required oninput="calculateBalance()"></div>
+                    <div class="input-group"><label>Advance Paid (₹)</label><input type="number" name="advance_amount" id="calc_advance" value="0" required oninput="calculateBalance()"></div>
+                    <div class="input-group"><label>Pending Balance (₹)</label><input type="number" name="balance_amount" id="calc_balance" value="0" readonly style="background: #FEF2F2; color: #DC2626; border-color: #FCA5A5;"></div>
+                </div>
+
+                <button type="submit" class="btn-save" style="background: #0F172A; margin-top: 10px; font-size: 16px;">+ Register Patient & Generate UID</button>
             </form>
         </div>
+
+        <script>
+            // Auto-Calculate Pending Balance
+            function calculateBalance() {
+                let total = parseFloat(document.getElementById('calc_total').value) || 0;
+                let advance = parseFloat(document.getElementById('calc_advance').value) || 0;
+                let balance = total - advance;
+                document.getElementById('calc_balance').value = balance > 0 ? balance : 0;
+            }
+        </script>
 
         <div class="card table-wrapper">
             <table>
