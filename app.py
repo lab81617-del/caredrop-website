@@ -18,27 +18,20 @@ def get_db():
 def safe_execute(query, params=None):
     conn = get_db()
     try: 
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        conn.commit()
+        cursor = conn.cursor(); cursor.execute(query, params); conn.commit()
     except Exception as e: 
-        conn.rollback()
-        print(e)
+        conn.rollback(); print(e)
     finally: 
         conn.close()
 
+# --- DATABASE EXPANSION FOR DYNAMIC LABS & BARCODES ---
 @app.before_request
 def ensure_db_schema():
     if not getattr(app, '_schema_checked', False):
-        safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS referred_by VARCHAR(255) DEFAULT 'Self'")
-        safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        safe_execute("ALTER TABLE phlebotomists ADD COLUMN IF NOT EXISTS pin VARCHAR(10) DEFAULT '1234'")
-        safe_execute("ALTER TABLE test_parameters ADD COLUMN IF NOT EXISTS methodology VARCHAR(255)")
-        safe_execute("ALTER TABLE test_parameters ADD COLUMN IF NOT EXISTS interpretation TEXT")
-        safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tpa_name VARCHAR(255)")
-        safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS advance_amount NUMERIC DEFAULT 0")
-        safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS balance_amount NUMERIC DEFAULT 0")
-        safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS family_member VARCHAR(255)")
+        safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_1_name VARCHAR(255) DEFAULT 'Dr. Ram Shran'")
+        safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_1_degree VARCHAR(255) DEFAULT 'MBBS, MD (Pathology) | DMC-44740'")
+        safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_2_name VARCHAR(255) DEFAULT 'Dr. Abdul Sameer Qureshi'")
+        safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_2_degree VARCHAR(255) DEFAULT 'MBBS, D.C.P | DMC-39510'")
         app._schema_checked = True
 
 # --- PUBLIC ROUTES ---
@@ -93,7 +86,7 @@ def download_invoice(order_id):
     finally: conn.close()
     return "Invoice generation failed.", 500
 
-# --- ADMIN ROUTES ---
+# --- ADMIN ROUTES & ACCESSIONING ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST' and request.form.get('password') == ADMIN_PASSWORD:
@@ -108,13 +101,17 @@ def admin_dashboard():
     cursor.execute("SELECT o.*, u.patient_uid, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
     orders = cursor.fetchall()
     
+    # Financial Analytics (Commission & TPA Tracking)
+    cursor.execute("SELECT referred_by, SUM(total_amount) as total_revenue, SUM(balance_amount) as pending_balance, COUNT(id) as total_orders FROM orders GROUP BY referred_by")
+    financials = cursor.fetchall()
+    
     cursor.execute("SELECT oi.order_id, t.name as test_name FROM order_items oi JOIN tests t ON oi.test_id = t.id WHERE oi.item_type = 'test'")
     items_map = {}
     for row in cursor.fetchall(): items_map.setdefault(row['order_id'], []).append(row)
     for order in orders: order['test_list'] = items_map.get(order['id'], [])
         
-    cursor.execute("SELECT id, name, is_active, CAST(rating AS FLOAT) as rating FROM labs ORDER BY name")
-    active_labs = [l for l in cursor.fetchall() if l['is_active']]
+    cursor.execute("SELECT * FROM labs ORDER BY name")
+    labs = cursor.fetchall()
     
     cursor.execute("SELECT t.id as test_id, t.name as test_name, CAST(ltp.price AS INTEGER) as price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id")
     inventory = cursor.fetchall()
@@ -123,7 +120,22 @@ def admin_dashboard():
     phlebotomists = cursor.fetchall()
     conn.close()
     
-    return render_template('admin.html', orders=orders, active_labs=active_labs, inventory=inventory, phlebotomists=phlebotomists)
+    return render_template('admin.html', orders=orders, active_labs=[l for l in labs if l['is_active']], all_labs=labs, inventory=inventory, phlebotomists=phlebotomists, financials=financials)
+
+@app.route('/admin/scan-barcode', methods=['POST'])
+def scan_barcode():
+    if session.get('admin_logged_in'):
+        uid = request.form.get('barcode').strip().upper()
+        new_status = request.form.get('new_status', 'Received in Lab')
+        safe_execute("UPDATE orders SET status = %s WHERE user_id = (SELECT id FROM users WHERE patient_uid = %s)", (new_status, uid))
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/update-lab-doctors', methods=['POST'])
+def update_lab_doctors():
+    if session.get('admin_logged_in'):
+        safe_execute("UPDATE labs SET doctor_1_name=%s, doctor_1_degree=%s, doctor_2_name=%s, doctor_2_degree=%s WHERE id=%s", 
+                     (request.form.get('d1_name'), request.form.get('d1_degree'), request.form.get('d2_name'), request.form.get('d2_degree'), request.form.get('lab_id')))
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/walk-in', methods=['POST'])
 def admin_walk_in():
@@ -133,9 +145,7 @@ def admin_walk_in():
     total, test_id, lab_id = request.form.get('total_amount', 0), request.form.get('test_id'), request.form.get('lab_id')
     ref_by = request.form.get('referred_by', 'Self').strip() or "Self"
     
-    tpa_name = request.form.get('tpa_name', '').strip()
-    advance = request.form.get('advance_amount', 0)
-    balance = request.form.get('balance_amount', 0)
+    tpa_name, advance, balance = request.form.get('tpa_name', '').strip(), request.form.get('advance_amount', 0), request.form.get('balance_amount', 0)
     
     conn = get_db()
     try:
@@ -163,13 +173,19 @@ def admin_walk_in():
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
-# --- MULTI-COLUMN SEEDER (WITH METHODOLOGIES) ---
 @app.route('/admin/auto-seed-lims')
 def auto_seed_lims():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
     conn = get_db()
     try:
         cursor = conn.cursor()
+        
+        # New Medical Interpretation Dictionary
+        interpretations = {
+            'Complete Blood Count': "There have been some reports of WBC and platelet counts being lower in venous blood than in capillary blood samples, although still within these reference ranges. Assay results should be correlated clinically with other clinical findings and the total clinical status of the patient.",
+            'Thyroid Profile': "TSH levels between 6.3 and 15.0 may represent subclinical or compensated hypothyroidism. A high TSH result often means an underactive thyroid gland. A low TSH result can indicate an overactive thyroid gland (hyperthyroidism). Please correlate clinically."
+        }
+        
         master_params = {
             'Complete Blood Count': [
                 ('Hemoglobin (HB)', 'g/dl', '12.0 - 16.0', 'Photometric/Non Cyanmethemoglobin'), 
@@ -204,10 +220,12 @@ def auto_seed_lims():
             test = cursor.fetchone()
             if test:
                 cursor.execute("DELETE FROM test_parameters WHERE test_id = %s", (test[0],))
+                interp_text = interpretations.get(search_name, "")
                 for p_name, unit, ref, method in params:
-                    cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range, methodology) VALUES (%s, %s, %s, %s, %s)", (test[0], p_name, unit, ref, method))
+                    # Inject Interpretations alongside Methodologies
+                    cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range, methodology, interpretation) VALUES (%s, %s, %s, %s, %s, %s)", (test[0], p_name, unit, ref, method, interp_text))
         conn.commit()
-        return "<h2 style='color:green; padding:50px;'>SUCCESS! Master Dictionary updated with Clinical Methodologies.</h2>"
+        return "<h2 style='color:green; padding:50px;'>SUCCESS! Master Dictionary updated with Methodologies & Clinical Interpretations.</h2>"
     except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
     finally: conn.close()
 
@@ -243,8 +261,7 @@ def save_results(order_id):
                 cursor.execute("INSERT INTO order_results (order_id, parameter_id, result_value) VALUES (%s, %s, %s)", (order_id, param_id, val))
                 
                 if request.form.get(f'print_{param_id}') == 'on':
-                    # CRITICAL: Now fetching the methodology column from the DB
-                    cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, tp.methodology, t.name as test_name, c.name as cat_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id LEFT JOIN test_categories c ON t.category_id = c.id WHERE tp.id = %s", (param_id,))
+                    cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, tp.methodology, tp.interpretation, t.name as test_name, c.name as cat_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id LEFT JOIN test_categories c ON t.category_id = c.id WHERE tp.id = %s", (param_id,))
                     p_info = cursor.fetchone()
                     if p_info: 
                         results_data.append({
@@ -254,13 +271,18 @@ def save_results(order_id):
                             'val': val, 
                             'unit': p_info['unit'], 
                             'ref': p_info['reference_range'],
-                            'method': p_info['methodology']  # Attaching methodology for the PDF
+                            'method': p_info['methodology'],
+                            'interpretation': p_info['interpretation']
                         })
         
         cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
         order = cursor.fetchone()
         
-        pdf_bytes = generate_medical_report(order_id, order, results_data)
+        # FETCH THE LAB DOCTORS TO PASS TO PDF
+        cursor.execute("SELECT l.* FROM order_items oi JOIN labs l ON oi.lab_id = l.id WHERE oi.order_id = %s LIMIT 1", (order_id,))
+        lab_data = cursor.fetchone()
+        
+        pdf_bytes = generate_medical_report(order_id, order, results_data, lab_data)
         filename = f"CareDrop_Report_{order['patient_uid']}.pdf"
         cursor.execute("UPDATE orders SET report_file = %s, report_filename = %s, status = 'Completed', report_type = 'System' WHERE id = %s", (psycopg2.Binary(pdf_bytes), filename, order_id))
         conn.commit()
