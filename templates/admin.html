@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIMS Control Panel | CareDrop</title>
+    <title>Enterprise LIMS | CareDrop</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important; box-sizing: border-box;}
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box;}
         body { background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; font-size: 14px; }
         input, select, button { font-family: inherit; background-color: #fff; border: 1px solid #cbd5e1; outline: none; }
         input:focus, select:focus { border-color: #0D9488; }
-        .container { max-width: 1300px; margin: 0 auto; }
+        .container { max-width: 1400px; margin: 0 auto; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 25px; border-top: 4px solid #0D9488; }
         .header h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0F172A; }
@@ -41,7 +41,7 @@
         .btn-save { background: #0D9488; color: white; padding: 14px 24px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
         .btn-save:hover { background: #0F766E; }
         
-        .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; transition: 0.2s; border: none; cursor: pointer; }
+        .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; transition: 0.2s; border: none; cursor: pointer; margin-top: 8px; }
         .btn-lims:hover { background: #1E293B; }
     </style>
 </head>
@@ -54,13 +54,15 @@
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('orders')">Live Registration & Orders</button>
-        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Dictionary & Catalog</button>
+        <button class="tab-btn active" onclick="switchTab('orders')">Live Orders & Registration</button>
+        <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Master Dictionary</button>
+        <button id="teamTabBtn" class="tab-btn" onclick="switchTab('team')">Fleet Management</button>
     </div>
 
+    <!-- ORDERS & REGISTRATION TAB -->
     <div id="orders" class="tab-content active">
-        <!-- WALK-IN REGISTRATION -->
-        <div class="card form-container" style="border: 1px solid #94A3B8; background: #F8FAFC;">
+        <!-- Walk-In Form -->
+        <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
             <div class="form-title">Walk-In Patient Registration</div>
             <form action="/admin/walk-in" method="POST">
                 <div class="form-grid">
@@ -77,7 +79,7 @@
                         <label>Investigation / Test</label>
                         <select name="test_id" required>
                             <option value="">Search Dictionary...</option>
-                            {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }}</option>{% endfor %}
+                            {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}
                         </select>
                     </div>
                     <div class="input-group">
@@ -93,7 +95,7 @@
             </form>
         </div>
 
-        <!-- ORDERS TABLE -->
+        <!-- Orders Table -->
         <div class="card table-wrapper">
             <table>
                 <thead>
@@ -129,7 +131,6 @@
                                     <a href="/download-invoice/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #475569;">🧾 Print Bill</a>
                                 </div>
                                 
-                                <!-- ONE-CLICK WHATSAPP AUTOMATION -->
                                 <a href="https://wa.me/91{{ order.phone }}?text=Hello {{ order.patient_name }}, your CareDrop Diagnostics report for {{ order.order_ref }} is ready. Download it securely here: https://caredrop.in/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #16A34A; margin-bottom: 8px;">
                                     <i data-lucide="message-circle" style="width: 14px; height: 14px; vertical-align: middle;"></i> Send via WhatsApp
                                 </a>
@@ -152,6 +153,42 @@
                 <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 6px; background: white;">
                 <button type="submit" class="btn-save" style="width: auto;">Inject Catalog</button>
             </form>
+        </div>
+    </div>
+
+    <!-- TEAM / FLEET TAB -->
+    <div id="team" class="tab-content">
+        <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
+            <div class="form-title" style="color: #0F172A;">Register New Phlebotomist</div>
+            <form action="/admin/add-phlebotomist" method="POST">
+                <div class="form-grid">
+                    <div class="input-group"><label>Full Name</label><input type="text" name="name" required></div>
+                    <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
+                    <div class="input-group"><label>Vehicle / Bike Number</label><input type="text" name="vehicle_number" placeholder="e.g. HR-02-AB-1234"></div>
+                </div>
+                <button type="submit" class="btn-save" style="background: #0F172A !important; width: auto;">+ Add to Fleet</button>
+            </form>
+        </div>
+
+        <div class="card table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Phlebotomist Name</th><th>Contact Details</th><th>Vehicle Details</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for p in phlebotomists %}
+                    <tr>
+                        <td><div style="font-weight: 800; color: #0D9488;">PHL-{{ p.id }}</div></td>
+                        <td style="font-weight: 800; color: #0F172A; text-transform: capitalize;">{{ p.name }}</td>
+                        <td style="font-weight: 700; color: #475569;">{{ p.phone }}</td>
+                        <td style="font-weight: 700; color: #475569;">{{ p.vehicle_number or 'N/A' }}</td>
+                        <td><div class="badge">Active</div></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" style="text-align: center; color: #64748B; font-weight: 700;">No phlebotomists added yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
