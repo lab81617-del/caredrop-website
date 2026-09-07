@@ -89,7 +89,7 @@ class CareDropPDF(FPDF):
         bc_img = barcode.get('code128', self.order.get('patient_uid', '0000'), writer=ImageWriter())
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tf_bc:
             bc_path = bc_img.save(tf_bc.name.replace('.png', ''))
-            self.image(bc_path, x=42, y=self.get_y(), h=7)
+            self.image(bc_path, x=42, y=self.get_y()+1, h=6)
         os.remove(bc_path)
         
         self.ln(10)
@@ -97,13 +97,15 @@ class CareDropPDF(FPDF):
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(4)
         
-        self.set_font("helvetica", "B", 9)
+        # 5-COLUMN CLINICAL TABLE HEADER
+        self.set_font("helvetica", "B", 8)
         self.set_fill_color(248, 250, 252)
         self.set_text_color(100, 116, 139)
-        self.cell(85, 8, ' INVESTIGATION', 0, 0, 'L', True)
-        self.cell(25, 8, 'RESULT', 0, 0, 'C', True)
-        self.cell(30, 8, 'UNIT', 0, 0, 'C', True)
-        self.cell(50, 8, 'BIO. REF. INTERVAL', 0, 1, 'C', True)
+        self.cell(65, 8, ' INVESTIGATION', 0, 0, 'L', True)
+        self.cell(20, 8, 'RESULT', 0, 0, 'C', True)
+        self.cell(20, 8, 'UNIT', 0, 0, 'C', True)
+        self.cell(45, 8, 'BIO. REF. INTERVAL', 0, 0, 'C', True)
+        self.cell(40, 8, 'METHOD', 0, 1, 'C', True)
         self.ln(2)
 
     def footer(self):
@@ -154,18 +156,21 @@ def generate_medical_report(order_id, order_data, results_data):
             pdf.cell(190, 8, r['test'].title(), 0, 1, 'L')
             current_test = r['test']
         
-        pdf.set_font("helvetica", "", 10)
+        pdf.set_font("helvetica", "", 9)
         pdf.set_text_color(51, 65, 85)
-        pdf.cell(85, 7, f"  {r['param']}", 0, 0, 'L')
+        pdf.cell(65, 7, f"  {r['param']}", 0, 0, 'L')
         
         pdf.set_font("helvetica", "B", 10)
         pdf.set_text_color(15, 23, 42)
-        pdf.cell(25, 7, str(r['val']), 0, 0, 'C')
+        pdf.cell(20, 7, str(r['val']), 0, 0, 'C')
         
         pdf.set_font("helvetica", "", 9)
         pdf.set_text_color(100, 100, 100)
-        pdf.cell(30, 7, str(r['unit']), 0, 0, 'C')
-        pdf.cell(50, 7, str(r['ref']), 0, 1, 'C')
+        pdf.cell(20, 7, str(r['unit']), 0, 0, 'C')
+        pdf.cell(45, 7, str(r['ref']), 0, 0, 'C')
+        
+        pdf.set_font("helvetica", "I", 8)
+        pdf.cell(40, 7, str(r.get('method') or ''), 0, 1, 'C')
         
         pdf.set_draw_color(241, 245, 249)
         pdf.line(12, pdf.get_y(), 198, pdf.get_y())
@@ -174,7 +179,7 @@ def generate_medical_report(order_id, order_data, results_data):
     return pdf.output()
 
 # ==========================================
-# 2. FINANCIAL INVOICE PDF ENGINE (NEW)
+# 2. FINANCIAL INVOICE PDF ENGINE
 # ==========================================
 class InvoicePDF(FPDF):
     def header(self):
@@ -217,7 +222,10 @@ def generate_invoice_report(order_data, items_data):
     pdf.cell(90, 6, f"Invoice Date: {created.strftime('%d-%b-%Y')}", ln=True)
     
     pdf.cell(100, 6, f"Age/Gender: {order_data['age']} / {order_data['gender']}", ln=False)
-    pdf.cell(90, 6, f"Payment Mode: Cash / Prepaid", ln=True)
+    
+    tpa = order_data.get('tpa_name')
+    tpa_str = tpa if tpa else "Normal (Self Pay)"
+    pdf.cell(90, 6, f"Panel/Insurance: {tpa_str}", ln=True)
     
     pdf.ln(10)
     
@@ -239,15 +247,29 @@ def generate_invoice_report(order_data, items_data):
         pdf.cell(35, 10, f" {int(item['price'])}.00", border=1, align="C")
         pdf.ln(10)
         
-    # Total Row
-    pdf.set_font("helvetica", "B", 12)
+    # Financial Calculations
+    pdf.set_font("helvetica", "B", 10)
     pdf.set_fill_color(248, 250, 252)
-    pdf.cell(155, 12, " TOTAL AMOUNT PAID:", border=1, align="R", fill=True)
-    pdf.cell(35, 12, f" Rs. {int(order_data['total_amount'])}.00", border=1, align="C", fill=True)
     
-    pdf.ln(30)
+    total = int(order_data.get('total_amount') or 0)
+    advance = int(order_data.get('advance_amount') or 0)
+    balance = int(order_data.get('balance_amount') or 0)
+    
+    pdf.cell(155, 8, " TOTAL AMOUNT:", border=1, align="R", fill=True)
+    pdf.cell(35, 8, f" Rs. {total}.00", border=1, align="C", fill=True)
+    pdf.ln()
+    
+    pdf.cell(155, 8, " ADVANCE PAID:", border=1, align="R", fill=True)
+    pdf.cell(35, 8, f" Rs. {advance}.00", border=1, align="C", fill=True)
+    pdf.ln()
+    
+    pdf.set_text_color(220, 38, 38) if balance > 0 else pdf.set_text_color(22, 163, 74)
+    pdf.cell(155, 8, " PENDING BALANCE:", border=1, align="R", fill=True)
+    pdf.cell(35, 8, f" Rs. {balance}.00", border=1, align="C", fill=True)
+    
+    pdf.ln(25)
     pdf.set_font("helvetica", "I", 9)
     pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 5, "This is a computer-generated invoice. No signature is required.", align="C", ln=True)
+    pdf.cell(0, 5, "This is a computer-generated invoice. No physical signature is required.", align="C", ln=True)
     
     return pdf.output()
