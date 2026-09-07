@@ -1,4 +1,5 @@
-import os, threading, json, io, csv, random, traceback, urllib.request, tempfile
+import os, threading, json, io, csv, random, traceback, urllib.request, tempfile, smtplib, requests
+from email.message import EmailMessage
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, send_file
@@ -12,7 +13,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 
-# Role Passwords (Can be overridden via environment variables)
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
 RECEPTION_PASSWORD = os.environ.get("RECEPTION_PASSWORD", "reception123")
 TECH_PASSWORD = os.environ.get("TECH_PASSWORD", "tech123")
@@ -41,7 +41,6 @@ def ensure_db_schema():
         safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_2_degree VARCHAR(255) DEFAULT 'MBBS, D.C.P | DMC-39510'")
         app._schema_checked = True
 
-# --- ROLE-BASED ACCESS CONTROL DECORATORS ---
 def role_required(role_name):
     def decorator(f):
         @wraps(f)
@@ -51,6 +50,40 @@ def role_required(role_name):
             return redirect(url_for('unified_login'))
         return decorated_function
     return decorator
+
+# --- BACKGROUND AUTOMATION ENGINE ---
+def dispatch_notifications_bg(patient_email, patient_phone, patient_name, order_ref, pdf_bytes, filename):
+    # 1. Automated Email Dispatch
+    try:
+        if patient_email and '@' in patient_email and not patient_email.startswith('walkin_'):
+            msg = EmailMessage()
+            msg['Subject'] = f"Secure Medical Report - CareDrop Diagnostics ({order_ref})"
+            msg['From'] = os.environ.get('MAIL_USERNAME', 'reports@caredrop.in')
+            msg['To'] = patient_email
+            msg.set_content(f"Dear {patient_name.title()},\n\nYour clinical investigations are complete. Please find your digitally verified laboratory report attached.\n\nThank you for choosing CareDrop Diagnostics.\n\nChief Laboratory Director")
+            msg.add_attachment(pdf_bytes, maintype='application', subtype='pdf', filename=filename)
+
+            # Requires SMTP credentials in your Render Environment Variables
+            if os.environ.get('MAIL_PASSWORD'):
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                    smtp.login(os.environ.get('MAIL_USERNAME'), os.environ.get('MAIL_PASSWORD'))
+                    smtp.send_message(msg)
+    except Exception as e:
+        print(f"Background Email Failed: {e}")
+
+    # 2. Automated WhatsApp API Dispatch
+    try:
+        wa_token = os.environ.get('WA_TOKEN')
+        wa_url = os.environ.get('WA_URL')
+        if wa_token and wa_url and patient_phone:
+            payload = {
+                "token": wa_token,
+                "to": f"+91{patient_phone}",
+                "body": f"Hello {patient_name.title()}, your CareDrop Diagnostics report ({order_ref}) is ready. Download it securely here: https://caredrop.in/my-bookings"
+            }
+            requests.post(wa_url, data=payload, timeout=5)
+    except Exception as e:
+        print(f"Background WhatsApp Failed: {e}")
 
 # --- PUBLIC ROUTES ---
 @app.route('/')
@@ -110,7 +143,6 @@ def unified_login():
     if request.method == 'POST':
         role = request.form.get('role')
         password = request.form.get('password')
-        
         if role == 'admin' and password == ADMIN_PASSWORD:
             session['role'] = 'admin'; return redirect(url_for('admin_dashboard'))
         elif role == 'receptionist' and password == RECEPTION_PASSWORD:
@@ -118,7 +150,6 @@ def unified_login():
         elif role == 'technician' and password == TECH_PASSWORD:
             session['role'] = 'technician'; return redirect(url_for('admin_dashboard'))
         return "Access Denied: Invalid Password for Selected Role."
-        
     return '''<html><body style="background:#F1F5F9; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
     <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05); width:350px; text-align:center;">
     <h2 style="color:#0F172A; margin-top:0;">CareDrop Secure Portal</h2>
@@ -138,31 +169,24 @@ def logout():
 
 # --- ADMIN / STAFF DASHBOARD ROUTE ---
 @app.route('/admin')
-@role_required('receptionist') # Base level access allows viewing orders
+@role_required('receptionist')
 def admin_dashboard():
     conn = get_db(); cursor = conn.cursor(cursor_factory=RealDictCursor)
-    
     cursor.execute("SELECT o.*, u.patient_uid, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")
     orders = cursor.fetchall()
-    
     cursor.execute("SELECT referred_by, SUM(total_amount) as total_revenue, SUM(balance_amount) as pending_balance, COUNT(id) as total_orders FROM orders GROUP BY referred_by")
     financials = cursor.fetchall()
-    
     cursor.execute("SELECT oi.order_id, t.name as test_name FROM order_items oi JOIN tests t ON oi.test_id = t.id WHERE oi.item_type = 'test'")
     items_map = {}
     for row in cursor.fetchall(): items_map.setdefault(row['order_id'], []).append(row)
     for order in orders: order['test_list'] = items_map.get(order['id'], [])
-        
     cursor.execute("SELECT * FROM labs ORDER BY name")
     labs = cursor.fetchall()
-    
     cursor.execute("SELECT t.id as test_id, t.name as test_name, CAST(ltp.price AS INTEGER) as price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id")
     inventory = cursor.fetchall()
-    
     cursor.execute("SELECT * FROM phlebotomists ORDER BY id DESC")
     phlebotomists = cursor.fetchall()
     conn.close()
-    
     user_role = session.get('role', 'admin')
     return render_template('admin.html', orders=orders, active_labs=[l for l in labs if l['is_active']], all_labs=labs, inventory=inventory, phlebotomists=phlebotomists, financials=financials, user_role=user_role)
 
@@ -302,7 +326,7 @@ def save_results(order_id):
                             'cat': p_info['cat_name'] or 'PATHOLOGY', 'test': p_info['test_name'], 'param': p_info['parameter_name'], 
                             'val': val, 'unit': p_info['unit'], 'ref': p_info['reference_range'], 'method': p_info['methodology'], 'interpretation': p_info['interpretation']
                         })
-        cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
+        cursor.execute("SELECT o.*, u.patient_uid, u.email FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
         order = cursor.fetchone()
         cursor.execute("SELECT l.* FROM order_items oi JOIN labs l ON oi.lab_id = l.id WHERE oi.order_id = %s LIMIT 1", (order_id,))
         lab_data = cursor.fetchone()
@@ -311,6 +335,12 @@ def save_results(order_id):
         filename = f"CareDrop_Report_{order['patient_uid']}.pdf"
         cursor.execute("UPDATE orders SET report_file = %s, report_filename = %s, status = 'Completed', report_type = 'System' WHERE id = %s", (psycopg2.Binary(pdf_bytes), filename, order_id))
         conn.commit()
+
+        # TRIGGER ASYNCHRONOUS BACKGROUND AUTOMATION
+        threading.Thread(target=dispatch_notifications_bg, args=(
+            order['email'], order['phone'], order['patient_name'], order['order_ref'], pdf_bytes, filename
+        )).start()
+
     except Exception as e: conn.rollback(); print(str(e))
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
