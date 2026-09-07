@@ -27,22 +27,18 @@ def safe_execute(query, params=None):
     finally: 
         conn.close()
 
-# --- ENTERPRISE DATABASE EXPANSION ---
 @app.before_request
 def ensure_db_schema():
     if not getattr(app, '_schema_checked', False):
         safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS referred_by VARCHAR(255) DEFAULT 'Self'")
         safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         safe_execute("ALTER TABLE phlebotomists ADD COLUMN IF NOT EXISTS pin VARCHAR(10) DEFAULT '1234'")
-        
-        # New Financial & Clinical Columns
         safe_execute("ALTER TABLE test_parameters ADD COLUMN IF NOT EXISTS methodology VARCHAR(255)")
         safe_execute("ALTER TABLE test_parameters ADD COLUMN IF NOT EXISTS interpretation TEXT")
         safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tpa_name VARCHAR(255)")
         safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS advance_amount NUMERIC DEFAULT 0")
         safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS balance_amount NUMERIC DEFAULT 0")
         safe_execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS family_member VARCHAR(255)")
-        
         app._schema_checked = True
 
 # --- PUBLIC ROUTES ---
@@ -137,7 +133,6 @@ def admin_walk_in():
     total, test_id, lab_id = request.form.get('total_amount', 0), request.form.get('test_id'), request.form.get('lab_id')
     ref_by = request.form.get('referred_by', 'Self').strip() or "Self"
     
-    # New Financial/TPA Data
     tpa_name = request.form.get('tpa_name', '').strip()
     advance = request.form.get('advance_amount', 0)
     balance = request.form.get('balance_amount', 0)
@@ -216,7 +211,63 @@ def auto_seed_lims():
     except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
     finally: conn.close()
 
-# Other minor admin routes remain structurally identical for team management, etc.
+@app.route('/admin/fill-report/<int:order_id>')
+def admin_fill_report(order_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = get_db()
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
+        order = cursor.fetchone()
+        cursor.execute("SELECT oi.order_id, t.id as test_id, t.name as test_name, c.name as cat_name FROM order_items oi JOIN tests t ON oi.test_id = t.id LEFT JOIN test_categories c ON t.category_id = c.id WHERE oi.item_type = 'test' AND oi.order_id = %s", (order_id,))
+        tests = cursor.fetchall()
+        for t in tests:
+            cursor.execute("SELECT id, parameter_name, unit, reference_range FROM test_parameters WHERE test_id = %s", (t['test_id'],))
+            t['parameters'] = cursor.fetchall()
+    except Exception as e: return str(e)
+    finally: conn.close()
+    return render_template('lims_report.html', order=order, tests=tests)
+
+@app.route('/admin/save-results/<int:order_id>', methods=['POST'])
+def save_results(order_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    conn = get_db()
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("DELETE FROM order_results WHERE order_id = %s", (order_id,)) 
+        results_data = []
+        
+        for key, value in request.form.items():
+            if key.startswith('param_') and value.strip() != '':
+                param_id = key.split('_')[1]; val = value.strip()
+                cursor.execute("INSERT INTO order_results (order_id, parameter_id, result_value) VALUES (%s, %s, %s)", (order_id, param_id, val))
+                
+                if request.form.get(f'print_{param_id}') == 'on':
+                    # CRITICAL: Now fetching the methodology column from the DB
+                    cursor.execute("SELECT tp.parameter_name, tp.unit, tp.reference_range, tp.methodology, t.name as test_name, c.name as cat_name FROM test_parameters tp JOIN tests t ON tp.test_id = t.id LEFT JOIN test_categories c ON t.category_id = c.id WHERE tp.id = %s", (param_id,))
+                    p_info = cursor.fetchone()
+                    if p_info: 
+                        results_data.append({
+                            'cat': p_info['cat_name'] or 'PATHOLOGY', 
+                            'test': p_info['test_name'], 
+                            'param': p_info['parameter_name'], 
+                            'val': val, 
+                            'unit': p_info['unit'], 
+                            'ref': p_info['reference_range'],
+                            'method': p_info['methodology']  # Attaching methodology for the PDF
+                        })
+        
+        cursor.execute("SELECT o.*, u.patient_uid FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = %s", (order_id,))
+        order = cursor.fetchone()
+        
+        pdf_bytes = generate_medical_report(order_id, order, results_data)
+        filename = f"CareDrop_Report_{order['patient_uid']}.pdf"
+        cursor.execute("UPDATE orders SET report_file = %s, report_filename = %s, status = 'Completed', report_type = 'System' WHERE id = %s", (psycopg2.Binary(pdf_bytes), filename, order_id))
+        conn.commit()
+    except Exception as e: conn.rollback(); print(str(e))
+    finally: conn.close()
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/add-phlebotomist', methods=['POST'])
 def add_phlebotomist():
     if session.get('admin_logged_in'): safe_execute("INSERT INTO phlebotomists (name, phone, vehicle_number, pin) VALUES (%s, %s, %s, %s)", (request.form.get('name'), request.form.get('phone'), request.form.get('vehicle_number'), request.form.get('pin', '1234')))
