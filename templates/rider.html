@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rider Portal | CareDrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
+        body { background: #F1F5F9; margin: 0; padding: 0; color: #0F172A; padding-bottom: 80px; }
+        
+        .header { background: #0F172A; color: white; padding: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; }
+        .logout-btn { color: #94A3B8; text-decoration: none; font-size: 13px; font-weight: 700; background: #1E293B; padding: 6px 12px; border-radius: 6px; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .stat-val { font-size: 24px; font-weight: 800; color: #0D9488; margin-bottom: 4px; }
+        .stat-label { font-size: 12px; font-weight: 800; color: #64748B; text-transform: uppercase; }
+
+        .container { padding: 0 20px; }
+        .section-title { font-size: 16px; font-weight: 800; color: #334155; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .order-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #E2E8F0; border-left: 4px solid #F59E0B; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .order-card.completed { border-left-color: #10B981; opacity: 0.8; }
+        
+        .o-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #CBD5E1; padding-bottom: 12px; margin-bottom: 12px; }
+        .o-time { font-size: 14px; font-weight: 800; color: #0F172A; }
+        .o-payout { background: #F0FDF4; color: #166534; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 800; border: 1px solid #BBF7D0; }
+        
+        .p-name { font-size: 18px; font-weight: 800; color: #0F172A; text-transform: capitalize; margin-bottom: 4px; }
+        .p-details { font-size: 13px; font-weight: 700; color: #64748B; margin-bottom: 15px; }
+        .p-address { background: #F8FAFC; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; color: #334155; border: 1px solid #E2E8F0; margin-bottom: 15px; line-height: 1.5; }
+        
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-nav { background: #DBEAFE; color: #1D4ED8; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 13px; text-decoration: none; text-align: center; display: flex; justify-content: center; align-items: center; gap: 6px; border: 1px solid #BFDBFE; }
+        .btn-nav:hover { background: #BFDBFE; }
+        .btn-collect { background: #0F172A; color: white; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 13px; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-collect:hover { background: #1E293B; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; background: white; border-radius: 12px; border: 1px dashed #CBD5E1; color: #64748B; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1><span><i data-lucide="navigation" style="width:20px; height:20px; vertical-align:middle; color:#0D9488;"></i> Rider Portal</span> <a href="/rider/logout" class="logout-btn">Logout</a></h1>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-val">{{ pending_count }}</div>
+            <div class="stat-label">Pending Pickups</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val">₹{{ total_earnings }}</div>
+            <div class="stat-label">Today's Payout</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section-title">Active Assignments</div>
+        
+        {% for o in orders %}
+            <div class="order-card {% if o.status != 'Pending' %}completed{% endif %}">
+                <div class="o-header">
+                    <div class="o-time">{{ o.time_slot }}</div>
+                    <div class="o-payout">Fee: ₹{{ o.payout_amount }}</div>
+                </div>
+                
+                <div class="p-name">{{ o.patient_name }}</div>
+                <div class="p-details">{{ o.age }} Yrs, {{ o.gender }} | Phone: {{ o.phone }}</div>
+                <div class="p-address"><i data-lucide="map-pin" style="width:14px; height:14px; vertical-align:middle; color:#0D9488;"></i> {{ o.address }}</div>
+                
+                {% if o.status == 'Pending' %}
+                <div class="action-grid">
+                    <a href="https://maps.google.com/?q={{ o.address }}" target="_blank" class="btn-nav"><i data-lucide="map" style="width:16px; height:16px;"></i> Navigate</a>
+                    <form action="/rider/update-status" method="POST" style="margin:0;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn-collect" onclick="return confirm('Confirm sample collected?');"><i data-lucide="check-circle" style="width:16px; height:16px;"></i> Mark Collected</button>
+                    </form>
+                </div>
+                {% else %}
+                <div style="background: #F1F5F9; color: #64748B; padding: 12px; border-radius: 8px; font-weight: 800; text-align: center; font-size: 13px; border: 1px dashed #CBD5E1;">
+                    ✓ Sample Collected & Updated
+                </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i data-lucide="check-circle-2" style="width: 48px; height: 48px; margin-bottom: 15px; color: #0D9488;"></i>
+                <div>No pending assignments. You're all caught up!</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
