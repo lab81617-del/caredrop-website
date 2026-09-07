@@ -23,26 +23,25 @@
         .tab-content.active { display: block; }
         
         .card { background: white; border-radius: 12px; margin-bottom: 30px; border: 1px solid #CBD5E1; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        
         .table-wrapper { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1000px; }
         th, td { padding: 16px 20px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
         th { background: #F8FAFC; font-weight: 800; color: #334155; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .badge { background: #F0FDF4; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; margin-bottom: 4px; border: 1px solid #BBF7D0; text-transform: uppercase; }
-        
         .form-container { padding: 25px; }
         .form-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; color: #0F172A; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
         
         .input-group label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 6px; color: #475569; text-transform: uppercase; }
         .input-group input, .input-group select { width: 100%; padding: 12px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: #0F172A; }
-        
         .btn-save { background: #0D9488; color: white; padding: 14px 24px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
-        .btn-save:hover { background: #0F766E; }
-        
         .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; transition: 0.2s; border: none; cursor: pointer; margin-top: 8px; }
-        .btn-lims:hover { background: #1E293B; }
+        
+        .dispatch-box { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .dispatch-box select { padding: 8px; font-size: 12px; font-weight: 700; border-radius: 4px; outline: none; }
+        .dispatch-box input { padding: 8px; font-size: 12px; font-weight: 700; border-radius: 4px; outline: none; width: 100%; }
+        .btn-assign { background: #0F172A; color: white; border: none; padding: 6px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -54,14 +53,13 @@
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('orders')">Live Orders & Registration</button>
+        <button class="tab-btn active" onclick="switchTab('orders')">Live Orders & Logistics</button>
         <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Master Dictionary</button>
         <button id="teamTabBtn" class="tab-btn" onclick="switchTab('team')">Fleet Management</button>
     </div>
 
-    <!-- ORDERS & REGISTRATION TAB -->
+    <!-- ORDERS TAB -->
     <div id="orders" class="tab-content active">
-        <!-- Walk-In Form -->
         <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
             <div class="form-title">Walk-In Patient Registration</div>
             <form action="/admin/walk-in" method="POST">
@@ -69,37 +67,22 @@
                     <div class="input-group"><label>Patient Name</label><input type="text" name="patient_name" placeholder="Full Name" required></div>
                     <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" placeholder="10 Digits" required></div>
                     <div class="input-group"><label>Age</label><input type="number" name="age" required></div>
-                    <div class="input-group">
-                        <label>Gender</label>
-                        <select name="gender" required><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
-                    </div>
+                    <div class="input-group"><label>Gender</label><select name="gender" required><option value="Male">Male</option><option value="Female">Female</option></select></div>
                 </div>
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label>Investigation / Test</label>
-                        <select name="test_id" required>
-                            <option value="">Search Dictionary...</option>
-                            {% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Processing Lab</label>
-                        <select name="lab_id" required>
-                            {% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}
-                        </select>
-                    </div>
-                    <div class="input-group"><label>Referred By</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma (Leave blank for Self)"></div>
+                    <div class="input-group"><label>Investigation / Test</label><select name="test_id" required><option value="">Search Dictionary...</option>{% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}</select></div>
+                    <div class="input-group"><label>Processing Lab</label><select name="lab_id" required>{% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}</select></div>
+                    <div class="input-group"><label>Referred By</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma"></div>
                     <div class="input-group"><label>Net Amount (₹)</label><input type="number" name="total_amount" required></div>
                 </div>
                 <button type="submit" class="btn-save" style="background: #0F172A;">+ Generate UID & Book Order</button>
             </form>
         </div>
 
-        <!-- Orders Table -->
         <div class="card table-wrapper">
             <table>
                 <thead>
-                    <tr><th>Order Ref & UID</th><th>Demographics</th><th>Schedule</th><th>Investigations</th><th>Actions & Reporting</th></tr>
+                    <tr><th>Order Ref & UID</th><th>Patient Details</th><th>Schedule & Status</th><th>Dispatch & Payout</th><th>Actions & Reporting</th></tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
@@ -111,31 +94,36 @@
                         <td>
                             <div style="font-weight: 800; text-transform: capitalize; color: #0F172A;">{{ order.patient_name }}</div>
                             <div style="font-size: 12px; color: #475569; font-weight: 700; margin-top: 4px;">{{ order.age }} Yrs | {{ order.gender }}</div>
-                            <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-top: 2px;">Ref: {{ order.referred_by or 'Self' }}</div>
+                            <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-top: 2px;"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> {{ order.address }}</div>
                         </td>
                         <td>
                             <div style="font-weight: 800; font-size: 13px; color: #0F172A;">{{ order.collection_date }}</div>
                             <div style="font-size: 12px; color: #0D9488; font-weight: 700; margin-top: 4px;">{{ order.status }}</div>
                         </td>
-                        <td>
-                            {% for test in order.test_list %}<div class="badge">{{ test.test_name }}</div><br>{% endfor %}
-                        </td>
-                        <td style="width: 250px;">
-                            {% if not order.has_report %}
-                                <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="background: #0D9488;"><i data-lucide="edit-3" style="width: 14px; height: 14px; vertical-align: middle;"></i> Open LIMS Result Entry</a>
-                            {% else %}
-                                <div style="background: #F0FDF4; color: #166534; padding: 6px; border-radius: 6px; font-size: 11px; font-weight: 800; text-align: center; border: 1px solid #86EFAC; margin-bottom: 6px;">✓ Authorized</div>
-                                
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                                    <a href="/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #0F172A;">📄 Clinical PDF</a>
-                                    <a href="/download-invoice/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #475569;">🧾 Print Bill</a>
+                        <td style="width: 200px;">
+                            <form action="/admin/assign-order" method="POST" class="dispatch-box">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <select name="phlebotomist_id">
+                                    <option value="">Unassigned</option>
+                                    {% for p in phlebotomists %}<option value="{{ p.id }}" {% if order.phlebotomist_id == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+                                </select>
+                                <div style="display:flex; gap:5px;">
+                                    <input type="number" name="payout_amount" value="{{ order.payout_amount or 150 }}" title="Rider Payout (₹)">
+                                    <button type="submit" class="btn-assign">Assign</button>
                                 </div>
-                                
-                                <a href="https://wa.me/91{{ order.phone }}?text=Hello {{ order.patient_name }}, your CareDrop Diagnostics report for {{ order.order_ref }} is ready. Download it securely here: https://caredrop.in/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin-top: 0; background: #16A34A; margin-bottom: 8px;">
-                                    <i data-lucide="message-circle" style="width: 14px; height: 14px; vertical-align: middle;"></i> Send via WhatsApp
+                            </form>
+                        </td>
+                        <td style="width: 220px;">
+                            {% if not order.has_report %}
+                                <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="background: #0D9488; margin:0;"><i data-lucide="edit-3" style="width: 14px; height: 14px; vertical-align: middle;"></i> Open LIMS Entry</a>
+                            {% else %}
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                                    <a href="/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin:0; background: #0F172A;">📄 Clinical PDF</a>
+                                    <a href="/download-invoice/{{ order.id }}" target="_blank" class="btn-lims" style="margin:0; background: #475569;">🧾 Print Bill</a>
+                                </div>
+                                <a href="https://wa.me/91{{ order.phone }}?text=Hello {{ order.patient_name }}, your CareDrop Diagnostics report for {{ order.order_ref }} is ready. Download it securely here: https://caredrop.in/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin:0; background: #16A34A; margin-bottom: 8px;">
+                                    <i data-lucide="message-circle" style="width: 14px; height: 14px; vertical-align: middle;"></i> WhatsApp Report
                                 </a>
-
-                                <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="margin-top: 0; background: white; color: #475569; border: 1px solid #CBD5E1;">Edit Results</a>
                             {% endif %}
                         </td>
                     </tr>
@@ -164,16 +152,17 @@
                 <div class="form-grid">
                     <div class="input-group"><label>Full Name</label><input type="text" name="name" required></div>
                     <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
-                    <div class="input-group"><label>Vehicle / Bike Number</label><input type="text" name="vehicle_number" placeholder="e.g. HR-02-AB-1234"></div>
+                    <div class="input-group"><label>Vehicle Number</label><input type="text" name="vehicle_number" placeholder="e.g. HR-02-AB-1234"></div>
+                    <div class="input-group"><label>4-Digit Login PIN</label><input type="text" name="pin" placeholder="e.g. 1234" maxlength="4" required></div>
                 </div>
-                <button type="submit" class="btn-save" style="background: #0F172A !important; width: auto;">+ Add to Fleet</button>
+                <button type="submit" class="btn-save" style="background: #0F172A !important; width: auto;">+ Register Rider & Generate PIN</button>
             </form>
         </div>
 
         <div class="card table-wrapper">
             <table>
                 <thead>
-                    <tr><th>ID</th><th>Phlebotomist Name</th><th>Contact Details</th><th>Vehicle Details</th><th>Status</th></tr>
+                    <tr><th>ID</th><th>Phlebotomist Name</th><th>Contact Details</th><th>Vehicle Details</th><th>Login PIN</th></tr>
                 </thead>
                 <tbody>
                     {% for p in phlebotomists %}
@@ -182,10 +171,10 @@
                         <td style="font-weight: 800; color: #0F172A; text-transform: capitalize;">{{ p.name }}</td>
                         <td style="font-weight: 700; color: #475569;">{{ p.phone }}</td>
                         <td style="font-weight: 700; color: #475569;">{{ p.vehicle_number or 'N/A' }}</td>
-                        <td><div class="badge">Active</div></td>
+                        <td><div style="font-family: monospace; font-size: 16px; font-weight: 800; color: #dc2626; background: #fef2f2; padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid #fca5a5;">{{ p.pin }}</div></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" style="text-align: center; color: #64748B; font-weight: 700;">No phlebotomists added yet.</td></tr>
+                    <tr><td colspan="5" style="text-align: center; color: #64748B; font-weight: 700;">No phlebotomists registered yet.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -199,6 +188,8 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
+        if (tabId === 'inventory') document.getElementById('inventoryTabBtn').classList.add('active');
+        if (tabId === 'team') document.getElementById('teamTabBtn').classList.add('active');
         localStorage.setItem('caredrop_admin_tab', tabId);
     }
     window.onload = () => {
