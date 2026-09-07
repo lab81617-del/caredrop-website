@@ -1,257 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script type="application/ld+json">
-{
-  "@context": "https://schema.org/",
-  "@type": "DiagnosticService",
-  "name": "CareDrop | Pathology Lab Home Collection",
-  "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "Diagnostic Services",
-    "itemListElement": [
-      {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Blood Test from Home"
-        }
-      },
-      {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Free Home Sample Collection"
-        }
-      },
-       {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Full Body Checkup"
-        }
-      }
-    ]
-  },
-  "provider": {
-    "@type": "DiagnosticLab",
-    "name": "CareDrop by IHC Diagnostics",
-    "location": {
-      "@type": "PostalAddress",
-      "streetAddress": "Agrasen Chowk, Opp. Dimple Cinema",
-      "addressLocality": "Yamunanagar",
-      "addressRegion": "Haryana",
-      "postalCode": "135001",
-      "addressCountry": "IN"
-    },
-    "serviceArea": {
-      "@type": "City",
-      "name": "Yamunanagar",
-      "sameAs": "https://en.wikipedia.org/wiki/Yamunanagar"
-    }
-  }
-}
-</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop | Yamunanagar's Best Labs at Home</title>
+    <title>CareDrop Diagnostics | Advanced Clinical Laboratory</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important; }
-        body { background: #F8FAFC; margin: 0; color: #0F172A; display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 90px; }
-        input, select, textarea, button { background-color: #fff; border: 1px solid #d1d5db; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
+        body { background: #F8FAFC; margin: 0; padding: 0; color: #0F172A; }
         
-        .navbar { display: flex; justify-content: space-between; padding: 20px 5%; background: white; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; text-align: left; line-height: 1.1; border: none !important; }
-        .nav-links { display: flex; gap: 20px; align-items: center; }
-        .nav-links a { text-decoration: none; color: #475569; font-weight: 800; font-size: 15px; border: none !important; background: transparent; }
-        .btn-nav { background: #0F172A !important; color: white !important; padding: 12px 24px; border-radius: 8px; transition: 0.2s; border: none; }
+        .nav { background: white; padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a { text-decoration: none; color: #475569; font-weight: 700; font-size: 15px; transition: 0.2s; }
+        .nav-links a:hover { color: #0D9488; }
+        .btn-primary { background: #0F172A; color: white !important; padding: 10px 20px; border-radius: 8px; font-weight: 800; }
         
-        .hero { text-align: center; padding: 60px 20px; background: #E0F2FE; border-radius: 24px; margin: 20px 5%; position: relative; overflow: hidden; }
-        .hero h1 { font-size: 42px; font-weight: 800; color: #0F766E; margin-bottom: 20px; line-height: 1.2; position: relative; z-index: 2; }
-        .hero p { font-size: 18px; color: #475569; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.6; font-weight: 600; position: relative; z-index: 2; }
-        .btn-hero { background: #0D9488 !important; color: white; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: 0.2s; border: none !important; cursor: pointer; position: relative; z-index: 2; }
-        .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.2); }
+        .hero { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white; padding: 100px 5%; text-align: center; }
+        .hero h1 { font-size: 48px; font-weight: 800; margin: 0 0 20px 0; line-height: 1.2; }
+        .hero p { font-size: 18px; color: #94A3B8; max-width: 600px; margin: 0 auto 40px auto; line-height: 1.6; font-weight: 500; }
+        .hero-btns { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn-large { background: #0D9488; color: white; padding: 16px 32px; border-radius: 8px; font-weight: 800; font-size: 16px; text-decoration: none; transition: 0.2s; }
+        .btn-large:hover { background: #0F766E; transform: translateY(-2px); }
+        .btn-outline { background: transparent; color: white; border: 2px solid white; padding: 14px 32px; border-radius: 8px; font-weight: 800; font-size: 16px; text-decoration: none; transition: 0.2s; }
+        .btn-outline:hover { background: white; color: #0F172A; }
         
-        /* Fixed dashed border to solid premium border */
-        .presc-banner { background: #F0FDF4; border-radius: 16px; margin: 0 5%; text-align: center; padding: 40px 20px; border: 1px solid #d1fae5; }
-        .presc-banner h2 { color: #166534; margin-top: 0; font-size: 24px; font-weight: 800; }
-        .presc-banner p { color: #15803D; margin-bottom: 25px; font-weight: 700; font-size: 16px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
-
-        .section { padding: 40px 5%; flex-grow: 1; }
-        .section h2 { font-size: 28px; font-weight: 800; margin-bottom: 30px; color: #1E293B; display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .section { padding: 80px 5%; max-width: 1200px; margin: 0 auto; }
+        .section-title { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 50px; color: #0F172A; }
         
-        .pkg-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 2px solid #0D9488; position: relative; transition: 0.2s; display: flex; flex-direction: column; }
-        .pkg-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(13, 148, 136, 0.1); }
-        .pkg-badge { position: absolute; top: -12px; right: 20px; background: #EC4899; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); border: none; }
-        .pkg-title { font-size: 22px; font-weight: 800; color: #0D9488; margin-bottom: 5px; text-transform: capitalize; }
-        .pkg-lab { font-size: 14px; font-weight: 800; color: #64748B; margin-bottom: 15px; background: #F1F5F9; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; text-transform: capitalize; }
-        .pkg-price { font-size: 32px; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; color: #0F172A; }
-        .pkg-old { font-size: 18px; color: #94A3B8; text-decoration: line-through; font-weight: 700; }
-        .pkg-timer { font-size: 13px; color: #DC2626; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 6px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .feature-card { background: white; padding: 30px; border-radius: 16px; border: 1px solid #E2E8F0; text-align: left; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.06); border-color: #0D9488; }
+        .feature-icon { background: #F0FDF4; color: #0D9488; width: 60px; height: 60px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+        .feature-card h3 { font-size: 20px; font-weight: 800; margin: 0 0 10px 0; }
+        .feature-card p { color: #64748B; font-size: 15px; line-height: 1.6; margin: 0; }
         
-        .pkg-features { list-style: none; padding: 0; margin: 0 0 25px 0; flex-grow: 1; }
-        .pkg-features li { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 15px; font-weight: 700; color: #475569; }
+        .footer { background: #0F172A; color: white; padding: 40px 5%; text-align: center; margin-top: 50px; }
+        .footer p { color: #64748B; font-weight: 600; font-size: 14px; }
         
-        .pkg-btn { display: block; width: 100%; text-align: center; background: #0F172A !important; color: white !important; padding: 16px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; font-size: 16px; transition: 0.2s; margin-top: auto; }
-        .pkg-btn:hover { background: #0D9488 !important; }
-
-        .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; text-align: center; }
-        .how-step { background: white; padding: 40px 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; }
-        .how-icon { background: #E0F2FE; color: #0284C7; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; }
-        .how-step h3 { font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 10px; }
-        .how-step p { font-size: 14px; color: #475569; font-weight: 600; line-height: 1.6; }
-
-        .wa-float { position: fixed; bottom: 20px; left: 20px; background: #25D366; color: white !important; padding: 14px 24px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 100; transition: 0.2s; border: none !important; }
-        .wa-float:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5); }
-
         @media (max-width: 768px) {
-            .navbar { padding: 15px; flex-direction: row; }
-            .logo { font-size: 20px; }
-            .logo span { font-size: 9px; }
-            .nav-links { gap: 12px; }
-            .nav-links a { font-size: 14px; }
-            .btn-nav { padding: 8px 14px; font-size: 14px; }
-            .hero { padding: 35px 15px; margin: 15px 5%; border-radius: 16px; }
-            .hero h1 { font-size: 28px; margin-bottom: 15px; line-height: 1.3; }
-            .hero p { font-size: 15px; margin-bottom: 20px; }
-            .btn-hero { width: 100%; justify-content: center; box-sizing: border-box; font-size: 16px; padding: 14px; }
-            .presc-banner { padding: 25px 15px; margin: 0 5%; border-radius: 16px; }
-            .presc-banner h2 { font-size: 20px; margin-bottom: 10px; }
-            .presc-banner p { font-size: 14px; margin-bottom: 15px; }
-            .section h2 { font-size: 24px; text-align: center; }
-            /* Left-align text blocks on mobile for readability */
-            .motive-grid { grid-template-columns: 1fr !important; gap: 30px !important; text-align: left; }
-            .pkg-card { padding: 25px; }
-            .wa-float { font-size: 0; padding: 14px; }
+            .hero h1 { font-size: 32px; }
+            .nav-links { display: none; } /* Hide links on mobile, keep simple */
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="/" class="logo">CareDrop<br><span style="font-size: 10px; color:#64748B; letter-spacing:1px; line-height: 1;">BY IHC DIAGNOSTICS</span></a>
+
+    <nav class="nav">
+        <a href="/" class="logo"><i data-lucide="activity" style="width: 28px; height: 28px;"></i> CareDrop</a>
         <div class="nav-links">
-            <a href="/my-bookings">My Bookings</a>
-            <a href="/tests" class="btn-nav">Book Test</a>
+            <a href="/tests">Lab Tests</a>
+            <a href="/tests">Health Packages</a>
+            <a href="/my-bookings" class="btn-primary">View Reports</a>
         </div>
     </nav>
 
     <div class="hero">
-        <h1>Yamunanagar's Best Labs.<br>Right at Your Doorstep.</h1>
-        <p>Compare prices, choose your favorite NABL-accredited or trusted local lab, and get your blood sample collected safely by certified health professionals.</p>
-        <a href="/tests" class="btn-hero"><i data-lucide="search" style="width: 20px; height: 20px;"></i> Search Tests & Packages</a>
-    </div>
-
-    <div class="presc-banner">
-        <h2>Have a Doctor's Prescription?</h2>
-        <p>Skip the manual search. Upload a photo of your prescription directly, and our support team will contact you to confirm the lowest cost and timing.</p>
-        <button onclick="directPrescription()" class="btn-hero" style="background: #15803D !important;"><i data-lucide="file-text" style="width: 20px; height: 20px;"></i> Upload Prescription</button>
+        <h1>Precision Diagnostics,<br>Delivered to Your Door.</h1>
+        <p>Book NABL-certified lab tests with free home sample collection. Receive digitally verified, QR-secured medical reports directly on your phone.</p>
+        <div class="hero-btns">
+            <a href="/tests" class="btn-large">Book a Lab Test</a>
+            <a href="/my-bookings" class="btn-outline">Download My Report</a>
+        </div>
     </div>
 
     <div class="section">
-        {% set has_offers = false %}
-        {% for pkg in packages %}
-            {% if pkg.offer_id %}{% set has_offers = true %}{% endif %}
-        {% endfor %}
-
-        {% if has_offers %}
-            <h2><i data-lucide="flame" style="color: #ea580c; width: 28px; height: 28px;"></i> Limited Time Special Offers</h2>
-            <div class="grid">
-                {% for pkg in packages %}
-                    {% if pkg.offer_id %}
-                    <div class="pkg-card">
-                        {% if pkg.badge %}<div class="pkg-badge">{{ pkg.badge }}</div>{% endif %}
-                        <div class="pkg-title">{{ pkg.title }}</div>
-                        <div class="pkg-lab"><i data-lucide="microscope" style="width: 14px; height: 14px;"></i> By {{ pkg.lab_name }}</div>
-                        <div class="pkg-price">₹{{ pkg.discounted_price }} <span class="pkg-old">₹{{ pkg.original_price }}</span></div>
-                        <div class="pkg-timer"><i data-lucide="timer" style="width: 14px; height: 14px;"></i> Offer valid until {{ pkg.end_date }}</div>
-                        <ul class="pkg-features">
-                            {% for feature in (pkg.features or '').split(',') %}
-                                {% if feature.strip() %}<li><i data-lucide="check-circle-2" style="color: #166534; width: 16px; height: 16px;"></i> {{ feature.strip() }}</li>{% endif %}
-                            {% endfor %}
-                        </ul>
-                        <button class="pkg-btn" onclick="bookPackage({{ pkg.id }}, '{{ pkg.title }}', {{ pkg.discounted_price }}, '{{ pkg.lab_name }}', {{ pkg.lab_id }})">Claim This Offer</button>
-                    </div>
-                    {% endif %}
-                {% endfor %}
+        <div class="section-title">Why Choose CareDrop?</div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i data-lucide="home" style="width: 32px; height: 32px;"></i></div>
+                <h3>Home Sample Collection</h3>
+                <p>Our certified phlebotomists will safely collect your blood and urine samples from the comfort of your home at your chosen time slot.</p>
             </div>
-        {% else %}
-            <!-- CONDITIONAL EMPTY STATE -->
-            <h2 style="color: #0D9488;">How CareDrop Works</h2>
-            <div class="how-grid">
-                <div class="how-step">
-                    <div class="how-icon"><i data-lucide="search" style="width: 30px; height: 30px;"></i></div>
-                    <h3>1. Search & Compare</h3>
-                    <p>Search for individual blood tests or full body packages. Compare prices across trusted labs in Yamunanagar instantly.</p>
-                </div>
-                <div class="how-step">
-                    <div class="how-icon"><i data-lucide="home" style="width: 30px; height: 30px;"></i></div>
-                    <h3>2. Free Home Collection</h3>
-                    <p>Select your preferred time slot. A certified phlebotomist will securely collect your sample directly from your home.</p>
-                </div>
-                <div class="how-step">
-                    <div class="how-icon"><i data-lucide="smartphone" style="width: 30px; height: 30px;"></i></div>
-                    <h3>3. Get Digital Reports</h3>
-                    <p>Log into your Patient Portal securely using just your email to download your PDF reports the moment they are ready.</p>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i data-lucide="shield-check" style="width: 32px; height: 32px;"></i></div>
+                <h3>NABL Certified Partner Labs</h3>
+                <p>We process all samples exclusively through strictly verified, high-end laboratory partners to guarantee absolute clinical accuracy.</p>
             </div>
-        {% endif %}
-    </div>
-
-    <div class="section" style="background: white; border-radius: 24px; margin: 20px 5% 60px 5%; padding: 50px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
-        <h2 style="color: #0F172A; text-align: center; margin-bottom: 30px;">The IHC Diagnostics Mission</h2>
-        <div class="motive-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
-            <div>
-                <h3 style="color: #0D9488; font-size: 20px; font-weight: 800;">Who We Are</h3>
-                <p style="color: #475569; line-height: 1.7; font-size: 15px; font-weight: 600;">Backed by the trusted expertise of <b>IHC Diagnostics</b>, CareDrop is Yamunanagar's premier healthcare aggregator. We partner strictly with highly-rated and NABL-accredited laboratories to ensure absolute accuracy and hygiene for every patient we serve.</p>
+            <div class="feature-card">
+                <div class="feature-icon"><i data-lucide="smartphone" style="width: 32px; height: 32px;"></i></div>
+                <h3>Smart Digital Reports</h3>
+                <p>Receive premium, enterprise-grade PDF reports directly to your WhatsApp and Email, complete with QR-code verification.</p>
             </div>
-            <div>
-                <h3 style="color: #0D9488; font-size: 20px; font-weight: 800;">Our Motive</h3>
-                <p style="color: #475569; line-height: 1.7; font-size: 15px; font-weight: 600;">We built CareDrop to eliminate the friction in modern healthcare. You shouldn't have to wait in crowded clinic lines or negotiate prices. Our platform provides absolute transparency, allowing you to compare lab costs, book certified phlebotomists to your doorstep, and receive your digital reports seamlessly.</p>
+            <!-- Placeholder for future B2B expansion -->
+            <div class="feature-card">
+                <div class="feature-icon"><i data-lucide="building" style="width: 32px; height: 32px;"></i></div>
+                <h3>Corporate Wellness (B2B)</h3>
+                <p>Comprehensive health monitoring and annual checkup packages designed specifically for corporate teams and organizations.</p>
             </div>
         </div>
     </div>
 
-    <footer style="background: #0F172A; color: white; padding: 40px 5%; margin-top: auto; text-align: center;">
-        <h3 style="color: #0D9488; margin-top: 0; font-size: 22px; font-weight: 800; margin-bottom: 20px;">CareDrop <span style="font-size: 14px; font-weight: 400; color: #94A3B8; letter-spacing: 1px; display: block; margin-top: 5px;">BY IHC DIAGNOSTICS</span></h3>
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; color: #CBD5E1; font-size: 15px; max-width: 400px; margin-left: auto; margin-right: auto; text-align: left; background: #1E293B; padding: 20px; border-radius: 12px; font-weight: 600;">
-            <div style="display: flex; align-items: center; gap: 10px;"><i data-lucide="map-pin" style="width: 18px; height: 18px;"></i> <span><b>Address:</b> Agrasen Chowk, Opp. Dimple Cinema, Yamunanagar</span></div>
-            <div style="display: flex; align-items: center; gap: 10px;"><i data-lucide="phone" style="width: 18px; height: 18px;"></i> <span><b>Support:</b> +91 9485978790</span></div>
-            <div style="display: flex; align-items: center; gap: 10px;"><i data-lucide="mail" style="width: 18px; height: 18px;"></i> <span><b>Email:</b> caredrop.ynr@gmail.com</span></div>
-        </div>
-        <p style="color: #475569; font-size: 13px; margin: 0; font-weight: 700;">© 2026 CareDrop Labs. All rights reserved.</p>
-    </footer>
+    <div class="footer">
+        <h2 style="margin: 0 0 10px 0;">CareDrop Diagnostics</h2>
+        <p>© 2026 CareDrop Digital LIMS Platform. All rights reserved.</p>
+    </div>
 
-    <!-- WHATSAPP CTA FLOATER -->
-    <a href="https://wa.me/919485978790?text=Hi%20CareDrop,%20I%20want%20to%20book%20a%20test" target="_blank" class="wa-float">
-        <i data-lucide="message-circle" style="width: 24px; height: 24px;"></i> <span>Book via WhatsApp</span>
-    </a>
-
-    <script>
-        lucide.createIcons();
-
-        function directPrescription() {
-            sessionStorage.removeItem('caredrop_cart'); 
-            window.location.href = '/book?direct=true'; 
-        }
-
-        function bookPackage(pkgId, title, price, labName, labId) {
-            let cart = JSON.parse(sessionStorage.getItem('caredrop_cart') || '[]');
-            const exists = cart.find(item => item.id === 'PKG_' + pkgId);
-            if (!exists) {
-                cart.push({
-                    id: 'PKG_' + pkgId,
-                    name: title,
-                    selectedLabId: labId, 
-                    labName: labName,
-                    currentPrice: price
-                });
-                sessionStorage.setItem('caredrop_cart', JSON.stringify(cart));
-            }
-            window.location.href = '/book';
-        }
-    </script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
