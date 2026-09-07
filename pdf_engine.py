@@ -10,10 +10,11 @@ from barcode.writer import ImageWriter
 # 1. CLINICAL MEDICAL REPORT PDF ENGINE
 # ==========================================
 class CareDropPDF(FPDF):
-    def __init__(self, qr_path, order_data, *args, **kwargs):
+    def __init__(self, qr_path, order_data, lab_data, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.qr_path = qr_path
         self.order = order_data
+        self.lab = lab_data if lab_data else {}
         self.set_auto_page_break(auto=True, margin=35)
 
     def header(self):
@@ -28,7 +29,10 @@ class CareDropPDF(FPDF):
         self.ln(8)
         self.set_font("helvetica", "B", 9)
         self.set_text_color(100, 100, 100)
-        self.cell(120, 5, "Advanced Clinical Laboratory | Precision & Care", ln=True)
+        
+        # Dynamic Lab Name
+        processing_lab = self.lab.get('name', 'Advanced Clinical Laboratory')
+        self.cell(120, 5, f"Processed at: {processing_lab} | Precision & Care", ln=True)
         
         self.set_draw_color(13, 148, 136)
         self.set_line_width(0.5)
@@ -97,7 +101,6 @@ class CareDropPDF(FPDF):
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(4)
         
-        # 5-COLUMN CLINICAL TABLE HEADER
         self.set_font("helvetica", "B", 8)
         self.set_fill_color(248, 250, 252)
         self.set_text_color(100, 116, 139)
@@ -113,22 +116,28 @@ class CareDropPDF(FPDF):
         self.set_draw_color(200, 200, 200)
         self.line(10, 267, 200, 267)
         
+        # Dynamic Doctors based on Lab
+        doc_1_name = self.lab.get('doctor_1_name', 'Dr. Ram Shran')
+        doc_1_deg = self.lab.get('doctor_1_degree', 'MBBS, MD (Pathology) | DMC-44740')
+        doc_2_name = self.lab.get('doctor_2_name', 'Dr. Abdul Sameer Qureshi')
+        doc_2_deg = self.lab.get('doctor_2_degree', 'MBBS, D.C.P | DMC-39510')
+
         self.set_y(-25)
         self.set_font("helvetica", "B", 10)
         self.set_text_color(15, 23, 42)
-        self.cell(100, 5, "CareDrop Digital Verification", ln=False, align="L")
-        self.cell(90, 5, "Chief Laboratory Director", ln=True, align="R")
+        self.cell(100, 5, doc_1_name, ln=False, align="L")
+        self.cell(90, 5, doc_2_name, ln=True, align="R")
         
         self.set_font("helvetica", "", 8)
         self.set_text_color(100, 100, 100)
-        self.cell(100, 4, "Electronically processed. No physical signature required.", ln=False, align="L")
-        self.cell(90, 4, "Verified by CareDrop LIMS", ln=True, align="R")
+        self.cell(100, 4, doc_1_deg, ln=False, align="L")
+        self.cell(90, 4, doc_2_deg, ln=True, align="R")
         
         self.set_y(-10)
         self.set_font("helvetica", "I", 8)
-        self.cell(0, 5, f"Page {self.page_no()}", align="C")
+        self.cell(0, 5, f"Electronically processed. Page {self.page_no()}", align="C")
 
-def generate_medical_report(order_id, order_data, results_data):
+def generate_medical_report(order_id, order_data, results_data, lab_data):
     qr = qrcode.QRCode(box_size=4, border=0)
     qr.add_data(f"https://caredrop.in/download-report/{order_id}")
     qr.make(fit=True)
@@ -138,10 +147,12 @@ def generate_medical_report(order_id, order_data, results_data):
         qr_img.save(tf_qr, 'PNG')
         qr_path = tf_qr.name
 
-    pdf = CareDropPDF(qr_path=qr_path, order_data=order_data)
+    pdf = CareDropPDF(qr_path=qr_path, order_data=order_data, lab_data=lab_data)
     pdf.add_page()
     
     current_cat, current_test = "", ""
+    interpretations_to_print = []
+
     for r in results_data:
         if r['cat'] != current_cat:
             pdf.ln(4)
@@ -155,6 +166,11 @@ def generate_medical_report(order_id, order_data, results_data):
             pdf.set_text_color(15, 23, 42)
             pdf.cell(190, 8, r['test'].title(), 0, 1, 'L')
             current_test = r['test']
+            
+            # Store interpretation if the test has one
+            if r.get('interpretation'):
+                if {'test': r['test'], 'text': r['interpretation']} not in interpretations_to_print:
+                    interpretations_to_print.append({'test': r['test'], 'text': r['interpretation']})
         
         pdf.set_font("helvetica", "", 9)
         pdf.set_text_color(51, 65, 85)
@@ -174,6 +190,27 @@ def generate_medical_report(order_id, order_data, results_data):
         
         pdf.set_draw_color(241, 245, 249)
         pdf.line(12, pdf.get_y(), 198, pdf.get_y())
+
+    # --- PRINT CLINICAL INTERPRETATIONS ---
+    if interpretations_to_print:
+        pdf.ln(10)
+        pdf.set_font("helvetica", "B", 11)
+        pdf.set_text_color(15, 23, 42)
+        pdf.cell(190, 8, "CLINICAL INTERPRETATIONS", 0, 1, 'L')
+        pdf.set_draw_color(13, 148, 136)
+        pdf.line(10, pdf.get_y(), 50, pdf.get_y())
+        pdf.ln(4)
+        
+        for interp in interpretations_to_print:
+            pdf.set_font("helvetica", "B", 9)
+            pdf.set_text_color(13, 148, 136)
+            pdf.cell(190, 6, interp['test'].upper(), 0, 1, 'L')
+            
+            pdf.set_font("helvetica", "", 8)
+            pdf.set_text_color(71, 85, 105)
+            # multi_cell handles line wrapping automatically for large paragraphs
+            pdf.multi_cell(190, 4, interp['text'])
+            pdf.ln(4)
 
     os.remove(qr_path)
     return pdf.output()
@@ -205,7 +242,6 @@ def generate_invoice_report(order_data, items_data):
     pdf = InvoicePDF()
     pdf.add_page()
     
-    # Billing Info
     pdf.set_y(40)
     pdf.set_font("helvetica", "B", 10)
     pdf.set_text_color(15, 23, 42)
@@ -229,7 +265,6 @@ def generate_invoice_report(order_data, items_data):
     
     pdf.ln(10)
     
-    # Table Header
     pdf.set_font("helvetica", "B", 10)
     pdf.set_fill_color(241, 245, 249)
     pdf.set_text_color(15, 23, 42)
@@ -239,7 +274,6 @@ def generate_invoice_report(order_data, items_data):
     pdf.cell(35, 10, " Amount (INR)", border=1, align="C", fill=True)
     pdf.ln(10)
     
-    # Table Rows
     pdf.set_font("helvetica", "", 10)
     for index, item in enumerate(items_data, 1):
         pdf.cell(15, 10, f" {index}", border=1, align="C")
@@ -247,7 +281,6 @@ def generate_invoice_report(order_data, items_data):
         pdf.cell(35, 10, f" {int(item['price'])}.00", border=1, align="C")
         pdf.ln(10)
         
-    # Financial Calculations
     pdf.set_font("helvetica", "B", 10)
     pdf.set_fill_color(248, 250, 252)
     
