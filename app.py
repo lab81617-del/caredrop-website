@@ -328,7 +328,7 @@ def auto_seed_lims():
             'Complete Blood Count': "There have been some reports of WBC and platelet counts being lower in venous blood than in capillary blood samples, although still within these reference ranges. Assay results should be correlated clinically.",
             'Thyroid Profile': "TSH levels between 6.3 and 15.0 may represent subclinical or compensated hypothyroidism. A high TSH result often means an underactive thyroid gland."
         }
-       master_params = {
+        master_params = {
             'Complete Blood Count': [
                 ('Hemoglobin (HB)', 'g/dl', '12.0 - 16.0', 'Photometric/Non Cyanmethemoglobin'), 
                 ('Total Leucocytes Count (WBC)', 'Cells/Cumm', '4000 - 10500', 'Optical Flow cytometry'), 
