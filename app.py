@@ -324,32 +324,75 @@ def auto_seed_lims():
             'Complete Blood Count': "There have been some reports of WBC and platelet counts being lower in venous blood than in capillary blood samples, although still within these reference ranges. Assay results should be correlated clinically.",
             'Thyroid Profile': "TSH levels between 6.3 and 15.0 may represent subclinical or compensated hypothyroidism. A high TSH result often means an underactive thyroid gland."
         }
-        master_params = {
+       master_params = {
             'Complete Blood Count': [
                 ('Hemoglobin (HB)', 'g/dl', '12.0 - 16.0', 'Photometric/Non Cyanmethemoglobin'), 
-                ('Total Leucocytes Count (WBC)', 'Cells/Cumm', '4000 - 10500', 'Optical Flow cytometry/Manual'), 
-                ('Neutrophils', '%', '40 - 80', 'Impedance/microscopy'), 
+                ('Total Leucocytes Count (WBC)', 'Cells/Cumm', '4000 - 10500', 'Optical Flow cytometry'), 
+                ('Neutrophils', '%', '40 - 80', 'Impedance'), 
                 ('Lymphocytes', '%', '20 - 40', 'Flowcytometry'),
-                ('Eosinophils', '%', '01 - 06', 'Impedance/microscopy'), 
-                ('Monocytes', '%', '02 - 10', 'Impedance/microscopy'), 
-                ('Basophils', '%', '00 - 01', 'Impedance/microscopy'),
-                ('Absolute Neutrophil Count', 'Cells/uL', '2000 - 8000', 'Automated Calculated'), 
+                ('Eosinophils', '%', '01 - 06', 'Impedance'), 
+                ('Monocytes', '%', '02 - 10', 'Impedance'), 
+                ('Basophils', '%', '00 - 01', 'Impedance'),
+                ('Absolute Neutrophil Count', 'Cells/uL', '2000 - 8000', 'Calculated'), 
                 ('Absolute Lymphocyte Count', '/uL', '1000 - 3000', 'Flowcytometry'),
-                ('Mean Cell Haemoglobin (MCH)', 'Pg', '27 - 32', 'Automated Calculated'), 
-                ('MCHC', 'g/dl', '31.5 - 34.5', 'Automated Calculated'),
+                ('Mean Cell Haemoglobin (MCH)', 'Pg', '27 - 32', 'Calculated'), 
+                ('MCHC', 'g/dl', '31.5 - 34.5', 'Calculated'),
                 ('Erythrocyte count (RBC COUNT)', 'million/cmm', '3.8 - 4.8', 'Impedance'), 
                 ('Packed Cell Volume (Hematocrit)', '%', '36 - 46', 'Cell Counter'),
-                ('Mean Cell Volume (MCV)', 'fL', '83 - 101', 'Automated Calculated'), 
-                ('Red Cell Distribution Width (RDW)-SD', 'fL', '35 - 56', 'Automated Calculated'),
-                ('Platelet Count', 'Lakh/cumm', '1.50 - 4.50', 'Impedance/microscopy'),
-                ('Plateletcrit (PCT)', '%', '0.2 - 0.5', 'Automated Optical'), 
-                ('Platelet large cell ratio (P-LCR)', '%', '11.9 - 66.9', 'Automated Calculated'),
+                ('Mean Cell Volume (MCV)', 'fL', '83 - 101', 'Calculated'), 
+                ('Red Cell Distribution Width (RDW)-SD', 'fL', '35 - 56', 'Calculated'),
+                ('Platelet Count', 'Lakh/cumm', '1.50 - 4.50', 'Impedance'),
                 ('Erythrocytes Sedimentation Rate (ESR)', 'mm/1st hr', '0 - 20', 'Westergren')
             ],
             'Thyroid Profile': [
                 ('Total T3', 'ng/dL', '80 - 200', 'ECLIA'), 
                 ('Total T4', 'ug/dL', '4.5 - 12.0', 'ECLIA'), 
-                ('TSH (3rd Gen, Ultrasensitive)', 'uIU/mL', '0.13 - 6.33', 'ECLIA')
+                ('TSH (3rd Gen, Ultrasensitive)', 'uIU/mL', '0.40 - 4.20', 'ECLIA')
+            ],
+            'Liver Function Test': [
+                ('Bilirubin (Total)', 'mg/dL', '0.2 - 1.2', 'Diazo method'), 
+                ('Bilirubin (Direct)', 'mg/dL', '0.0 - 0.3', 'Diazo method'), 
+                ('Bilirubin (Indirect)', 'mg/dL', '0.2 - 0.9', 'Calculated'),
+                ('SGOT / AST', 'U/L', '5 - 40', 'IFCC without P5P'), 
+                ('SGPT / ALT', 'U/L', '7 - 56', 'IFCC without P5P'), 
+                ('Alkaline Phosphatase (ALP)', 'U/L', '40 - 129', 'PNPP AMP Buffer'),
+                ('Total Protein', 'g/dL', '6.0 - 8.3', 'Biuret'), 
+                ('Albumin', 'g/dL', '3.5 - 5.2', 'Bromocresol Green'), 
+                ('Globulin', 'g/dL', '2.5 - 3.5', 'Calculated'), 
+                ('A/G Ratio', 'Ratio', '1.0 - 2.1', 'Calculated')
+            ],
+            'Kidney Function Test': [
+                ('Blood Urea', 'mg/dL', '14 - 40', 'GLDH-Urease'), 
+                ('Blood Urea Nitrogen (BUN)', 'mg/dl', '7 - 18', 'Calculated'), 
+                ('Serum Creatinine', 'mg/dl', '0.5 - 1.1', 'Jaffe / Enzymatic'), 
+                ('Serum Uric Acid', 'mg/dL', '3.4 - 7.0', 'Uricase'), 
+                ('Calcium', 'mg/dl', '8.6 - 10.2', 'Arsenazo III'), 
+                ('Sodium', 'mmol/L', '135 - 155', 'ISE Indirect'), 
+                ('Potassium', 'mmol/L', '3.5 - 5.0', 'ISE Indirect'), 
+                ('Chloride', 'mmol/L', '95 - 108', 'ISE Indirect')
+            ],
+            'Lipid Profile': [
+                ('Total Cholesterol', 'mg/dl', '< 200', 'CHOD-PAP'), 
+                ('Triglycerides', 'mg/dl', '< 150', 'GPO-PAP'), 
+                ('Cholesterol-HDL', 'mg/dl', '40 - 60', 'Direct Enzymatic'), 
+                ('Cholesterol-LDL (Direct)', 'mg/dl', '< 100', 'Direct Enzymatic'), 
+                ('Cholesterol-VLDL', 'mg/dl', '7 - 40', 'Calculated'), 
+                ('Total Cholesterol/HDL Ratio', 'Ratio', '< 5.0', 'Calculated')
+            ],
+            'Diabetes Screen': [
+                ('Fasting Blood Sugar (FBS)', 'mg/dL', '70 - 100', 'Hexokinase/GOD-POD'),
+                ('Post Prandial Blood Sugar (PPBS)', 'mg/dL', '< 140', 'Hexokinase/GOD-POD'),
+                ('Glycosylated Hemoglobin (HbA1C)', '%', '< 5.7', 'HPLC / Immunoturbidimetry'), 
+                ('Estimated Average Glucose (eAG)', 'mg/dl', '90 - 120', 'Calculated')
+            ],
+            'Vitamin Profile': [
+                ('Vitamin D (25 - OH Cholecalciferol)', 'ng/mL', '30.0 - 100.0', 'CLIA / ECLIA'),
+                ('Vitamin B12 (Cyanocobalamin)', 'pg/mL', '211 - 911', 'CLIA / ECLIA')
+            ],
+            'Dengue Serology': [
+                ('Dengue NS1 Antigen', 'Index', '< 0.9 (Negative)', 'ELISA / Immunochromatography'),
+                ('Dengue IgG Antibody', 'Index', '< 0.9 (Negative)', 'ELISA'),
+                ('Dengue IgM Antibody', 'Index', '< 0.9 (Negative)', 'ELISA')
             ]
         }
         for search_name, params in master_params.items():
