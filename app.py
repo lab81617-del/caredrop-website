@@ -53,7 +53,6 @@ def role_required(role_name):
 
 # --- BACKGROUND AUTOMATION ENGINE ---
 def dispatch_notifications_bg(patient_email, patient_phone, patient_name, order_ref, pdf_bytes, filename):
-    # 1. Automated Email Dispatch
     try:
         if patient_email and '@' in patient_email and not patient_email.startswith('walkin_'):
             msg = EmailMessage()
@@ -63,7 +62,6 @@ def dispatch_notifications_bg(patient_email, patient_phone, patient_name, order_
             msg.set_content(f"Dear {patient_name.title()},\n\nYour clinical investigations are complete. Please find your digitally verified laboratory report attached.\n\nThank you for choosing CareDrop Diagnostics.\n\nChief Laboratory Director")
             msg.add_attachment(pdf_bytes, maintype='application', subtype='pdf', filename=filename)
 
-            # Requires SMTP credentials in your Render Environment Variables
             if os.environ.get('MAIL_PASSWORD'):
                 with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
                     smtp.login(os.environ.get('MAIL_USERNAME'), os.environ.get('MAIL_PASSWORD'))
@@ -71,7 +69,6 @@ def dispatch_notifications_bg(patient_email, patient_phone, patient_name, order_
     except Exception as e:
         print(f"Background Email Failed: {e}")
 
-    # 2. Automated WhatsApp API Dispatch
     try:
         wa_token = os.environ.get('WA_TOKEN')
         wa_url = os.environ.get('WA_URL')
@@ -84,6 +81,85 @@ def dispatch_notifications_bg(patient_email, patient_phone, patient_name, order_
             requests.post(wa_url, data=payload, timeout=5)
     except Exception as e:
         print(f"Background WhatsApp Failed: {e}")
+
+# --- RESTORED API ROUTES (FRONTEND BUTTONS) ---
+@app.route('/api/place-order', methods=['POST'])
+def place_order():
+    name = request.form.get('patient_name')
+    phone = request.form.get('phone')
+    email = request.form.get('email')
+    age = request.form.get('age')
+    gender = request.form.get('gender')
+    address = request.form.get('address')
+    date = request.form.get('date')
+    time_slot = request.form.get('time_slot', 'Morning')
+    total = request.form.get('total', 0)
+    cart_json = request.form.get('cart', '[]')
+    
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE phone = %s", (phone,))
+        user = cursor.fetchone()
+        if user:
+            user_id = user[0]
+            cursor.execute("UPDATE users SET email = %s WHERE id = %s", (email, user_id))
+        else:
+            cursor.execute("INSERT INTO users (name, phone, email) VALUES (%s, %s, %s) RETURNING id", (name, phone, email))
+            user_id = cursor.fetchone()[0]
+            
+        cursor.execute("SELECT patient_uid FROM users WHERE id = %s", (user_id,))
+        if not cursor.fetchone()[0]:
+            cursor.execute("UPDATE users SET patient_uid = %s WHERE id = %s", (f"CD-PAT-{1000 + user_id}", user_id))
+
+        cursor.execute("""
+            INSERT INTO orders (user_id, patient_name, age, gender, address, collection_date, time_slot, total_amount, balance_amount, status) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Pending') RETURNING id
+        """, (user_id, name, age, gender, address, date, time_slot, total, total))
+        order_id = cursor.fetchone()[0]
+        
+        cursor.execute("UPDATE orders SET order_ref = %s WHERE id = %s", (f"ORD-{datetime.today().strftime('%y%m')}-{order_id:04d}", order_id))
+        
+        for item in json.loads(cart_json):
+            clean_id, is_pkg = str(item['id']).replace('PKG_',''), 'package' if 'PKG_' in str(item['id']) else 'test'
+            cursor.execute("INSERT INTO order_items (order_id, test_id, lab_id, price, item_type) VALUES (%s, %s, %s, %s, %s)", (order_id, clean_id, item['selectedLabId'], item['currentPrice'], is_pkg))
+        conn.commit()
+        return jsonify({"success": True, "order_id": order_id})
+    except Exception as e: conn.rollback(); return jsonify({"success": False, "message": str(e)})
+    finally: conn.close()
+
+@app.route('/api/send-otp', methods=['POST'])
+def send_otp():
+    email = request.json.get('email')
+    if email:
+        otp = str(random.randint(1000, 9999))
+        session[f'otp_{email}'] = otp
+        
+        try:
+            msg = EmailMessage()
+            msg['Subject'] = "CareDrop Diagnostics - Secure Login OTP"
+            msg['From'] = os.environ.get('MAIL_USERNAME', 'reports@caredrop.in')
+            msg['To'] = email
+            msg.set_content(f"Your CareDrop Secure Portal OTP is: {otp}\n\nDo not share this code with anyone.")
+            
+            if os.environ.get('MAIL_PASSWORD'):
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                    smtp.login(os.environ.get('MAIL_USERNAME'), os.environ.get('MAIL_PASSWORD'))
+                    smtp.send_message(msg)
+        except Exception as e:
+            print(e)
+            
+        return jsonify({"success": True})
+    return jsonify({"success": False})
+
+@app.route('/api/verify-otp', methods=['POST'])
+def verify_otp():
+    email = request.json.get('email')
+    user_otp = request.json.get('otp')
+    if session.get(f'otp_{email}') == user_otp or user_otp == "1234": # 1234 serves as a master override if email fails
+        session[f'verified_{email}'] = True
+        return jsonify({"success": True})
+    return jsonify({"success": False})
 
 # --- PUBLIC ROUTES ---
 @app.route('/')
@@ -336,7 +412,6 @@ def save_results(order_id):
         cursor.execute("UPDATE orders SET report_file = %s, report_filename = %s, status = 'Completed', report_type = 'System' WHERE id = %s", (psycopg2.Binary(pdf_bytes), filename, order_id))
         conn.commit()
 
-        # TRIGGER ASYNCHRONOUS BACKGROUND AUTOMATION
         threading.Thread(target=dispatch_notifications_bg, args=(
             order['email'], order['phone'], order['patient_name'], order['order_ref'], pdf_bytes, filename
         )).start()
