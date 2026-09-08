@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2B Clinical Portal | CareDrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box;}
+        body { background: #F8FAFC; margin: 0; padding: 20px; color: #0F172A; font-size: 14px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 25px; border-top: 4px solid #16A34A; }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 800; color: #0F172A; }
+        
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; }
+        .stat-card h3 { margin: 0 0 5px 0; font-size: 12px; color: #64748B; text-transform: uppercase; }
+        .stat-card .val { font-size: 28px; font-weight: 800; color: #16A34A; }
+        
+        .card { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        th { background: #F1F5F9; font-weight: 800; color: #334155; font-size: 12px; text-transform: uppercase; }
+        
+        .btn-download { background: #0F172A; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 800; text-decoration: none; display: inline-block; font-size: 12px; transition: 0.2s; }
+        .btn-download:hover { background: #1E293B; }
+        .status-badge { background: #FEF3C7; color: #92400E; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .status-ready { background: #DCFCE7; color: #166534; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>CareDrop Clinical Portal</h1>
+            <div style="font-size: 13px; color: #64748B; font-weight: 600; margin-top: 4px;">Welcome, {{ doc_name }}</div>
+        </div>
+        <a href="/doctor/logout" style="color: #DC2626; font-weight: 800; text-decoration: none; font-size: 13px;">Secure Logout</a>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <h3>Total Patients Referred</h3>
+            <div class="val">{{ stats.total_patients }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Total Revenue Generated</h3>
+            <div class="val">₹{{ stats.total_revenue or 0 }}</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr><th>Patient Details</th><th>Reg. Date</th><th>Current Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                {% for p in patients %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 800; color: #0F172A; font-size: 15px;">{{ p.patient_name.title() }}</div>
+                        <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-top: 4px;">{{ p.age }} Yrs | {{ p.gender }} | {{ p.patient_uid }}</div>
+                    </td>
+                    <td style="font-weight: 700; color: #475569;">{{ p.created_at.strftime('%d-%b-%Y') if p.created_at else p.collection_date }}</td>
+                    <td>
+                        {% if p.has_report %}
+                            <span class="status-badge status-ready">Report Ready</span>
+                        {% else %}
+                            <span class="status-badge">{{ p.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.has_report %}
+                            <a href="/download-report/{{ p.id }}" target="_blank" class="btn-download"><i data-lucide="download" style="width: 14px; height: 14px; vertical-align: middle;"></i> Download PDF</a>
+                        {% else %}
+                            <span style="font-size: 12px; color: #94A3B8; font-weight: 700;">Processing...</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align: center; font-weight: 700; color: #64748B; padding: 40px;">No patients found under your referral name yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>
