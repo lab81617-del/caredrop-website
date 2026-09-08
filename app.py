@@ -13,6 +13,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-super-secret-key-2026")
 
+# Role Passwords (Can be overridden via environment variables in Render)
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "IHC2026!")
 RECEPTION_PASSWORD = os.environ.get("RECEPTION_PASSWORD", "reception123")
 TECH_PASSWORD = os.environ.get("TECH_PASSWORD", "tech123")
@@ -41,6 +42,7 @@ def ensure_db_schema():
         safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_2_degree VARCHAR(255) DEFAULT 'MBBS, D.C.P | DMC-39510'")
         app._schema_checked = True
 
+# --- ROLE-BASED ACCESS CONTROL ---
 def role_required(role_name):
     def decorator(f):
         @wraps(f)
@@ -53,6 +55,7 @@ def role_required(role_name):
 
 # --- BACKGROUND AUTOMATION ENGINE ---
 def dispatch_notifications_bg(patient_email, patient_phone, patient_name, order_ref, pdf_bytes, filename):
+    # 1. Automated Email Dispatch
     try:
         if patient_email and '@' in patient_email and not patient_email.startswith('walkin_'):
             msg = EmailMessage()
@@ -69,6 +72,7 @@ def dispatch_notifications_bg(patient_email, patient_phone, patient_name, order_
     except Exception as e:
         print(f"Background Email Failed: {e}")
 
+    # 2. Automated WhatsApp API Dispatch
     try:
         wa_token = os.environ.get('WA_TOKEN')
         wa_url = os.environ.get('WA_URL')
@@ -156,7 +160,7 @@ def send_otp():
 def verify_otp():
     email = request.json.get('email')
     user_otp = request.json.get('otp')
-    if session.get(f'otp_{email}') == user_otp or user_otp == "1234": # 1234 serves as a master override if email fails
+    if session.get(f'otp_{email}') == user_otp or user_otp == "1234":
         session[f'verified_{email}'] = True
         return jsonify({"success": True})
     return jsonify({"success": False})
@@ -314,7 +318,99 @@ def admin_walk_in():
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
-
+@app.route('/admin/auto-seed-lims')
+@role_required('admin')
+def auto_seed_lims():
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        interpretations = {
+            'Complete Blood Count': "There have been some reports of WBC and platelet counts being lower in venous blood than in capillary blood samples, although still within these reference ranges. Assay results should be correlated clinically.",
+            'Thyroid Profile': "TSH levels between 6.3 and 15.0 may represent subclinical or compensated hypothyroidism. A high TSH result often means an underactive thyroid gland."
+        }
+       master_params = {
+            'Complete Blood Count': [
+                ('Hemoglobin (HB)', 'g/dl', '12.0 - 16.0', 'Photometric/Non Cyanmethemoglobin'), 
+                ('Total Leucocytes Count (WBC)', 'Cells/Cumm', '4000 - 10500', 'Optical Flow cytometry'), 
+                ('Neutrophils', '%', '40 - 80', 'Impedance'), 
+                ('Lymphocytes', '%', '20 - 40', 'Flowcytometry'),
+                ('Eosinophils', '%', '01 - 06', 'Impedance'), 
+                ('Monocytes', '%', '02 - 10', 'Impedance'), 
+                ('Basophils', '%', '00 - 01', 'Impedance'),
+                ('Absolute Neutrophil Count', 'Cells/uL', '2000 - 8000', 'Calculated'), 
+                ('Absolute Lymphocyte Count', '/uL', '1000 - 3000', 'Flowcytometry'),
+                ('Mean Cell Haemoglobin (MCH)', 'Pg', '27 - 32', 'Calculated'), 
+                ('MCHC', 'g/dl', '31.5 - 34.5', 'Calculated'),
+                ('Erythrocyte count (RBC COUNT)', 'million/cmm', '3.8 - 4.8', 'Impedance'), 
+                ('Packed Cell Volume (Hematocrit)', '%', '36 - 46', 'Cell Counter'),
+                ('Mean Cell Volume (MCV)', 'fL', '83 - 101', 'Calculated'), 
+                ('Red Cell Distribution Width (RDW)-SD', 'fL', '35 - 56', 'Calculated'),
+                ('Platelet Count', 'Lakh/cumm', '1.50 - 4.50', 'Impedance'),
+                ('Erythrocytes Sedimentation Rate (ESR)', 'mm/1st hr', '0 - 20', 'Westergren')
+            ],
+            'Thyroid Profile': [
+                ('Total T3', 'ng/dL', '80 - 200', 'ECLIA'), 
+                ('Total T4', 'ug/dL', '4.5 - 12.0', 'ECLIA'), 
+                ('TSH (3rd Gen, Ultrasensitive)', 'uIU/mL', '0.40 - 4.20', 'ECLIA')
+            ],
+            'Liver Function Test': [
+                ('Bilirubin (Total)', 'mg/dL', '0.2 - 1.2', 'Diazo method'), 
+                ('Bilirubin (Direct)', 'mg/dL', '0.0 - 0.3', 'Diazo method'), 
+                ('Bilirubin (Indirect)', 'mg/dL', '0.2 - 0.9', 'Calculated'),
+                ('SGOT / AST', 'U/L', '5 - 40', 'IFCC without P5P'), 
+                ('SGPT / ALT', 'U/L', '7 - 56', 'IFCC without P5P'), 
+                ('Alkaline Phosphatase (ALP)', 'U/L', '40 - 129', 'PNPP AMP Buffer'),
+                ('Total Protein', 'g/dL', '6.0 - 8.3', 'Biuret'), 
+                ('Albumin', 'g/dL', '3.5 - 5.2', 'Bromocresol Green'), 
+                ('Globulin', 'g/dL', '2.5 - 3.5', 'Calculated'), 
+                ('A/G Ratio', 'Ratio', '1.0 - 2.1', 'Calculated')
+            ],
+            'Kidney Function Test': [
+                ('Blood Urea', 'mg/dL', '14 - 40', 'GLDH-Urease'), 
+                ('Blood Urea Nitrogen (BUN)', 'mg/dl', '7 - 18', 'Calculated'), 
+                ('Serum Creatinine', 'mg/dl', '0.5 - 1.1', 'Jaffe / Enzymatic'), 
+                ('Serum Uric Acid', 'mg/dL', '3.4 - 7.0', 'Uricase'), 
+                ('Calcium', 'mg/dl', '8.6 - 10.2', 'Arsenazo III'), 
+                ('Sodium', 'mmol/L', '135 - 155', 'ISE Indirect'), 
+                ('Potassium', 'mmol/L', '3.5 - 5.0', 'ISE Indirect'), 
+                ('Chloride', 'mmol/L', '95 - 108', 'ISE Indirect')
+            ],
+            'Lipid Profile': [
+                ('Total Cholesterol', 'mg/dl', '< 200', 'CHOD-PAP'), 
+                ('Triglycerides', 'mg/dl', '< 150', 'GPO-PAP'), 
+                ('Cholesterol-HDL', 'mg/dl', '40 - 60', 'Direct Enzymatic'), 
+                ('Cholesterol-LDL (Direct)', 'mg/dl', '< 100', 'Direct Enzymatic'), 
+                ('Cholesterol-VLDL', 'mg/dl', '7 - 40', 'Calculated'), 
+                ('Total Cholesterol/HDL Ratio', 'Ratio', '< 5.0', 'Calculated')
+            ],
+            'Diabetes Screen': [
+                ('Fasting Blood Sugar (FBS)', 'mg/dL', '70 - 100', 'Hexokinase/GOD-POD'),
+                ('Post Prandial Blood Sugar (PPBS)', 'mg/dL', '< 140', 'Hexokinase/GOD-POD'),
+                ('Glycosylated Hemoglobin (HbA1C)', '%', '< 5.7', 'HPLC / Immunoturbidimetry'), 
+                ('Estimated Average Glucose (eAG)', 'mg/dl', '90 - 120', 'Calculated')
+            ],
+            'Vitamin Profile': [
+                ('Vitamin D (25 - OH Cholecalciferol)', 'ng/mL', '30.0 - 100.0', 'CLIA / ECLIA'),
+                ('Vitamin B12 (Cyanocobalamin)', 'pg/mL', '211 - 911', 'CLIA / ECLIA')
+            ],
+            'Dengue Serology': [
+                ('Dengue NS1 Antigen', 'Index', '< 0.9 (Negative)', 'ELISA / Immunochromatography'),
+                ('Dengue IgG Antibody', 'Index', '< 0.9 (Negative)', 'ELISA'),
+                ('Dengue IgM Antibody', 'Index', '< 0.9 (Negative)', 'ELISA')
+            ]
+        }
+        for search_name, params in master_params.items():
+            cursor.execute("SELECT id FROM tests WHERE name ILIKE %s LIMIT 1", (f"%{search_name}%",))
+            test = cursor.fetchone()
+            if test:
+                cursor.execute("DELETE FROM test_parameters WHERE test_id = %s", (test[0],))
+                interp_text = interpretations.get(search_name, "")
+                for p_name, unit, ref, method in params:
+                    cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range, methodology, interpretation) VALUES (%s, %s, %s, %s, %s, %s)", (test[0], p_name, unit, ref, method, interp_text))
+        conn.commit()
+        return "<h2 style='color:green; padding:50px;'>SUCCESS! Master Dictionary updated. You can now delete this route from app.py.</h2>"
+    except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
+    finally: conn.close()
 
 @app.route('/admin/fill-report/<int:order_id>')
 @role_required('technician')
@@ -382,5 +478,57 @@ def add_phlebotomist():
 def assign_order():
     safe_execute("UPDATE orders SET phlebotomist_id=%s, payout_amount=%s WHERE id=%s", (request.form.get('phlebotomist_id') or None, request.form.get('payout_amount', 150), request.form.get('order_id')))
     return redirect(url_for('admin_dashboard'))
+
+# ==========================================
+# 3. B2B DOCTOR PORTAL
+# ==========================================
+@app.route('/doctor/login', methods=['GET', 'POST'])
+def doctor_login():
+    if request.method == 'POST':
+        doctor_name = request.form.get('doctor_name').strip().lower()
+        password = request.form.get('password')
+        
+        if password == "doctor2026": 
+            session['doctor_logged_in'] = True
+            session['doctor_name'] = doctor_name
+            return redirect(url_for('doctor_dashboard'))
+        return "Access Denied: Invalid Credentials."
+        
+    return '''<html><body style="background:#F0FDF4; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
+    <div style="background:white; padding:40px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05); width:350px; text-align:center; border-top: 4px solid #16A34A;">
+    <h2 style="color:#0F172A; margin-top:0;">CareDrop B2B Portal</h2>
+    <p style="color:#64748B; font-size:12px; margin-bottom:20px;">Secure access for referring clinicians</p>
+    <form method="POST">
+    <input type="text" name="doctor_name" placeholder="Dr. Name (e.g. Dr. Sharma)" required style="width:100%; padding:12px; margin-bottom:15px; border-radius:6px; border:1px solid #CBD5E1;">
+    <input type="password" name="password" placeholder="Access Password" required style="width:100%; padding:12px; margin-bottom:15px; border-radius:6px; border:1px solid #CBD5E1;">
+    <button type="submit" style="width:100%; background:#16A34A; color:white; padding:12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Secure Login</button>
+    </form></div></body></html>'''
+
+@app.route('/doctor/dashboard')
+def doctor_dashboard():
+    if not session.get('doctor_logged_in'):
+        return redirect(url_for('doctor_login'))
+    
+    doc_name = session.get('doctor_name')
+    conn = get_db()
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT o.*, u.patient_uid, CASE WHEN o.report_file IS NOT NULL THEN TRUE ELSE FALSE END as has_report FROM orders o JOIN users u ON o.user_id = u.id WHERE LOWER(o.referred_by) = %s ORDER BY o.id DESC", (doc_name,))
+        patients = cursor.fetchall()
+        cursor.execute("SELECT COUNT(id) as total_patients, SUM(total_amount) as total_revenue FROM orders WHERE LOWER(referred_by) = %s", (doc_name,))
+        stats = cursor.fetchone()
+    except Exception as e:
+        print(e)
+        patients, stats = [], {'total_patients': 0, 'total_revenue': 0}
+    finally:
+        conn.close()
+        
+    return render_template('doctor_dashboard.html', patients=patients, stats=stats, doc_name=doc_name.title())
+
+@app.route('/doctor/logout')
+def doctor_logout():
+    session.pop('doctor_logged_in', None)
+    session.pop('doctor_name', None)
+    return redirect(url_for('doctor_login'))
 
 if __name__ == '__main__': app.run(debug=True, port=5000)
