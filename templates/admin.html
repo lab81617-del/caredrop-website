@@ -3,284 +3,287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure LIMS Panel | CareDrop</title>
+    <title>CareDrop Admin Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box;}
-        body { background: #F1F5F9; margin: 0; padding: 20px; color: #0F172A; font-size: 14px; }
-        input, select, button { font-family: inherit; background-color: #fff; border: 1px solid #cbd5e1; outline: none; }
-        input:focus, select:focus { border-color: #0D9488; }
-        .container { max-width: 1400px; margin: 0 auto; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
+        body { background: #F1F5F9; margin: 0; display: flex; height: 100vh; color: #0F172A; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 25px; border-top: 4px solid #0D9488; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0F172A; }
+        /* Sidebar Styles */
+        .sidebar { width: 250px; background: #0F172A; color: white; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; font-size: 20px; font-weight: 800; border-bottom: 1px solid #1E293B; color: #38BDF8; }
+        .nav-btn { padding: 15px 20px; color: #94A3B8; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-weight: 600; font-size: 14px; transition: 0.2s; }
+        .nav-btn:hover, .nav-btn.active { background: #1E293B; color: white; border-left: 4px solid #38BDF8; }
+        .logout-btn { margin-top: auto; padding: 15px 20px; background: #DC2626; color: white; text-align: center; text-decoration: none; font-weight: bold; }
         
-        .role-badge { background: #E0F2FE; color: #0369A1; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-left: 10px; }
-        .logout-btn { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 8px 16px; border-radius: 6px; font-weight: 800; text-decoration: none; font-size: 13px; }
-
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab-btn { background: white; border: 1px solid #CBD5E1; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; color: #475569; transition: 0.2s; font-size: 14px; white-space: nowrap; }
-        .tab-btn.active { background: #0F172A !important; color: white !important; border-color: #0F172A !important; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* Main Content Styles */
+        .main-content { flex: 1; overflow-y: auto; padding: 30px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .role-badge { background: #E0F2FE; color: #0284C7; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
         
-        .card { background: white; border-radius: 12px; margin-bottom: 30px; border: 1px solid #CBD5E1; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1000px; }
-        th, td { padding: 16px 20px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
-        th { background: #F8FAFC; font-weight: 800; color: #334155; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        /* Table Styles */
+        .card { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 15px 20px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        th { background: #F8FAFC; font-weight: 800; color: #64748B; font-size: 12px; text-transform: uppercase; }
         
-        .badge { background: #F0FDF4; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; margin-bottom: 4px; border: 1px solid #BBF7D0; text-transform: uppercase; }
-        .form-container { padding: 25px; }
-        .form-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; color: #0F172A; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        /* Buttons */
+        .btn-primary { background: #0D9488; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-action { background: #F1F5F9; color: #0F172A; padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-action.green { background: #DCFCE7; color: #166534; }
         
-        .input-group label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 6px; color: #475569; text-transform: uppercase; }
-        .input-group input, .input-group select { width: 100%; padding: 12px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: #0F172A; }
-        .btn-save { background: #0D9488; color: white; padding: 14px 24px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
-        .btn-lims { background: #0F172A; color: white; padding: 10px; border-radius: 6px; font-weight: 800; text-decoration: none; display: block; font-size: 11px; text-align: center; transition: 0.2s; border: none; cursor: pointer; margin-top: 8px; }
-        
-        .dispatch-box { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; }
-        .dispatch-box select, .dispatch-box input { padding: 8px; font-size: 12px; font-weight: 700; border-radius: 4px; outline: none; width: 100%; }
-        .btn-assign { background: #0F172A; color: white; border: none; padding: 6px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; }
-        
-        .scan-bar { display: flex; gap: 15px; background: #0F172A; padding: 20px; border-radius: 12px; margin-bottom: 30px; align-items: center; }
-        .scan-bar input { flex: 2; padding: 15px; font-size: 18px; font-weight: 800; font-family: monospace; border-radius: 8px; border: none; }
-        .scan-bar select { flex: 1; padding: 15px; font-size: 15px; font-weight: 800; border-radius: 8px; border: none; }
-        .scan-bar button { background: #0D9488; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-weight: 800; font-size: 15px; cursor: pointer; }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 400px; max-width: 90%; }
+        .form-input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #CBD5E1; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>CareDrop LIMS Control Panel <span class="role-badge">{{ user_role }}</span></h1>
-        <div style="display: flex; gap: 15px; align-items: center;">
-            <a href="/" target="_blank" style="text-decoration: none; color: #0D9488; font-weight: 800;">View Public Site</a>
-            <a href="/logout" class="logout-btn">Secure Logout</a>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">CareDrop LIMS</div>
+        <button class="nav-btn active" onclick="showTab('Orders')"><i data-lucide="clipboard-list"></i> Orders & Reports</button>
+        <button class="nav-btn" onclick="showTab('Fleet')"><i data-lucide="truck"></i> Fleet Management</button>
+        <button class="nav-btn" onclick="showTab('Inventory')"><i data-lucide="package"></i> Digital Warehouse</button>
+        <button class="nav-btn" onclick="showTab('Finance')"><i data-lucide="indian-rupee"></i> Financials</button>
+        <button class="nav-btn" onclick="showTab('Settings')"><i data-lucide="settings"></i> System Settings</button>
+        <a href="/logout" class="logout-btn"><i data-lucide="log-out"></i> Secure Logout</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="header-top">
+            <h1 style="margin: 0; font-size: 24px; font-weight: 800;">Master Dashboard</h1>
+            <div class="role-badge">Logged in as: {{ user_role }}</div>
         </div>
-    </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('orders')">Live Orders & Registration</button>
-        {% if user_role == 'admin' %}
-            <button id="financeTabBtn" class="tab-btn" onclick="switchTab('finance')">Financials & Commissions</button>
-            <button id="labTabBtn" class="tab-btn" onclick="switchTab('labs')">Lab Signatures & Setup</button>
-            <button id="teamTabBtn" class="tab-btn" onclick="switchTab('team')">Fleet Management</button>
-            <button id="inventoryTabBtn" class="tab-btn" onclick="switchTab('inventory')">Master Dictionary</button>
-        {% endif %}
-    </div>
-
-    <!-- ORDERS & REGISTRATION TAB -->
-    <div id="orders" class="tab-content active">
-        
-        <!-- ACCESSIONING / BARCODE SCANNER -->
-        <form action="/admin/scan-barcode" method="POST" class="scan-bar">
-            <i data-lucide="scan-line" style="color: white; width: 32px; height: 32px;"></i>
-            <input type="text" name="barcode" placeholder="Scan Patient Barcode (e.g. CD-PAT-1001)" required autocomplete="off" autofocus>
-            <select name="new_status">
-                <option value="Sample Received in Lab">Sample Received in Lab</option>
-                <option value="Processing">Processing</option>
-            </select>
-            <button type="submit">Update Workflow</button>
-        </form>
-
-        {% if user_role == 'admin' or user_role == 'receptionist' %}
-        <!-- WALK-IN REGISTRATION -->
-        <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
-            <div class="form-title">
-                <span>Walk-In Patient Registration</span>
-                <span style="font-size: 12px; color: #64748B; font-weight: 800; text-transform: uppercase;">Reception Desk</span>
+        <!-- 1. ORDERS TAB -->
+        <div id="Orders" class="tab-content">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Live Patient Orders</h2>
+                <button onclick="document.getElementById('walkin-modal').style.display='flex'" class="btn-primary">+ Walk-In Patient</button>
             </div>
-            <form action="/admin/walk-in" method="POST">
-                <div class="form-grid">
-                    <div class="input-group"><label>Patient Name</label><input type="text" name="patient_name" placeholder="Full Name" required></div>
-                    <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" placeholder="10 Digits" required></div>
-                    <div class="input-group"><label>Age</label><input type="number" name="age" required></div>
-                    <div class="input-group"><label>Gender</label><select name="gender" required><option value="Male">Male</option><option value="Female">Female</option></select></div>
-                </div>
-                
-                <div style="background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #E2E8F0;">
-                    <div class="form-grid" style="margin-bottom: 0;">
-                        <div class="input-group"><label>Investigation / Panel</label><select name="test_id" required><option value="">Search Dictionary...</option>{% for item in inventory %}<option value="{{ item.test_id }}">{{ item.test_name }} (₹{{ item.price }})</option>{% endfor %}</select></div>
-                        <div class="input-group"><label>Processing Lab</label><select name="lab_id" required>{% for lab in active_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}</select></div>
-                        <div class="input-group"><label>Referred By (Doctor)</label><input type="text" name="referred_by" placeholder="e.g. Dr. Sharma"></div>
-                    </div>
-                </div>
-
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Panel Type / Insurance</label>
-                        <select name="tpa_name" style="border-color: #3B82F6;">
-                            <option value="">Normal (Self Pay)</option>
-                            <option value="Star Health">Star Health Insurance</option>
-                            <option value="HDFC Ergo">HDFC Ergo</option>
-                            <option value="CGHS">CGHS Panel</option>
-                            <option value="Corporate">Corporate Account</option>
-                        </select>
-                    </div>
-                    <div class="input-group"><label>Total Amount (₹)</label><input type="number" name="total_amount" id="calc_total" value="0" required oninput="calculateBalance()"></div>
-                    <div class="input-group"><label>Advance Paid (₹)</label><input type="number" name="advance_amount" id="calc_advance" value="0" required oninput="calculateBalance()"></div>
-                    <div class="input-group"><label>Pending Balance (₹)</label><input type="number" name="balance_amount" id="calc_balance" value="0" readonly style="background: #FEF2F2; color: #DC2626; border-color: #FCA5A5;"></div>
-                </div>
-                <button type="submit" class="btn-save" style="background: #0F172A; margin-top: 10px;">+ Register Patient & Generate UID</button>
-            </form>
+            
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Order ID</th><th>Patient</th><th>Status</th><th>Rider Assign</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td style="font-weight: 800; color: #0D9488;">{{ order.order_ref }}<br><span style="font-size:11px; color:#94A3B8;">{{ order.patient_uid }}</span></td>
+                            <td><b style="font-size:15px;">{{ order.patient_name.title() }}</b><br><span style="font-size:12px; color:#64748B;">{{ order.collection_date }}</span></td>
+                            <td>
+                                <span style="background: #F1F5F9; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{{ order.status }}</span>
+                            </td>
+                            <td>
+                                {% if order.status == 'Pending' %}
+                                <form action="/admin/assign-order" method="POST" style="display: flex; gap: 5px;">
+                                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                                    <select name="phlebotomist_id" style="padding: 4px; border-radius: 4px; border: 1px solid #CBD5E1; font-size: 12px;">
+                                        <option value="">Select Rider...</option>
+                                        {% for rider in phlebotomists %}
+                                        <option value="{{ rider.id }}">{{ rider.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn-action">Assign</button>
+                                </form>
+                                {% else %}
+                                <span style="font-size: 12px; color: #64748B;">Assigned/In Lab</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.status != 'Completed' %}
+                                <a href="/admin/fill-report/{{ order.id }}" class="btn-action green">Fill Results</a>
+                                {% else %}
+                                <a href="/download-report/{{ order.id }}" class="btn-action" target="_blank">Download PDF</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-        {% endif %}
 
-        <div class="card table-wrapper">
-            <table>
-                <thead>
-                    <tr><th>Order Ref & UID</th><th>Demographics</th><th>Schedule & Status</th><th>Dispatch & Payout</th><th>Actions & Reporting</th></tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>
-                            <div style="font-weight: 800; color: #0D9488; font-size: 15px;">{{ order.order_ref }}</div>
-                            <div style="font-size: 12px; color: #475569; font-weight: 800; margin-top: 4px; background: #F1F5F9; padding: 4px 6px; border-radius: 4px; display:inline-block;">{{ order.patient_uid or 'N/A' }}</div>
-                        </td>
-                        <td>
-                            <div style="font-weight: 800; text-transform: capitalize; color: #0F172A;">{{ order.patient_name }}</div>
-                            <div style="font-size: 12px; color: #475569; font-weight: 700; margin-top: 4px;">{{ order.age }} Yrs | {{ order.gender }}</div>
-                            <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-top: 2px;">Ref: {{ order.referred_by or 'Self' }}</div>
-                        </td>
-                        <td>
-                            <div style="font-weight: 800; font-size: 13px; color: #0F172A;">{{ order.collection_date }}</div>
-                            <div style="font-size: 12px; color: #0D9488; font-weight: 700; margin-top: 4px;">{{ order.status }}</div>
-                        </td>
-                        <td style="width: 200px;">
-                            <form action="/admin/assign-order" method="POST" class="dispatch-box">
-                                <input type="hidden" name="order_id" value="{{ order.id }}">
-                                <select name="phlebotomist_id">
-                                    <option value="">Unassigned</option>
-                                    {% for p in phlebotomists %}<option value="{{ p.id }}" {% if order.phlebotomist_id == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
-                                </select>
-                                <div style="display:flex; gap:5px;">
-                                    <input type="number" name="payout_amount" value="{{ order.payout_amount or 150 }}" title="Rider Payout (₹)">
-                                    <button type="submit" class="btn-assign">Assign</button>
-                                </div>
-                            </form>
-                        </td>
-                        <td style="width: 220px;">
-                            {% if not order.has_report %}
-                                <a href="/admin/fill-report/{{ order.id }}" class="btn-lims" style="background: #0D9488; margin:0;"><i data-lucide="edit-3" style="width: 14px; height: 14px; vertical-align: middle;"></i> Open LIMS Entry</a>
-                            {% else %}
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                                    <a href="/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin:0; background: #0F172A;">📄 Clinical PDF</a>
-                                    <a href="/download-invoice/{{ order.id }}" target="_blank" class="btn-lims" style="margin:0; background: #475569;">🧾 Print Bill</a>
-                                </div>
-                                <a href="https://wa.me/91{{ order.phone }}?text=Hello {{ order.patient_name }}, your CareDrop Diagnostics report for {{ order.order_ref }} is ready. Download it securely here: https://caredrop.in/download-report/{{ order.id }}" target="_blank" class="btn-lims" style="margin:0; background: #16A34A; margin-bottom: 8px;">
-                                    <i data-lucide="message-circle" style="width: 14px; height: 14px; vertical-align: middle;"></i> WhatsApp Report
-                                </a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- 2. FLEET LOGISTICS TAB -->
+        <div id="Fleet" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Rider Network</h2>
+                <button onclick="document.getElementById('rider-modal').style.display='flex'" class="btn-primary">+ Register Rider</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Rider Name</th><th>Phone Number</th><th>Vehicle No.</th><th>Login PIN</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for rider in phlebotomists %}
+                        <tr>
+                            <td style="font-weight: bold;">{{ rider.name }}</td>
+                            <td>{{ rider.phone }}</td>
+                            <td>{{ rider.vehicle_number }}</td>
+                            <td style="font-weight: 900; letter-spacing: 2px; color: #0D9488;">{{ rider.pin }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        <!-- 3. INVENTORY TAB -->
+        <div id="Inventory" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Digital Warehouse</h2>
+                <button onclick="document.getElementById('inventory-modal').style.display='flex'" class="btn-primary">+ Add New Stock</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Item Name</th><th>Category</th><th>Current Stock</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in warehouse_stock %}
+                        <tr>
+                            <td style="font-weight: bold;">{{ item.item_name }}</td>
+                            <td>{{ item.category }}</td>
+                            <td style="font-weight: 800; font-size: 16px;">{{ item.current_stock }} <span style="font-size: 12px; color: #94A3B8;">{{ item.unit }}</span></td>
+                            <td>
+                                {% if item.current_stock <= item.threshold %}
+                                <span style="background: #FEF2F2; color: #DC2626; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #FCA5A5;">Low Stock Alert</span>
+                                {% else %}
+                                <span style="background: #DCFCE7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">Healthy</span>
+                                {% endif %}
+                            </td>
+                            <td><a href="/admin/delete-inventory/{{ item.id }}" style="color: #EF4444; font-size: 12px; font-weight: bold; text-decoration: none;">Remove</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. FINANCIALS TAB -->
+        <div id="Finance" class="tab-content" style="display: none;">
+            <h2 style="margin-bottom: 20px;">B2B Partner Revenue</h2>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Referring Clinic/Doctor</th><th>Total Orders</th><th>Total Revenue Generated</th><th>Pending Dues</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for f in financials %}
+                        <tr>
+                            <td style="font-weight: bold; font-size: 15px;">{{ f.referred_by.title() }}</td>
+                            <td>{{ f.total_orders }}</td>
+                            <td style="color: #16A34A; font-weight: 900;">₹{{ f.total_revenue }}</td>
+                            <td style="color: #DC2626; font-weight: bold;">₹{{ f.pending_balance }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 5. SETTINGS TAB -->
+        <div id="Settings" class="tab-content" style="display: none;">
+            <h2 style="margin-bottom: 20px;">System Settings</h2>
+            <div class="card" style="padding: 20px;">
+                <p>Manage Lab Settings, API Keys, and Master Test Parameters via the DB directly.</p>
+            </div>
+        </div>
+
     </div>
 
-    {% if user_role == 'admin' %}
-    <!-- FINANCIALS TAB -->
-    <div id="finance" class="tab-content">
-        <div class="form-title" style="border: none;">Financial & Referral Dashboard</div>
-        <div class="card table-wrapper">
-            <table>
-                <thead><tr><th>Referral Source (Doctor)</th><th>Total Orders</th><th>Total Revenue Generated</th><th>Pending Balance (Due)</th></tr></thead>
-                <tbody>
-                    {% for f in financials %}
-                    <tr>
-                        <td style="font-weight: 800; color: #0F172A; text-transform: capitalize;">{{ f.referred_by }}</td>
-                        <td style="font-weight: 700;">{{ f.total_orders }} Orders</td>
-                        <td style="font-weight: 800; color: #166534;">₹{{ f.total_revenue }}</td>
-                        <td style="font-weight: 800; color: #DC2626;">₹{{ f.pending_balance }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- LAB SETTINGS TAB -->
-    <div id="labs" class="tab-content">
-        <div class="form-title" style="border: none;">Partner Lab Configurations & PDF Signatures</div>
-        {% for lab in all_labs %}
-        <div class="card form-container">
-            <div style="font-size: 16px; font-weight: 800; margin-bottom: 15px; color: #0D9488;">{{ lab.name }}</div>
-            <form action="/admin/update-lab-doctors" method="POST">
-                <input type="hidden" name="lab_id" value="{{ lab.id }}">
-                <div class="form-grid">
-                    <div class="input-group"><label>Left Doctor Name</label><input type="text" name="d1_name" value="{{ lab.doctor_1_name }}" required></div>
-                    <div class="input-group"><label>Left Degree / Reg</label><input type="text" name="d1_degree" value="{{ lab.doctor_1_degree }}" required></div>
-                </div>
-                <div class="form-grid">
-                    <div class="input-group"><label>Right Doctor Name</label><input type="text" name="d2_name" value="{{ lab.doctor_2_name }}" required></div>
-                    <div class="input-group"><label>Right Degree / Reg</label><input type="text" name="d2_degree" value="{{ lab.doctor_2_degree }}" required></div>
-                </div>
-                <button type="submit" class="btn-save" style="width: auto;">Update Signatures</button>
-            </form>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- TEAM TAB -->
-    <div id="team" class="tab-content">
-        <div class="card form-container" style="border: 2px solid #0F172A; background: #F8FAFC;">
-            <div class="form-title" style="color: #0F172A;">Register New Phlebotomist</div>
-            <form action="/admin/add-phlebotomist" method="POST">
-                <div class="form-grid">
-                    <div class="input-group"><label>Full Name</label><input type="text" name="name" required></div>
-                    <div class="input-group"><label>Mobile Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
-                    <div class="input-group"><label>Vehicle Number</label><input type="text" name="vehicle_number"></div>
-                    <div class="input-group"><label>4-Digit Login PIN</label><input type="text" name="pin" maxlength="4" required></div>
-                </div>
-                <button type="submit" class="btn-save" style="background: #0F172A !important; width: auto;">+ Register Rider</button>
-            </form>
-        </div>
-    </div>
-
-   <!-- INVENTORY TAB -->
-    <div id="inventory" class="tab-content">
-        <div class="card form-container" style="border: 2px dashed #0D9488; background: #F0FDF4;">
-            <div class="form-title" style="color: #0D9488; border-bottom: none;">Master Dictionary Import (CSV)</div>
-            <form action="/admin/bulk-upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <input type="file" name="csv_file" accept=".csv" required style="flex: 1; padding: 10px; border: 1px solid #86EFAC; border-radius: 6px; background: white;">
-                <button type="submit" class="btn-save" style="width: auto;">Inject Catalog</button>
-            </form>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<script>
-    lucide.createIcons();
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        if(document.getElementById('inventoryTabBtn')) {
-            if (tabId === 'inventory') document.getElementById('inventoryTabBtn').classList.add('active');
-            if (tabId === 'team') document.getElementById('teamTabBtn').classList.add('active');
-            if (tabId === 'finance') document.getElementById('financeTabBtn').classList.add('active');
-            if (tabId === 'labs') document.getElementById('labTabBtn').classList.add('active');
-        }
-        localStorage.setItem('caredrop_admin_tab', tabId);
-    }
+    <!-- MODALS -->
     
-    function calculateBalance() {
-        let total = parseFloat(document.getElementById('calc_total').value) || 0;
-        let advance = parseFloat(document.getElementById('calc_advance').value) || 0;
-        let balance = total - advance;
-        document.getElementById('calc_balance').value = balance > 0 ? balance : 0;
-    }
+    <!-- Inventory Modal -->
+    <div id="inventory-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Receive New Stock</h3>
+            <form action="/admin/add-inventory" method="POST">
+                <input type="text" name="item_name" placeholder="Item Name (e.g. EDTA Tube)" required class="form-input">
+                <select name="category" required class="form-input">
+                    <option value="Consumable">Consumable (Tubes, Syringes)</option>
+                    <option value="Reagent">Chemical Reagent</option>
+                    <option value="Stationery">Stationery (Barcodes, Paper)</option>
+                </select>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" name="stock" placeholder="Quantity Added" required class="form-input" style="flex: 1;">
+                    <select name="unit" class="form-input" style="flex: 1;">
+                        <option value="Pieces">Pieces</option>
+                        <option value="Vials">Vials</option>
+                        <option value="mL">mL</option>
+                        <option value="Kits">Kits</option>
+                    </select>
+                </div>
+                <input type="number" name="threshold" placeholder="Low Stock Alert Threshold" value="50" required class="form-input">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                    <button type="button" onclick="document.getElementById('inventory-modal').style.display='none'" class="btn-action">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    window.onload = () => {
-        const savedTab = localStorage.getItem('caredrop_admin_tab');
-        if(savedTab) switchTab(savedTab);
-    };
-</script>
+    <!-- Rider Modal -->
+    <div id="rider-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Register New Rider</h3>
+            <form action="/admin/add-phlebotomist" method="POST">
+                <input type="text" name="name" placeholder="Full Name" required class="form-input">
+                <input type="tel" name="phone" placeholder="Mobile Number" required class="form-input">
+                <input type="text" name="vehicle_number" placeholder="Vehicle Registration (e.g. HR-02-AB-1234)" required class="form-input">
+                <input type="text" name="pin" placeholder="Assign 4-Digit PIN" maxlength="4" required class="form-input" style="letter-spacing: 4px; font-weight: bold; text-align: center;">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                    <button type="button" onclick="document.getElementById('rider-modal').style.display='none'" class="btn-action">Cancel</button>
+                    <button type="submit" class="btn-primary">Register Rider</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Walk-In Modal (Simplified for space) -->
+    <div id="walkin-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Register Walk-In Patient</h3>
+            <form action="/admin/walk-in" method="POST">
+                <input type="text" name="patient_name" placeholder="Patient Name" required class="form-input">
+                <input type="tel" name="phone" placeholder="Phone Number" required class="form-input">
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" name="age" placeholder="Age" required class="form-input">
+                    <select name="gender" class="form-input">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <input type="number" name="total_amount" placeholder="Total Cost (₹)" required class="form-input">
+                <input type="text" name="referred_by" placeholder="Referred By (e.g. Dr. Sharma or Self)" class="form-input">
+                
+                <input type="hidden" name="test_id" value="1"> <!-- Default fallback test ID -->
+                <input type="hidden" name="lab_id" value="1">  <!-- Default fallback lab ID -->
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                    <button type="button" onclick="document.getElementById('walkin-modal').style.display='none'" class="btn-action">Cancel</button>
+                    <button type="submit" class="btn-primary">Register & Collect</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+    </script>
 </body>
 </html>
