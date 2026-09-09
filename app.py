@@ -318,100 +318,6 @@ def admin_walk_in():
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/auto-seed-lims')
-@role_required('admin')
-def auto_seed_lims():
-    conn = get_db()
-    try:
-        cursor = conn.cursor()
-        interpretations = {
-            'Complete Blood Count': "There have been some reports of WBC and platelet counts being lower in venous blood than in capillary blood samples, although still within these reference ranges. Assay results should be correlated clinically.",
-            'Thyroid Profile': "TSH levels between 6.3 and 15.0 may represent subclinical or compensated hypothyroidism. A high TSH result often means an underactive thyroid gland."
-        }
-        master_params = {
-            'Complete Blood Count': [
-                ('Hemoglobin (HB)', 'g/dl', '12.0 - 16.0', 'Photometric/Non Cyanmethemoglobin'), 
-                ('Total Leucocytes Count (WBC)', 'Cells/Cumm', '4000 - 10500', 'Optical Flow cytometry'), 
-                ('Neutrophils', '%', '40 - 80', 'Impedance'), 
-                ('Lymphocytes', '%', '20 - 40', 'Flowcytometry'),
-                ('Eosinophils', '%', '01 - 06', 'Impedance'), 
-                ('Monocytes', '%', '02 - 10', 'Impedance'), 
-                ('Basophils', '%', '00 - 01', 'Impedance'),
-                ('Absolute Neutrophil Count', 'Cells/uL', '2000 - 8000', 'Calculated'), 
-                ('Absolute Lymphocyte Count', '/uL', '1000 - 3000', 'Flowcytometry'),
-                ('Mean Cell Haemoglobin (MCH)', 'Pg', '27 - 32', 'Calculated'), 
-                ('MCHC', 'g/dl', '31.5 - 34.5', 'Calculated'),
-                ('Erythrocyte count (RBC COUNT)', 'million/cmm', '3.8 - 4.8', 'Impedance'), 
-                ('Packed Cell Volume (Hematocrit)', '%', '36 - 46', 'Cell Counter'),
-                ('Mean Cell Volume (MCV)', 'fL', '83 - 101', 'Calculated'), 
-                ('Red Cell Distribution Width (RDW)-SD', 'fL', '35 - 56', 'Calculated'),
-                ('Platelet Count', 'Lakh/cumm', '1.50 - 4.50', 'Impedance'),
-                ('Erythrocytes Sedimentation Rate (ESR)', 'mm/1st hr', '0 - 20', 'Westergren')
-            ],
-            'Thyroid Profile': [
-                ('Total T3', 'ng/dL', '80 - 200', 'ECLIA'), 
-                ('Total T4', 'ug/dL', '4.5 - 12.0', 'ECLIA'), 
-                ('TSH (3rd Gen, Ultrasensitive)', 'uIU/mL', '0.40 - 4.20', 'ECLIA')
-            ],
-            'Liver Function Test': [
-                ('Bilirubin (Total)', 'mg/dL', '0.2 - 1.2', 'Diazo method'), 
-                ('Bilirubin (Direct)', 'mg/dL', '0.0 - 0.3', 'Diazo method'), 
-                ('Bilirubin (Indirect)', 'mg/dL', '0.2 - 0.9', 'Calculated'),
-                ('SGOT / AST', 'U/L', '5 - 40', 'IFCC without P5P'), 
-                ('SGPT / ALT', 'U/L', '7 - 56', 'IFCC without P5P'), 
-                ('Alkaline Phosphatase (ALP)', 'U/L', '40 - 129', 'PNPP AMP Buffer'),
-                ('Total Protein', 'g/dL', '6.0 - 8.3', 'Biuret'), 
-                ('Albumin', 'g/dL', '3.5 - 5.2', 'Bromocresol Green'), 
-                ('Globulin', 'g/dL', '2.5 - 3.5', 'Calculated'), 
-                ('A/G Ratio', 'Ratio', '1.0 - 2.1', 'Calculated')
-            ],
-            'Kidney Function Test': [
-                ('Blood Urea', 'mg/dL', '14 - 40', 'GLDH-Urease'), 
-                ('Blood Urea Nitrogen (BUN)', 'mg/dl', '7 - 18', 'Calculated'), 
-                ('Serum Creatinine', 'mg/dl', '0.5 - 1.1', 'Jaffe / Enzymatic'), 
-                ('Serum Uric Acid', 'mg/dL', '3.4 - 7.0', 'Uricase'), 
-                ('Calcium', 'mg/dl', '8.6 - 10.2', 'Arsenazo III'), 
-                ('Sodium', 'mmol/L', '135 - 155', 'ISE Indirect'), 
-                ('Potassium', 'mmol/L', '3.5 - 5.0', 'ISE Indirect'), 
-                ('Chloride', 'mmol/L', '95 - 108', 'ISE Indirect')
-            ],
-            'Lipid Profile': [
-                ('Total Cholesterol', 'mg/dl', '< 200', 'CHOD-PAP'), 
-                ('Triglycerides', 'mg/dl', '< 150', 'GPO-PAP'), 
-                ('Cholesterol-HDL', 'mg/dl', '40 - 60', 'Direct Enzymatic'), 
-                ('Cholesterol-LDL (Direct)', 'mg/dl', '< 100', 'Direct Enzymatic'), 
-                ('Cholesterol-VLDL', 'mg/dl', '7 - 40', 'Calculated'), 
-                ('Total Cholesterol/HDL Ratio', 'Ratio', '< 5.0', 'Calculated')
-            ],
-            'Diabetes Screen': [
-                ('Fasting Blood Sugar (FBS)', 'mg/dL', '70 - 100', 'Hexokinase/GOD-POD'),
-                ('Post Prandial Blood Sugar (PPBS)', 'mg/dL', '< 140', 'Hexokinase/GOD-POD'),
-                ('Glycosylated Hemoglobin (HbA1C)', '%', '< 5.7', 'HPLC / Immunoturbidimetry'), 
-                ('Estimated Average Glucose (eAG)', 'mg/dl', '90 - 120', 'Calculated')
-            ],
-            'Vitamin Profile': [
-                ('Vitamin D (25 - OH Cholecalciferol)', 'ng/mL', '30.0 - 100.0', 'CLIA / ECLIA'),
-                ('Vitamin B12 (Cyanocobalamin)', 'pg/mL', '211 - 911', 'CLIA / ECLIA')
-            ],
-            'Dengue Serology': [
-                ('Dengue NS1 Antigen', 'Index', '< 0.9 (Negative)', 'ELISA / Immunochromatography'),
-                ('Dengue IgG Antibody', 'Index', '< 0.9 (Negative)', 'ELISA'),
-                ('Dengue IgM Antibody', 'Index', '< 0.9 (Negative)', 'ELISA')
-            ]
-        }
-        for search_name, params in master_params.items():
-            cursor.execute("SELECT id FROM tests WHERE name ILIKE %s LIMIT 1", (f"%{search_name}%",))
-            test = cursor.fetchone()
-            if test:
-                cursor.execute("DELETE FROM test_parameters WHERE test_id = %s", (test[0],))
-                interp_text = interpretations.get(search_name, "")
-                for p_name, unit, ref, method in params:
-                    cursor.execute("INSERT INTO test_parameters (test_id, parameter_name, unit, reference_range, methodology, interpretation) VALUES (%s, %s, %s, %s, %s, %s)", (test[0], p_name, unit, ref, method, interp_text))
-        conn.commit()
-        return "<h2 style='color:green; padding:50px;'>SUCCESS! Master Dictionary updated. You can now delete this route from app.py.</h2>"
-    except Exception as e: return f"<h2 style='color:red;'>Error: {str(e)}</h2>"
-    finally: conn.close()
-
 @app.route('/admin/fill-report/<int:order_id>')
 @role_required('technician')
 def admin_fill_report(order_id):
@@ -530,5 +436,75 @@ def doctor_logout():
     session.pop('doctor_logged_in', None)
     session.pop('doctor_name', None)
     return redirect(url_for('doctor_login'))
+
+# ==========================================
+# 4. PHLEBOTOMIST MOBILE APP (FLEET LOGISTICS)
+# ==========================================
+@app.route('/rider', methods=['GET', 'POST'])
+def rider_login():
+    if request.method == 'POST':
+        phone = request.form.get('phone').strip()
+        pin = request.form.get('pin').strip()
+        
+        conn = get_db()
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT id, name FROM phlebotomists WHERE phone = %s AND pin = %s", (phone, pin))
+            rider = cursor.fetchone()
+            if rider:
+                session['rider_logged_in'] = True
+                session['rider_id'] = rider['id']
+                session['rider_name'] = rider['name']
+                return redirect(url_for('rider_dashboard'))
+            return "Access Denied: Invalid Phone or PIN."
+        except Exception as e:
+            print(e)
+            return "Database Error."
+        finally:
+            conn.close()
+
+    return '''<html>
+    <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="background:#F8FAFC; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;">
+    <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05); width:90%; max-width:350px; text-align:center; border-top: 4px solid #F59E0B;">
+    <h2 style="color:#0F172A; margin-top:0;">CareDrop Fleet</h2>
+    <p style="color:#64748B; font-size:14px; margin-bottom:20px;">Rider Login Portal</p>
+    <form method="POST">
+    <input type="tel" name="phone" placeholder="Registered Mobile No." required style="width:100%; padding:14px; margin-bottom:15px; border-radius:8px; border:1px solid #CBD5E1; font-size:16px; box-sizing:border-box;">
+    <input type="password" name="pin" placeholder="4-Digit PIN" maxlength="4" required style="width:100%; padding:14px; margin-bottom:20px; border-radius:8px; border:1px solid #CBD5E1; font-size:16px; box-sizing:border-box; text-align:center; letter-spacing:8px;">
+    <button type="submit" style="width:100%; background:#F59E0B; color:white; padding:14px; border:none; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">Start Shift</button>
+    </form></div></body></html>'''
+
+@app.route('/rider/dashboard')
+def rider_dashboard():
+    if not session.get('rider_logged_in'): return redirect(url_for('rider_login'))
+    
+    rider_id = session.get('rider_id')
+    conn = get_db()
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT id, order_ref, patient_name, phone, address, time_slot, total_amount, balance_amount, status FROM orders WHERE phlebotomist_id = %s AND status != 'Completed' ORDER BY id ASC", (rider_id,))
+        assignments = cursor.fetchall()
+    except Exception as e:
+        print(e)
+        assignments = []
+    finally:
+        conn.close()
+        
+    return render_template('rider_dashboard.html', assignments=assignments, rider_name=session.get('rider_name').title())
+
+@app.route('/rider/collect/<int:order_id>', methods=['POST'])
+def rider_collect(order_id):
+    if not session.get('rider_logged_in'): return redirect(url_for('rider_login'))
+    
+    safe_execute("UPDATE orders SET status = 'Sample Collected' WHERE id = %s AND phlebotomist_id = %s", (order_id, session.get('rider_id')))
+    return redirect(url_for('rider_dashboard'))
+    
+@app.route('/rider/logout')
+def rider_logout():
+    session.pop('rider_logged_in', None)
+    session.pop('rider_id', None)
+    session.pop('rider_name', None)
+    return redirect(url_for('rider_login'))
 
 if __name__ == '__main__': app.run(debug=True, port=5000)
