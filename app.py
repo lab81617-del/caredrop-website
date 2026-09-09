@@ -274,13 +274,16 @@ def admin_dashboard():
     for order in orders: order['test_list'] = items_map.get(order['id'], [])
     cursor.execute("SELECT * FROM labs ORDER BY name")
     labs = cursor.fetchall()
-    cursor.execute("SELECT t.id as test_id, t.name as test_name, CAST(ltp.price AS INTEGER) as price FROM lab_test_pricing ltp JOIN tests t ON ltp.test_id = t.id")
-    inventory = cursor.fetchall()
+    
+    # Inventory Fetch
+    cursor.execute("SELECT * FROM inventory ORDER BY category, item_name")
+    warehouse_stock = cursor.fetchall()
+    
     cursor.execute("SELECT * FROM phlebotomists ORDER BY id DESC")
     phlebotomists = cursor.fetchall()
     conn.close()
     user_role = session.get('role', 'admin')
-    return render_template('admin.html', orders=orders, active_labs=[l for l in labs if l['is_active']], all_labs=labs, inventory=inventory, phlebotomists=phlebotomists, financials=financials, user_role=user_role)
+    return render_template('admin.html', orders=orders, active_labs=[l for l in labs if l['is_active']], all_labs=labs, phlebotomists=phlebotomists, financials=financials, user_role=user_role, warehouse_stock=warehouse_stock)
 
 @app.route('/admin/scan-barcode', methods=['POST'])
 @role_required('receptionist')
@@ -375,6 +378,11 @@ def save_results(order_id):
         pdf_bytes = generate_medical_report(order_id, order, results_data, lab_data)
         filename = f"CareDrop_Report_{order['patient_uid']}.pdf"
         cursor.execute("UPDATE orders SET report_file = %s, report_filename = %s, status = 'Completed', report_type = 'System' WHERE id = %s", (psycopg2.Binary(pdf_bytes), filename, order_id))
+        
+        # INVENTORY AUTO-DEDUCTION LOGIC
+        # Deduct 1 Consumable and 1 Reagent globally for this order
+        cursor.execute("UPDATE inventory SET current_stock = current_stock - 1 WHERE category IN ('Consumable', 'Reagent') AND current_stock > 0")
+        
         conn.commit()
 
         threading.Thread(target=dispatch_notifications_bg, args=(
@@ -518,5 +526,42 @@ def rider_logout():
     session.pop('rider_id', None)
     session.pop('rider_name', None)
     return redirect(url_for('rider_login'))
+
+# ==========================================
+# 5. INVENTORY & WAREHOUSE MANAGEMENT
+# ==========================================
+@app.route('/admin/add-inventory', methods=['POST'])
+@role_required('admin')
+def add_inventory():
+    item_name = request.form.get('item_name').strip()
+    category = request.form.get('category')
+    stock = int(request.form.get('stock', 0))
+    threshold = int(request.form.get('threshold', 50))
+    unit = request.form.get('unit', 'units')
+    
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, current_stock FROM inventory WHERE item_name ILIKE %s", (item_name,))
+        existing = cursor.fetchone()
+        if existing:
+            new_stock = existing[1] + stock
+            cursor.execute("UPDATE inventory SET current_stock = %s, threshold = %s WHERE id = %s", (new_stock, threshold, existing[0]))
+        else:
+            cursor.execute("INSERT INTO inventory (item_name, category, current_stock, threshold, unit) VALUES (%s, %s, %s, %s, %s)", 
+                           (item_name, category, stock, threshold, unit))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(e)
+    finally:
+        conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete-inventory/<int:item_id>')
+@role_required('admin')
+def delete_inventory(item_id):
+    safe_execute("DELETE FROM inventory WHERE id = %s", (item_id,))
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__': app.run(debug=True, port=5000)
