@@ -40,6 +40,18 @@ def ensure_db_schema():
         safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_1_degree VARCHAR(255) DEFAULT 'MBBS, MD (Pathology) | DMC-44740'")
         safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_2_name VARCHAR(255) DEFAULT 'Dr. Abdul Sameer Qureshi'")
         safe_execute("ALTER TABLE labs ADD COLUMN IF NOT EXISTS doctor_2_degree VARCHAR(255) DEFAULT 'MBBS, D.C.P | DMC-39510'")
+        
+        # New Inventory Table
+        safe_execute("""
+            CREATE TABLE IF NOT EXISTS inventory (
+                id SERIAL PRIMARY KEY,
+                item_name VARCHAR(255) NOT NULL,
+                category VARCHAR(100),
+                current_stock INT DEFAULT 0,
+                threshold INT DEFAULT 50,
+                unit VARCHAR(50) DEFAULT 'units'
+            )
+        """)
         app._schema_checked = True
 
 # --- ROLE-BASED ACCESS CONTROL ---
