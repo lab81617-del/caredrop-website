@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fleet App | CareDrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
+        body { background: #F1F5F9; margin: 0; padding: 0; color: #0F172A; }
+        
+        .header { background: #0F172A; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; border-bottom: 3px solid #F59E0B; }
+        .header h1 { margin: 0; font-size: 18px; font-weight: 800; }
+        
+        .container { padding: 15px; }
+        
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; }
+        .patient-name { font-size: 18px; font-weight: 800; margin-bottom: 5px; color: #0F172A; }
+        
+        .address-box { background: #F8FAFC; padding: 10px; border-radius: 8px; font-size: 13px; color: #475569; font-weight: 600; margin-bottom: 15px; border: 1px solid #E2E8F0; line-height: 1.5; }
+        
+        .action-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 6px; border: none; cursor: pointer; }
+        
+        .btn-call { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
+        .btn-map { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+        .btn-collect { background: #F59E0B; color: white; width: 100%; font-size: 15px; transition: 0.2s; }
+        .btn-collect:active { background: #D97706; }
+        
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
+        .due-amount { font-size: 16px; font-weight: 800; color: #DC2626; margin-bottom: 15px; background: #FEF2F2; display: inline-block; padding: 6px 12px; border-radius: 6px; border: 1px solid #FCA5A5;}
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>CareDrop Fleet</h1>
+        <div style="font-size: 12px; color: #94A3B8; margin-top: 4px;">Rider: {{ rider_name }}</div>
+    </div>
+    <a href="/rider/logout" style="color: #F87171; font-size: 12px; font-weight: 800; text-decoration: none;">LOGOUT</a>
+</div>
+
+<div class="container">
+    <h3 style="font-size: 14px; color: #64748B; margin-top: 5px; margin-bottom: 15px; text-transform: uppercase;">Today's Assignments</h3>
+    
+    {% for a in assignments %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="badge" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">{{ a.order_ref }}</div>
+            <div class="badge" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A;">{{ a.time_slot }}</div>
+        </div>
+        
+        <div class="patient-name">{{ a.patient_name.title() }}</div>
+        
+        {% if a.balance_amount > 0 %}
+            <div class="due-amount">Collect Cash: ₹{{ a.balance_amount }}</div>
+        {% else %}
+            <div class="due-amount" style="color: #16A34A; background: #DCFCE7; border-color: #BBF7D0;">Payment: Fully Paid</div>
+        {% endif %}
+
+        <div class="address-box">
+            <i data-lucide="map-pin" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px; color: #0F172A;"></i> 
+            {{ a.address or 'No Address Provided. Ask Reception.' }}
+        </div>
+        
+        <div class="action-row">
+            <a href="tel:{{ a.phone }}" class="btn btn-call"><i data-lucide="phone" style="width: 16px;"></i> Call</a>
+            <a href="https://maps.google.com/?q={{ a.address }}" target="_blank" class="btn btn-map"><i data-lucide="navigation" style="width: 16px;"></i> Navigate</a>
+        </div>
+        
+        <form action="/rider/collect/{{ a.id }}" method="POST">
+            <button type="submit" class="btn btn-collect">
+                <i data-lucide="droplet" style="width: 18px;"></i> Mark Sample Collected
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px 20px; color: #64748B; font-weight: 600;">
+        <i data-lucide="check-circle" style="width: 54px; height: 54px; color: #16A34A; margin-bottom: 15px;"></i>
+        <p style="font-size: 16px; color: #0F172A;">No active assignments!</p>
+        <p style="font-size: 13px;">Wait for the lab to assign you a new home collection.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>
