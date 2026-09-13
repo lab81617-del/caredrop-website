@@ -6,7 +6,6 @@
     <title>CareDrop Master Console</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
         body { background: #F1F5F9; margin: 0; display: flex; height: 100vh; color: #0F172A; }
@@ -25,32 +24,21 @@
         .btn-primary { background: #0D9488; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-action { background: #F1F5F9; color: #0F172A; padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; }
         .btn-action.green { background: #DCFCE7; color: #166534; }
+        .btn-action.red { background: #FEE2E2; color: #991B1B; }
+        .btn-action.orange { background: #FEF3C7; color: #B45309; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 30px; border-radius: 12px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
         .form-input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #CBD5E1; box-sizing: border-box; }
     </style>
 </head>
 <body>
-
     <!-- SECURE SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-header">CareDrop LIMS</div>
-        
-        {% if user_role == 'admin' %}
-        <button class="nav-btn" onclick="showTab('Analytics')"><i data-lucide="bar-chart-2"></i> Executive Dashboard</button>
-        {% endif %}
-        
         <button class="nav-btn active" onclick="showTab('Orders')"><i data-lucide="clipboard-list"></i> Live Orders</button>
-        
-        {% if user_role in ['admin', 'receptionist'] %}
-        <button class="nav-btn" onclick="showTab('Fleet')"><i data-lucide="truck"></i> Fleet Logistics</button>
-        <button class="nav-btn" onclick="showTab('Partners')"><i data-lucide="network"></i> Manage Partners</button>
-        {% endif %}
-        
         {% if user_role == 'admin' %}
-        <button class="nav-btn" onclick="showTab('Inventory')"><i data-lucide="package"></i> Digital Warehouse</button>
+        <button class="nav-btn" onclick="showTab('Audit')"><i data-lucide="shield-alert"></i> Flight Recorder</button>
         {% endif %}
-        
         <a href="/logout" class="logout-btn"><i data-lucide="log-out"></i> Secure Logout</a>
     </div>
 
@@ -60,11 +48,11 @@
             <div class="role-badge">Logged in as: {{ user_role }}</div>
         </div>
 
-        <!-- ORDERS TAB (Visible to All) -->
+        <!-- ORDERS TAB -->
         <div id="Orders" class="tab-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h2 style="margin: 0;">Live Patient Pipeline</h2>
-                {% if user_role != 'technician' %}
+                <h2 style="margin: 0;">{{ 'Verification Queue' if user_role == 'pathologist' else 'Live Patient Pipeline' }}</h2>
+                {% if user_role in ['admin', 'receptionist'] %}
                 <button onclick="document.getElementById('walkin-modal').style.display='flex'" class="btn-primary">+ New Walk-In / B2B</button>
                 {% endif %}
             </div>
@@ -72,36 +60,51 @@
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th>Order ID</th><th>Patient Details</th><th>Status</th><th>Rider Dispatch</th><th>Actions</th></tr>
+                        <tr><th>Order ID / Accession</th><th>Patient Details</th><th>Status</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                         {% for order in orders %}
                         <tr>
-                            <td style="font-weight: 800; color: #0D9488;">{{ order.order_ref }}</td>
-                            <td><b style="font-size:15px;">{{ order.patient_name.title() }}</b><br><span style="font-size:11px; color:#64748B;">{{ order.address or 'Lab Walk-In' }}</span></td>
-                            <td><span style="background: #F1F5F9; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{{ order.status }}</span></td>
-                            <td>
-                                {% if order.status == 'Pending' and user_role != 'technician' %}
-                                <form action="/admin/assign-order" method="POST" style="display: flex; gap: 5px;">
-                                    <input type="hidden" name="order_id" value="{{ order.id }}">
-                                    <select name="phlebotomist_id" style="padding: 4px; border-radius: 4px; border: 1px solid #CBD5E1; font-size: 12px;">
-                                        <option value="">Assign Rider...</option>
-                                        {% for rider in phlebotomists %}
-                                        <option value="{{ rider.id }}">{{ rider.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="submit" class="btn-action">Dispatch</button>
-                                </form>
-                                {% else %}
-                                <span style="font-size: 12px; color: #64748B;">{{ order.status }}</span>
+                            <td style="font-weight: 800; color: #0D9488;">
+                                {{ order.order_ref }}
+                                {% if order.accession_id %}
+                                <br><span style="font-size:11px; background:#F1F5F9; padding:2px 4px; border-radius:3px; color:#475569;">{{ order.accession_id }}</span>
                                 {% endif %}
                             </td>
+                            <td><b style="font-size:15px;">{{ order.patient_name.title() }}</b><br><span style="font-size:12px; color:#64748B;">{{ order.collection_date }}</span></td>
+                            
+                            <!-- Status Display (Red if Rejected) -->
                             <td>
-                                {% if order.status != 'Completed' %}
-                                <a href="/admin/fill-report/{{ order.id }}" class="btn-action green">Enter Results</a>
+                                {% if order.status == 'Sample Rejected' %}
+                                <span style="background: #FEE2E2; color:#991B1B; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{{ order.status }}</span>
                                 {% else %}
+                                <span style="background: #FEF3C7; color:#B45309; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{{ order.status }}</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                {% if order.accession_id and user_role in ['admin', 'receptionist', 'technician'] %}
+                                <a href="/admin/print-barcode/{{ order.id }}" target="_blank" class="btn-action" style="background:#E0F2FE; color:#0284C7;">Barcode</a>
+                                {% endif %}
+                                
+                                {% if order.status in ['Received in Lab', 'Sample Collected'] and user_role == 'technician' %}
+                                <a href="/admin/fill-report/{{ order.id }}" class="btn-action green">Enter Results</a>
+                                <button onclick="rejectSample({{ order.id }})" class="btn-action red">Reject</button>
+                                {% endif %}
+                                
+                                {% if order.status == 'Sample Rejected' and user_role in ['admin', 'receptionist'] %}
+                                <form action="/admin/request-recollection" method="POST" style="margin:0;">
+                                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                                    <button type="submit" class="btn-action orange">Request Recollection</button>
+                                </form>
+                                {% endif %}
+                                
+                                {% if order.status == 'Pending Verification' and user_role == 'pathologist' %}
+                                <a href="/admin/verify-results/{{ order.id }}" class="btn-action" style="background:#FCE7F3; color:#BE185D;">Review & Sign</a>
+                                {% endif %}
+                                
+                                {% if order.status == 'Completed' %}
                                 <a href="/download-report/{{ order.id }}" class="btn-action" target="_blank">View PDF</a>
-                                <a href="/download-invoice/{{ order.id }}" class="btn-action" target="_blank">Print Bill</a>
                                 {% endif %}
                             </td>
                         </tr>
@@ -111,105 +114,64 @@
             </div>
         </div>
 
-        <!-- PARTNERS TAB (New) -->
-        <div id="Partners" class="tab-content" style="display: none;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h2 style="margin: 0;">B2B Clinics & Partner Labs</h2>
-                {% if user_role == 'admin' %}
-                <button onclick="document.getElementById('partner-modal').style.display='flex'" class="btn-primary">+ Add Partner</button>
-                {% endif %}
-            </div>
+        <!-- AUDIT LOG TAB (Admin Only) -->
+        {% if user_role == 'admin' %}
+        <div id="Audit" class="tab-content" style="display: none;">
+            <h2 style="margin-bottom: 20px;">System Flight Recorder (Immutable)</h2>
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th>Clinic / Lab Name</th><th>Type</th><th>Contact</th><th>Commission %</th></tr>
+                        <tr><th>Timestamp</th><th>Order ID</th><th>User Role</th><th>Action</th><th>Transition</th><th>Notes</th></tr>
                     </thead>
                     <tbody>
-                        {% for p in partners %}
+                        {% for log in audit_logs %}
                         <tr>
-                            <td style="font-weight: bold;">{{ p.partner_name }}</td>
-                            <td>{{ p.partner_type }}</td>
-                            <td>{{ p.contact_phone }}</td>
-                            <td style="color: #16A34A; font-weight: bold;">{{ p.commission_rate }}%</td>
+                            <td style="font-size:11px; color:#64748B;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td style="font-weight:bold;">#{{ log.order_id }}</td>
+                            <td><span class="role-badge" style="font-size:10px;">{{ log.user_role }}</span></td>
+                            <td style="font-weight:bold;">{{ log.action }}</td>
+                            <td style="font-size:12px;">{{ log.previous_state }} &rarr; {{ log.new_state }}</td>
+                            <td style="font-size:12px; color:#475569;">{{ log.notes }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <!-- (Other tabs remain exactly the same but hidden via the JS router) -->
-        <div id="Analytics" class="tab-content" style="display: none;"><h2>Executive Dashboard Active</h2></div>
-        <div id="Fleet" class="tab-content" style="display: none;"><h2>Fleet Active</h2></div>
-        <div id="Inventory" class="tab-content" style="display: none;"><h2>Warehouse Active</h2></div>
+        {% endif %}
     </div>
 
-    <!-- UPGRADED WALK-IN MODAL -->
+    <!-- WALK-IN MODAL (Simplified for space) -->
     <div id="walkin-modal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-top: 0;">Register New Booking & Generate Bill</h3>
+            <h3 style="margin-top: 0;">New Walk-In Order</h3>
             <form action="/admin/walk-in" method="POST">
-                <input type="text" name="patient_name" placeholder="Patient Full Name" required class="form-input">
-                <input type="tel" name="phone" placeholder="Mobile Number" required class="form-input">
-                <input type="text" name="address" placeholder="Home Collection Address (Leave blank if Walk-In)" class="form-input">
-                
+                <input type="text" name="patient_name" placeholder="Patient Name" required class="form-input">
+                <input type="tel" name="phone" placeholder="Phone" required class="form-input">
                 <div style="display: flex; gap: 10px;">
                     <input type="number" name="age" placeholder="Age" required class="form-input">
-                    <select name="gender" class="form-input">
-                        <option value="Male">Male</option><option value="Female">Female</option>
-                    </select>
+                    <select name="gender" class="form-input"><option value="Male">Male</option><option value="Female">Female</option></select>
                 </div>
-                
                 <select name="test_id" class="form-input" required>
-                    <option value="">-- Select Diagnostic Test --</option>
-                    {% for test in all_tests %}
-                    <option value="{{ test.id }}">{{ test.name }}</option>
-                    {% endfor %}
+                    {% for test in all_tests %}<option value="{{ test.id }}">{{ test.name }}</option>{% endfor %}
                 </select>
-
                 <select name="lab_id" class="form-input" required>
-                    <option value="">-- Select Processing Lab --</option>
-                    {% for lab in active_labs %}
-                    <option value="{{ lab.id }}">{{ lab.name }}</option>
-                    {% endfor %}
+                    {% for lab in all_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}
                 </select>
-                
-                <select name="referred_by" class="form-input">
-                    <option value="Self">Self / Direct Walk-In</option>
-                    {% for p in partners %}
-                    <option value="{{ p.partner_name }}">{{ p.partner_name }}</option>
-                    {% endfor %}
-                </select>
-
-                <input type="number" name="total_amount" placeholder="Total Amount Collected (₹)" required class="form-input" style="font-weight: bold; border-color: #16A34A;">
-                
-                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-                    <button type="button" onclick="document.getElementById('walkin-modal').style.display='none'" class="btn-action">Cancel</button>
-                    <button type="submit" class="btn-primary">Generate Invoice</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- PARTNER MODAL -->
-    <div id="partner-modal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-top: 0;">Register B2B Partner</h3>
-            <form action="/admin/add-partner" method="POST">
-                <input type="text" name="partner_name" placeholder="Clinic or Doctor Name (e.g. Dr. Sharma Clinic)" required class="form-input">
-                <select name="partner_type" required class="form-input">
-                    <option value="Referring Doctor">Referring Doctor</option>
-                    <option value="Outsource Lab">Outsource Processing Lab</option>
-                </select>
-                <input type="tel" name="contact_phone" placeholder="Contact Number" class="form-input">
-                <input type="number" name="commission_rate" placeholder="Commission % (e.g. 20)" value="0" class="form-input">
+                <input type="number" name="total_amount" placeholder="Total (₹)" required class="form-input">
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" onclick="document.getElementById('partner-modal').style.display='none'" class="btn-action">Cancel</button>
-                    <button type="submit" class="btn-primary">Save Partner</button>
+                    <button type="button" onclick="document.getElementById('walkin-modal').style.display='none'" class="btn-action">Cancel</button>
+                    <button type="submit" class="btn-primary">Generate Order</button>
                 </div>
             </form>
         </div>
     </div>
+    
+    <!-- REJECT SAMPLE MODAL (Hidden form generated by JS) -->
+    <form id="rejectForm" action="/admin/reject-sample" method="POST" style="display:none;">
+        <input type="hidden" name="order_id" id="reject_order_id">
+        <input type="hidden" name="reason" id="reject_reason">
+    </form>
 
     <script>
         lucide.createIcons();
@@ -218,6 +180,14 @@
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabId).style.display = 'block';
             event.currentTarget.classList.add('active');
+        }
+        function rejectSample(orderId) {
+            let reason = prompt("Enter reason for sample rejection (e.g., Hemolyzed, Insufficient):");
+            if(reason) {
+                document.getElementById('reject_order_id').value = orderId;
+                document.getElementById('reject_reason').value = reason;
+                document.getElementById('rejectForm').submit();
+            }
         }
     </script>
 </body>
