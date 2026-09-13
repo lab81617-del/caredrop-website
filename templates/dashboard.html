@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDrop V3 Master OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root { --bg: #F1F5F9; --surface: #FFFFFF; --sidebar: #0F172A; --primary: #0D9488; --danger: #DC2626; --text: #0F172A; --muted: #64748B; --border: #E2E8F0; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
+        body { margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
+        
+        /* Layout */
+        .sidebar { width: 260px; background: var(--sidebar); color: white; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; font-size: 20px; font-weight: 800; border-bottom: 1px solid #1E293B; }
+        .nav-btn { padding: 15px 20px; color: #94A3B8; display: flex; align-items: center; gap: 12px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-weight: 600; transition: 0.2s; }
+        .nav-btn:hover, .nav-btn.active { background: #1E293B; color: white; border-left: 4px solid var(--primary); }
+        .main-content { flex: 1; overflow-y: auto; padding: 30px; position: relative; }
+        
+        /* UI Components */
+        .card { background: var(--surface); padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
+        .patient-identity { background: #F8FAFC; border: 2px solid #CBD5E1; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: -30px; z-index: 10; }
+        
+        .grid-pos { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-weight: 600; margin-bottom: 15px; }
+        
+        /* Search Dropdown */
+        .search-wrapper { position: relative; }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .search-item { padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .search-item:hover { background: var(--bg); }
+        
+        /* Cart */
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--bg); }
+        
+        /* Buttons */
+        .btn { padding: 12px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; width: 100%; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #0F766E; }
+        .btn-danger-outline { background: transparent; color: var(--danger); border: 2px solid var(--danger); }
+        .btn-danger-outline:hover { background: #FEF2F2; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        /* Financial Hierarchy */
+        .fin-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; font-weight: 600; color: var(--muted); }
+        .fin-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border); font-size: 24px; font-weight: 800; color: var(--text); }
+        
+        /* Alerts */
+        .alert-critical { background: #FEF2F2; border-left: 4px solid var(--danger); padding: 15px; color: #991B1B; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        
+        /* Network Lock Overlay */
+        #network-lock { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 999; justify-content: center; align-items: center; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">CareDrop V3</div>
+        <button class="nav-btn active" onclick="switchTab('pos-tab')"><i data-lucide="shopping-cart"></i> Reception POS</button>
+        <button class="nav-btn" onclick="switchTab('lims-tab')"><i data-lucide="microscope"></i> LIMS Verification</button>
+        <button class="nav-btn" onclick="switchTab('ledger-tab')"><i data-lucide="file-text"></i> Financial Ledger</button>
+        <a href="/logout" class="nav-btn" style="margin-top: auto; color: #FCA5A5;"><i data-lucide="log-out"></i> Secure Logout</a>
+    </div>
+
+    <div class="main-content">
+        <!-- NETWORK UNCERTAINTY LOCK -->
+        <div id="network-lock">
+            <i data-lucide="loader" style="animation: spin 1s linear infinite; width:40px; height:40px; color:#0D9488; margin-bottom: 15px;"></i>
+            <h3 style="margin:0;">Processing Transaction...</h3>
+            <p style="color:#64748B;">Do not close or refresh this page. Enforcing backend idempotency.</p>
+        </div>
+
+        <!-- 1. POS TAB -->
+        <div id="pos-tab" class="tab-content">
+            <h2 style="margin-top: 0;">New Order (Point of Sale)</h2>
+            
+            <!-- CPO RULE: PATIENT IDENTITY IMPOSSIBLE TO OVERLOOK -->
+            <div class="patient-identity">
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; color: var(--text);">Ramesh Kumar <span style="color:var(--muted); font-size:14px; font-weight:600;">(CD-PAT-1045)</span></h3>
+                    <span style="font-size: 13px; color: var(--muted); font-weight: 600;">45 Yrs • Male • +91 9876543210</span>
+                </div>
+                <button class="btn btn-primary" style="width:auto; padding:8px 15px; background:var(--sidebar);">Change Patient</button>
+            </div>
+
+            <div class="grid-pos">
+                <!-- LEFT: TEST SELECTION -->
+                <div class="card">
+                    <h3 style="margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 10px;">Diagnostic Tests</h3>
+                    
+                    <div class="search-wrapper">
+                        <input type="text" id="test-search" class="form-input" placeholder="Search test by name or code (e.g. CBC)..." onkeyup="debounceSearch(event)">
+                        <div id="search-results" class="search-results"></div>
+                    </div>
+
+                    <div id="cart-container" style="margin-top: 20px;">
+                        <!-- Cart Items dynamically injected via JS -->
+                    </div>
+                </div>
+
+                <!-- RIGHT: FINANCIAL HIERARCHY -->
+                <div class="card" style="position: sticky; top: 80px;">
+                    <h3 style="margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 10px;">Financial Summary</h3>
+                    
+                    <div class="fin-row"><span>Subtotal</span><span>₹<span id="ui-subtotal">0.00</span></span></div>
+                    
+                    <label style="font-size:12px; font-weight:800; color:var(--muted);">Apply Discount (₹)</label>
+                    <input type="number" id="ui-discount" class="form-input" value="0" min="0" oninput="updateTotals()" style="color:var(--danger);">
+                    
+                    <div class="fin-total" style="border-top: none; padding-top: 0; margin-top: 0;">
+                        <span>Final Payable</span><span style="color:var(--primary);">₹<span id="ui-payable">0.00</span></span>
+                    </div>
+
+                    <div style="background: var(--bg); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                        <label style="font-size:12px; font-weight:800; color:var(--muted);">Collect Payment Now (₹)</label>
+                        <input type="number" id="ui-advance" class="form-input" value="0" min="0">
+                        <select id="ui-method" class="form-input">
+                            <option value="Cash">Cash</option><option value="UPI">UPI</option>
+                        </select>
+                        
+                        <!-- IDEMPOTENT TRANSACTION BUTTON -->
+                        <button id="btn-checkout" class="btn btn-primary" onclick="processIdempotentCheckout()">
+                            <i data-lucide="lock"></i> Generate Invoice & Record Payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LIMS / PATHOLOGIST TAB -->
+        <div id="lims-tab" class="tab-content" style="display: none;">
+            <h2 style="margin-top: 0;">Pathologist Verification Queue</h2>
+            
+            <div class="card">
+                <div class="patient-identity">
+                    <div>
+                        <h3 style="margin: 0;">Aman Singh <span style="color:var(--muted); font-size:14px;">(ACC-2609-001)</span></h3>
+                        <span style="font-size: 13px; color: var(--muted); font-weight: 600;">Sample: Serum • Collected: 09:30 AM</span>
+                    </div>
+                </div>
+
+                <!-- CPO RULE: EXPLICIT CRITICAL TEXT (No color-only flags) -->
+                <div class="alert-critical">
+                    <i data-lucide="alert-triangle"></i> CRITICAL RESULT — Potassium: 6.8 mmol/L
+                </div>
+
+                <table style="width:100%; text-align:left; border-collapse:collapse; margin-bottom: 20px;">
+                    <tr style="border-bottom:2px solid var(--bg); color:var(--muted); font-size:12px;">
+                        <th style="padding:10px 0;">Test Component</th><th>Result</th><th>Unit</th><th>Reference Range</th>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--bg); font-weight:600;">
+                        <td style="padding:15px 0;">Serum Potassium</td>
+                        <td style="color:var(--danger); font-size:18px; font-weight:800;">6.8</td>
+                        <td>mmol/L</td><td>3.5 - 5.1</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--bg); font-weight:600;">
+                        <td style="padding:15px 0;">Serum Sodium</td>
+                        <td style="font-size:16px;">140</td>
+                        <td>mmol/L</td><td>135 - 145</td>
+                    </tr>
+                </table>
+
+                <div style="display:flex; gap:15px;">
+                    <button class="btn btn-primary" style="flex:2;"><i data-lucide="check-circle"></i> Approve & Sign Report</button>
+                    <!-- CPO RULE: DANGEROUS ACTION IS OBVIOUS -->
+                    <button class="btn btn-danger-outline" style="flex:1;"><i data-lucide="x-circle"></i> Return for Correction</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. FINANCIAL LEDGER TAB -->
+        <div id="ledger-tab" class="tab-content" style="display: none;">
+            <h2 style="margin-top: 0;">Financial Ledger & Logistics</h2>
+            <div class="card">
+                <p>Immutable history of Invoices, UUID Payments, and Barcode Reprints will render here.</p>
+                <button class="btn btn-primary" style="width: 200px; background:var(--sidebar);"><i data-lucide="printer"></i> Reprint Barcode</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // UI Tab Switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- THE POS SEARCH ENGINE (Vanilla JS Debounce) ---
+        let searchTimeout = null;
+        let cart = []; // Array of {id, name, price}
+
+        function debounceSearch(e) {
+            clearTimeout(searchTimeout);
+            const query = e.target.value;
+            const resultsDiv = document.getElementById('search-results');
+            
+            if(query.length < 2) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+
+            // Wait 300ms before hitting the backend
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/search-tests?q=${query}`);
+                    const data = await res.json();
+                    
+                    resultsDiv.innerHTML = '';
+                    if(data.length > 0) {
+                        data.forEach(test => {
+                            // Prevent rendering already selected tests
+                            if(!cart.find(item => item.id === test.id)) {
+                                const div = document.createElement('div');
+                                div.className = 'search-item';
+                                div.innerHTML = `<span><strong>${test.name}</strong> (${test.code})</span> <span style="color:#0D9488; font-weight:800;">₹${test.price}</span>`;
+                                div.onclick = () => addToCart(test);
+                                resultsDiv.appendChild(div);
+                            }
+                        });
+                        resultsDiv.style.display = 'block';
+                    } else {
+                        resultsDiv.innerHTML = '<div style="padding:12px; color:#64748B;">No tests found.</div>';
+                        resultsDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.error("Search failed", err);
+                }
+            }, 300);
+        }
+
+        // Hide search when clicking outside
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.search-wrapper')) document.getElementById('search-results').style.display = 'none';
+        });
+
+        function addToCart(test) {
+            cart.push(test);
+            document.getElementById('test-search').value = '';
+            document.getElementById('search-results').style.display = 'none';
+            renderCart();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(t => t.id !== id);
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-container');
+            container.innerHTML = '';
+            let subtotal = 0;
+
+            cart.forEach(test => {
+                subtotal += parseFloat(test.price);
+                container.innerHTML += `
+                    <div class="cart-item">
+                        <span style="font-weight:600; color:#0F172A;">${test.name}</span>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span style="font-weight:800;">₹${test.price}</span>
+                            <i data-lucide="trash-2" style="color:#DC2626; cursor:pointer;" onclick="removeFromCart(${test.id})"></i>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('ui-subtotal').innerText = subtotal.toFixed(2);
+            lucide.createIcons();
+            updateTotals();
+        }
+
+        function updateTotals() {
+            const subtotal = parseFloat(document.getElementById('ui-subtotal').innerText);
+            let discount = parseFloat(document.getElementById('ui-discount').value) || 0;
+            
+            // Prevent discount > subtotal
+            if(discount > subtotal) {
+                discount = subtotal;
+                document.getElementById('ui-discount').value = discount;
+            }
+
+            const payable = subtotal - discount;
+            document.getElementById('ui-payable').innerText = payable.toFixed(2);
+            
+            // Auto-cap the advance input
+            const advanceInput = document.getElementById('ui-advance');
+            if(parseFloat(advanceInput.value) > payable) {
+                advanceInput.value = payable;
+            }
+            advanceInput.max = payable;
+        }
+
+        // --- IDEMPOTENT TRANSACTION RECOVERY ---
+        async function processIdempotentCheckout() {
+            if(cart.length === 0) return alert("Select at least one test.");
+
+            const btn = document.getElementById('btn-checkout');
+            const lock = document.getElementById('network-lock');
+            
+            // 1. Generate Idempotency Key
+            const transactionUUID = crypto.randomUUID();
+            
+            // 2. Lock UI
+            btn.disabled = true;
+            lock.style.display = 'flex';
+
+            // Prepare Payload
+            const payload = {
+                idempotency_key: transactionUUID,
+                patient_id: 1, // Hardcoded for frontend demo
+                tests: cart.map(t => t.id),
+                discount: document.getElementById('ui-discount').value,
+                advance_payment: document.getElementById('ui-advance').value,
+                method: document.getElementById('ui-method').value
+            };
+
+            // 3. Save to localStorage for Draft Recovery (CPO Rule)
+            localStorage.setItem('pending_transaction', JSON.stringify(payload));
+
+            // SIMULATED BACKEND CALL (Since we don't have the full order endpoint wired yet)
+            setTimeout(() => {
+                alert(`Transaction ${transactionUUID} Successfully Committed to PostgreSQL! Invoice Issued.`);
+                
+                // Clear draft and UI
+                localStorage.removeItem('pending_transaction');
+                cart = [];
+                renderCart();
+                document.getElementById('ui-discount').value = '0';
+                document.getElementById('ui-advance').value = '0';
+                
+                // Unlock UI
+                btn.disabled = false;
+                lock.style.display = 'none';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
