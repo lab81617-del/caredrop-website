@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reception Desk - New Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
+        body { background: #F1F5F9; margin: 0; display: flex; flex-direction: column; height: 100vh; color: #0F172A; }
+        
+        .top-bar { background: #0F172A; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { color: white; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        
+        .container { display: flex; flex: 1; padding: 30px; gap: 30px; overflow-y: auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .col-left { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .col-right { width: 400px; display: flex; flex-direction: column; gap: 20px; }
+        
+        h3 { margin-top: 0; color: #0F172A; font-weight: 800; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
+        label { font-size: 12px; font-weight: 800; color: #64748B; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .form-input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #CBD5E1; font-size: 15px; }
+        
+        /* Test Selection Checkboxes */
+        .test-list { max-height: 250px; overflow-y: auto; border: 1px solid #CBD5E1; border-radius: 6px; padding: 10px; margin-bottom: 15px; }
+        .test-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
+        .test-item:hover { background: #F8FAFC; }
+        .test-item input { margin-right: 10px; transform: scale(1.2); }
+        
+        /* Cart Summary */
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+        .summary-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #CBD5E1; font-size: 20px; font-weight: 900; color: #0D9488; }
+        
+        .btn-primary { width: 100%; background: #0D9488; color: white; padding: 15px; border: none; border-radius: 6px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 20px; }
+        .btn-primary:hover { background: #0F766E; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <a href="/admin" class="back-btn"><i data-lucide="arrow-left"></i> Back to Dashboard</a>
+        <h2 style="margin:0; font-size: 18px;">CareDrop Point of Sale (POS)</h2>
+    </div>
+
+    <form action="/admin/walk-in" method="POST" class="container">
+        
+        <!-- LEFT COLUMN: PATIENT INFO -->
+        <div class="col-left">
+            <div class="card">
+                <h3>1. Patient Information</h3>
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>Patient Full Name</label>
+                        <input type="text" name="patient_name" required class="form-input" placeholder="e.g. Ramesh Kumar">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Mobile Number</label>
+                        <input type="tel" name="phone" required class="form-input" placeholder="10-digit number">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>Age</label>
+                        <input type="number" name="age" required class="form-input" placeholder="e.g. 45">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Gender</label>
+                        <select name="gender" class="form-input">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label>Home Collection Address (Leave blank if walk-in)</label>
+                <input type="text" name="address" class="form-input" placeholder="House No, Street, City">
+                
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>Referred By (Doctor / Clinic)</label>
+                        <select name="referred_by" class="form-input">
+                            <option value="Self">Self / Direct Walk-In</option>
+                            {% for p in partners %}
+                            <option value="{{ p.partner_name }}">{{ p.partner_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Processing Lab</label>
+                        <select name="lab_id" class="form-input">
+                            {% for lab in labs %}
+                            <option value="{{ lab.id }}">{{ lab.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>2. Select Diagnostic Tests</h3>
+                <div class="test-list">
+                    {% for test in all_tests %}
+                    <label class="test-item">
+                        <div>
+                            <input type="checkbox" name="test_ids" value="{{ test.id }}" data-price="{{ test.price }}" onchange="calculateCart()"> 
+                            <span style="font-weight: bold; color: #1E293B;">{{ test.name }}</span>
+                        </div>
+                        <span style="color: #0D9488; font-weight: bold;">₹{{ test.price }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: CART & PAYMENT -->
+        <div class="col-right">
+            <div class="card">
+                <h3>3. Financial Summary</h3>
+                
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span style="font-weight: bold;">₹<span id="display_subtotal">0</span></span>
+                </div>
+                
+                <label style="margin-top: 15px;">Apply Discount (₹)</label>
+                <input type="number" name="discount" id="discount_input" value="0" min="0" class="form-input" style="color: #DC2626; font-weight: bold;" oninput="calculateCart()">
+                
+                <div class="summary-total">
+                    <span>Final Payable:</span>
+                    <span>₹<span id="display_total">0</span></span>
+                </div>
+                
+                <div style="margin-top: 30px; background: #F8FAFC; padding: 15px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                    <h4 style="margin: 0 0 15px 0; color: #0F172A;">Collect Payment Now</h4>
+                    
+                    <label>Advance Received (₹)</label>
+                    <input type="number" name="advance" id="advance_input" value="0" min="0" class="form-input" style="color: #16A34A; font-weight: bold; font-size: 18px;">
+                    
+                    <label>Payment Method</label>
+                    <select name="payment_method" class="form-input">
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Card">Card</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-primary">Confirm Booking & Invoice</button>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        lucide.createIcons();
+        
+        function calculateCart() {
+            let subtotal = 0;
+            // Get all checked checkboxes
+            const checkboxes = document.querySelectorAll('input[name="test_ids"]:checked');
+            checkboxes.forEach(cb => {
+                subtotal += parseFloat(cb.getAttribute('data-price') || 0);
+            });
+            
+            // Get discount
+            let discount = parseFloat(document.getElementById('discount_input').value) || 0;
+            if (discount > subtotal) {
+                discount = subtotal; // Can't discount more than the total
+                document.getElementById('discount_input').value = discount;
+            }
+            
+            let total = subtotal - discount;
+            
+            // Update UI
+            document.getElementById('display_subtotal').innerText = subtotal.toFixed(2);
+            document.getElementById('display_total').innerText = total.toFixed(2);
+            
+            // Prevent advance from being higher than total
+            let advanceInput = document.getElementById('advance_input');
+            advanceInput.max = total;
+            if(parseFloat(advanceInput.value) > total) {
+                advanceInput.value = total;
+            }
+        }
+    </script>
+</body>
+</html>
