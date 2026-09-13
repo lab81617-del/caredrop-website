@@ -239,5 +239,55 @@ def reconcile_cash():
     except Exception as e: conn.rollback(); print(e)
     finally: conn.close()
     return redirect(url_for('admin_dashboard'))
+    # --- MASTER SETTINGS & CSV IMPORT ---
+@app.route('/admin/update-lab', methods=['POST'])
+@role_required(['admin'])
+def update_lab():
+    lab_id = request.form.get('lab_id', 1)
+    d1_name = request.form.get('doctor_1_name')
+    d1_degree = request.form.get('doctor_1_degree')
+    
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE labs SET doctor_1_name = %s, doctor_1_degree = %s WHERE id = %s", (d1_name, d1_degree, lab_id))
+        conn.commit()
+        log_audit(0, "System Settings", "N/A", "Updated", f"Updated Lab ID {lab_id} Pathologist info")
+    except Exception as e: conn.rollback(); print(e)
+    finally: conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/import-tests', methods=['POST'])
+@role_required(['admin'])
+def import_tests():
+    if 'csv_file' not in request.files: return redirect(url_for('admin_dashboard'))
+    file = request.files['csv_file']
+    if file.filename == '': return redirect(url_for('admin_dashboard'))
+    
+    conn = get_db()
+    try:
+        # Read the CSV file
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        reader = csv.DictReader(stream)
+        cursor = conn.cursor()
+        
+        count = 0
+        for row in reader:
+            test_name = row.get('Test Name')
+            price = row.get('Price', 0)
+            
+            if test_name:
+                # Insert Test
+                cursor.execute("INSERT INTO tests (name, is_active) VALUES (%s, TRUE) RETURNING id", (test_name,))
+                t_id = cursor.fetchone()[0]
+                # Insert Price for Lab 1 (Main Lab)
+                cursor.execute("INSERT INTO lab_test_pricing (test_id, lab_id, price) VALUES (%s, 1, %s)", (t_id, price))
+                count += 1
+                
+        conn.commit()
+        log_audit(0, "Catalog Import", "N/A", "Success", f"Bulk imported {count} tests via CSV")
+    except Exception as e: conn.rollback(); print(e)
+    finally: conn.close()
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__': app.run(debug=True, port=5000)
