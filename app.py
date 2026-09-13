@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect, url_for, session
+from flask import Flask, redirect, url_for, session, render_template
 from dotenv import load_dotenv
 
 # Import the database initializer
@@ -38,8 +38,8 @@ def home():
     if 'role' not in session:
         return redirect(url_for('auth.unified_login'))
     
-    # We will build the UI dashboard routes in the templates phase next
-    return f"CareDrop V3 Master Engine Running. Logged in as: {session['role']}. All 12 Domains active."
+    # Render the master dashboard based on role
+    return render_template('dashboard.html', user_role=session['role'])
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
