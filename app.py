@@ -12,21 +12,13 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "caredrop-v3-enterprise-key")
 
-# Import Blueprints (We will build these files in the next steps)
-# from blueprints.auth import auth_bp
-# from blueprints.pos import pos_bp
-# from blueprints.financial import financial_bp
-# from blueprints.clinical import clinical_bp
-# from blueprints.logistics import logistics_bp
-# from blueprints.settings import settings_bp
+# Import Blueprints
+from blueprints.auth import auth_bp
+from blueprints.pos import pos_bp
 
 # Register Blueprints
-# app.register_blueprint(auth_bp)
-# app.register_blueprint(pos_bp)
-# app.register_blueprint(financial_bp)
-# app.register_blueprint(clinical_bp)
-# app.register_blueprint(logistics_bp)
-# app.register_blueprint(settings_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(pos_bp)
 
 @app.before_request
 def startup_tasks():
@@ -37,8 +29,11 @@ def startup_tasks():
 
 @app.route('/')
 def home():
-    # Temporary placeholder until we build the Patient Mobile UI
-    return "CareDrop V3 Master Engine is Running."
+    # If not logged in, redirect to the new Auth module
+    if 'role' not in session:
+        return redirect(url_for('auth.unified_login'))
+        
+    return f"CareDrop V3 Master Engine Running. Logged in as: {session['role']}. (Dashboards loading next...)"
 
 if __name__ == '__main__':
     # Start the server
