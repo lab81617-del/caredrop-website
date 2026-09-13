@@ -7,185 +7,169 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --bg: #F1F5F9; --surface: #FFFFFF; --sidebar: #0F172A; --primary: #0D9488; --danger: #DC2626; --text: #0F172A; --muted: #64748B; --border: #E2E8F0; }
+        :root { --bg: #F1F5F9; --surface: #FFFFFF; --sidebar: #0F172A; --primary: #0D9488; --text: #0F172A; --muted: #64748B; --border: #E2E8F0; }
         * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
         body { margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* Layout */
+        /* Sidebar */
         .sidebar { width: 260px; background: var(--sidebar); color: white; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; font-size: 20px; font-weight: 800; border-bottom: 1px solid #1E293B; }
-        .nav-btn { padding: 15px 20px; color: #94A3B8; display: flex; align-items: center; gap: 12px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-weight: 600; transition: 0.2s; }
+        .sidebar-header { padding: 25px 20px; font-size: 22px; font-weight: 800; border-bottom: 1px solid #1E293B; letter-spacing: -0.5px; }
+        .role-badge { margin: 20px 20px; background: #1E293B; padding: 10px; border-radius: 6px; color: #38BDF8; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+        .nav-btn { padding: 16px 20px; color: #94A3B8; display: flex; align-items: center; gap: 12px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-weight: 600; transition: 0.2s; font-size: 15px; }
         .nav-btn:hover, .nav-btn.active { background: #1E293B; color: white; border-left: 4px solid var(--primary); }
-        .main-content { flex: 1; overflow-y: auto; padding: 30px; position: relative; }
         
-        /* UI Components */
-        .card { background: var(--surface); padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
-        .patient-identity { background: #F8FAFC; border: 2px solid #CBD5E1; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: -30px; z-index: 10; }
+        /* Layout */
+        .main-content { flex: 1; overflow-y: auto; padding: 40px; position: relative; }
+        .card { background: var(--surface); padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 25px; }
+        .grid-pos { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start; }
         
-        .grid-pos { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-        .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-weight: 600; margin-bottom: 15px; }
-        
-        /* Search Dropdown */
+        /* Inputs & Search */
+        .form-input { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-weight: 600; margin-bottom: 15px; outline: none; transition: border-color 0.2s; font-size: 15px; }
+        .form-input:focus { border-color: var(--primary); }
         .search-wrapper { position: relative; }
-        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .search-item { padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .search-item { padding: 14px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .search-item:hover { background: var(--bg); }
         
-        /* Cart */
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--bg); }
-        
         /* Buttons */
-        .btn { padding: 12px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; width: 100%; transition: 0.2s; }
+        .btn { padding: 14px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-size: 15px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: #0F766E; }
-        .btn-danger-outline { background: transparent; color: var(--danger); border: 2px solid var(--danger); }
-        .btn-danger-outline:hover { background: #FEF2F2; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        
-        /* Financial Hierarchy */
-        .fin-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; font-weight: 600; color: var(--muted); }
-        .fin-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border); font-size: 24px; font-weight: 800; color: var(--text); }
-        
-        /* Alerts */
-        .alert-critical { background: #FEF2F2; border-left: 4px solid var(--danger); padding: 15px; color: #991B1B; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         
         /* Network Lock Overlay */
-        #network-lock { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 999; justify-content: center; align-items: center; flex-direction: column; }
+        #network-lock { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 999; justify-content: center; align-items: center; flex-direction: column; text-align: center; }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-header">CareDrop V3</div>
+        <div class="role-badge"><i data-lucide="shield" style="width:16px;"></i> {{ user_role }}</div>
+        
         <button class="nav-btn active" onclick="switchTab('pos-tab')"><i data-lucide="shopping-cart"></i> Reception POS</button>
-        <button class="nav-btn" onclick="switchTab('lims-tab')"><i data-lucide="microscope"></i> LIMS Verification</button>
+        <button class="nav-btn" onclick="switchTab('lims-tab')"><i data-lucide="microscope"></i> LIMS Queue</button>
         <button class="nav-btn" onclick="switchTab('ledger-tab')"><i data-lucide="file-text"></i> Financial Ledger</button>
-        <a href="/logout" class="nav-btn" style="margin-top: auto; color: #FCA5A5;"><i data-lucide="log-out"></i> Secure Logout</a>
+        
+        <a href="/logout" class="nav-btn" style="margin-top: auto; color: #FCA5A5; border-top: 1px solid #1E293B;"><i data-lucide="log-out"></i> Secure Logout</a>
     </div>
 
     <div class="main-content">
-        <!-- NETWORK UNCERTAINTY LOCK -->
+        <!-- Network Lock UI -->
         <div id="network-lock">
-            <i data-lucide="loader" style="animation: spin 1s linear infinite; width:40px; height:40px; color:#0D9488; margin-bottom: 15px;"></i>
-            <h3 style="margin:0;">Processing Transaction...</h3>
-            <p style="color:#64748B;">Do not close or refresh this page. Enforcing backend idempotency.</p>
+            <i data-lucide="loader" style="animation: spin 1.5s linear infinite; width:56px; height:56px; color:#0D9488; margin-bottom: 20px;"></i>
+            <h2 id="lock-title" style="margin:0; font-size: 28px; font-weight:800; color:#0F172A;">Processing Transaction...</h2>
+            <p id="lock-msg" style="color:#64748B; font-size: 16px; margin-top:10px;">Enforcing PostgreSQL backend idempotency. Do not close this page.</p>
+            <button id="lock-close-btn" class="btn btn-primary" style="display:none; width:auto; margin-top:30px; padding: 14px 40px;" onclick="window.location.reload()">Dismiss & Update Ledger</button>
         </div>
 
         <!-- 1. POS TAB -->
         <div id="pos-tab" class="tab-content">
-            <h2 style="margin-top: 0;">New Order (Point of Sale)</h2>
-            
-            <!-- CPO RULE: PATIENT IDENTITY IMPOSSIBLE TO OVERLOOK -->
-            <div class="patient-identity">
-                <div>
-                    <h3 style="margin: 0; font-size: 18px; color: var(--text);">Ramesh Kumar <span style="color:var(--muted); font-size:14px; font-weight:600;">(CD-PAT-1045)</span></h3>
-                    <span style="font-size: 13px; color: var(--muted); font-weight: 600;">45 Yrs • Male • +91 9876543210</span>
-                </div>
-                <button class="btn btn-primary" style="width:auto; padding:8px 15px; background:var(--sidebar);">Change Patient</button>
-            </div>
-
+            <h2 style="margin-top: 0; font-size: 28px; letter-spacing:-0.5px;">Point of Sale (Walk-in)</h2>
             <div class="grid-pos">
-                <!-- LEFT: TEST SELECTION -->
                 <div class="card">
-                    <h3 style="margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 10px;">Diagnostic Tests</h3>
-                    
+                    <h3 style="margin-top:0; border-bottom: 2px solid var(--bg); padding-bottom:15px; color:#334155;">Diagnostic Test Catalog</h3>
                     <div class="search-wrapper">
-                        <input type="text" id="test-search" class="form-input" placeholder="Search test by name or code (e.g. CBC)..." onkeyup="debounceSearch(event)">
+                        <input type="text" id="test-search" class="form-input" placeholder="Search test by name or code (e.g. Complete Blood Count)..." onkeyup="debounceSearch(event)">
                         <div id="search-results" class="search-results"></div>
                     </div>
-
-                    <div id="cart-container" style="margin-top: 20px;">
-                        <!-- Cart Items dynamically injected via JS -->
-                    </div>
+                    <div id="cart-container" style="margin-top: 25px;"></div>
                 </div>
 
-                <!-- RIGHT: FINANCIAL HIERARCHY -->
-                <div class="card" style="position: sticky; top: 80px;">
-                    <h3 style="margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 10px;">Financial Summary</h3>
+                <div class="card" style="position: sticky; top: 40px;">
+                    <h3 style="margin-top:0; border-bottom: 2px solid var(--bg); padding-bottom:15px; color:#334155;">Financial Summary</h3>
                     
-                    <div class="fin-row"><span>Subtotal</span><span>₹<span id="ui-subtotal">0.00</span></span></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; color:var(--muted); font-weight:600;">
+                        <span>Subtotal</span><span>₹<span id="ui-subtotal">0.00</span></span>
+                    </div>
                     
-                    <label style="font-size:12px; font-weight:800; color:var(--muted);">Apply Discount (₹)</label>
-                    <input type="number" id="ui-discount" class="form-input" value="0" min="0" oninput="updateTotals()" style="color:var(--danger);">
+                    <label style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Apply Discount (₹)</label>
+                    <input type="number" id="ui-discount" class="form-input" value="0" min="0" oninput="updateTotals()" style="color:#DC2626;">
                     
-                    <div class="fin-total" style="border-top: none; padding-top: 0; margin-top: 0;">
+                    <div style="display:flex; justify-content:space-between; margin:20px 0; padding-top:20px; border-top: 2px dashed var(--border); font-size: 24px; font-weight: 800;">
                         <span>Final Payable</span><span style="color:var(--primary);">₹<span id="ui-payable">0.00</span></span>
                     </div>
-
-                    <div style="background: var(--bg); padding: 15px; border-radius: 8px; margin-top: 20px;">
-                        <label style="font-size:12px; font-weight:800; color:var(--muted);">Collect Payment Now (₹)</label>
+                    
+                    <div style="background: var(--bg); padding: 20px; border-radius: 8px; margin-top: 20px;">
+                        <label style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Advance Collection (₹)</label>
                         <input type="number" id="ui-advance" class="form-input" value="0" min="0">
+                        
+                        <label style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Payment Method</label>
                         <select id="ui-method" class="form-input">
-                            <option value="Cash">Cash</option><option value="UPI">UPI</option>
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI / QR</option>
+                            <option value="Card">Credit/Debit Card</option>
                         </select>
                         
-                        <!-- IDEMPOTENT TRANSACTION BUTTON -->
-                        <button id="btn-checkout" class="btn btn-primary" onclick="processIdempotentCheckout()">
-                            <i data-lucide="lock"></i> Generate Invoice & Record Payment
+                        <button id="btn-checkout" class="btn btn-primary" onclick="processLiveCheckout()" style="margin-top:10px;">
+                            <i data-lucide="lock" style="width:18px;"></i> Generate Secure Invoice
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 2. LIMS / PATHOLOGIST TAB -->
+        <!-- 2. LIMS TAB -->
         <div id="lims-tab" class="tab-content" style="display: none;">
-            <h2 style="margin-top: 0;">Pathologist Verification Queue</h2>
-            
-            <div class="card">
-                <div class="patient-identity">
+            <h2 style="margin-top: 0; font-size: 28px; letter-spacing:-0.5px;">Clinical Verification Queue</h2>
+            {% if lims_orders %}
+                {% for order in lims_orders %}
+                <div class="card" id="lims-card-{{ order.order_id }}" style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <h3 style="margin: 0;">Aman Singh <span style="color:var(--muted); font-size:14px;">(ACC-2609-001)</span></h3>
-                        <span style="font-size: 13px; color: var(--muted); font-weight: 600;">Sample: Serum • Collected: 09:30 AM</span>
+                        <h3 style="margin: 0 0 8px 0; font-size:20px;">{{ order.patient_name }} <span style="color:var(--muted); font-size:15px; font-weight:600;">({{ order.order_ref }})</span></h3>
+                        <div style="color: var(--muted); font-size: 14px; font-weight:600; display:flex; gap:15px;">
+                            <span style="background:#FEF3C7; color:#B45309; padding:4px 8px; border-radius:4px; font-size:12px;">{{ order.clinical_status }}</span>
+                            <span>Created: {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
                     </div>
+                    <button class="btn btn-primary" style="width: auto; padding: 12px 24px;" onclick="alert('PDF Engine to be attached here.')">
+                        <i data-lucide="check-circle" style="width:18px;"></i> Approve & Generate PDF
+                    </button>
                 </div>
-
-                <!-- CPO RULE: EXPLICIT CRITICAL TEXT (No color-only flags) -->
-                <div class="alert-critical">
-                    <i data-lucide="alert-triangle"></i> CRITICAL RESULT — Potassium: 6.8 mmol/L
+                {% endfor %}
+            {% else %}
+                <div class="card" style="text-align: center; color: var(--muted); padding: 60px;">
+                    <i data-lucide="check-square" style="width: 56px; height: 56px; margin-bottom: 15px; opacity: 0.3;"></i>
+                    <h3 style="font-size:22px; color:#475569;">All caught up!</h3>
+                    <p style="font-size:16px;">There are no clinical reports pending pathologist verification at this time.</p>
                 </div>
-
-                <table style="width:100%; text-align:left; border-collapse:collapse; margin-bottom: 20px;">
-                    <tr style="border-bottom:2px solid var(--bg); color:var(--muted); font-size:12px;">
-                        <th style="padding:10px 0;">Test Component</th><th>Result</th><th>Unit</th><th>Reference Range</th>
-                    </tr>
-                    <tr style="border-bottom:1px solid var(--bg); font-weight:600;">
-                        <td style="padding:15px 0;">Serum Potassium</td>
-                        <td style="color:var(--danger); font-size:18px; font-weight:800;">6.8</td>
-                        <td>mmol/L</td><td>3.5 - 5.1</td>
-                    </tr>
-                    <tr style="border-bottom:1px solid var(--bg); font-weight:600;">
-                        <td style="padding:15px 0;">Serum Sodium</td>
-                        <td style="font-size:16px;">140</td>
-                        <td>mmol/L</td><td>135 - 145</td>
-                    </tr>
-                </table>
-
-                <div style="display:flex; gap:15px;">
-                    <button class="btn btn-primary" style="flex:2;"><i data-lucide="check-circle"></i> Approve & Sign Report</button>
-                    <!-- CPO RULE: DANGEROUS ACTION IS OBVIOUS -->
-                    <button class="btn btn-danger-outline" style="flex:1;"><i data-lucide="x-circle"></i> Return for Correction</button>
-                </div>
-            </div>
+            {% endif %}
         </div>
 
-        <!-- 3. FINANCIAL LEDGER TAB -->
+        <!-- 3. LEDGER TAB -->
         <div id="ledger-tab" class="tab-content" style="display: none;">
-            <h2 style="margin-top: 0;">Financial Ledger & Logistics</h2>
-            <div class="card">
-                <p>Immutable history of Invoices, UUID Payments, and Barcode Reprints will render here.</p>
-                <button class="btn btn-primary" style="width: 200px; background:var(--sidebar);"><i data-lucide="printer"></i> Reprint Barcode</button>
+            <h2 style="margin-top: 0; font-size: 28px; letter-spacing:-0.5px;">Master Financial Ledger</h2>
+            <div class="card" style="padding:0; overflow:hidden;">
+                <table style="width:100%; text-align:left; border-collapse:collapse;">
+                    <tr style="background: #F8FAFC; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">
+                        <th style="padding:15px 25px;">Invoice Ref</th><th style="padding:15px 25px;">Patient Name</th><th style="padding:15px 25px;">Payment Status</th><th style="padding:15px 25px;">Total Amount</th>
+                    </tr>
+                    {% for inv in ledger_invoices %}
+                    <tr style="border-top:1px solid var(--border); font-weight:600; transition:0.2s;">
+                        <td style="padding:18px 25px; color:#0F172A;">{{ inv.invoice_ref }}</td>
+                        <td style="padding:18px 25px;">{{ inv.patient_name }}</td>
+                        <td style="padding:18px 25px;">
+                            {% if inv.status == 'PAID' %}
+                                <span style="background: #DCFCE7; color:#166534; padding: 6px 10px; border-radius: 6px; font-size: 12px;">PAID</span>
+                            {% elif inv.status == 'PARTIALLY_PAID' %}
+                                <span style="background: #FEF3C7; color:#B45309; padding: 6px 10px; border-radius: 6px; font-size: 12px;">PARTIAL</span>
+                            {% else %}
+                                <span style="background: #F1F5F9; color:#475569; padding: 6px 10px; border-radius: 6px; font-size: 12px;">{{ inv.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding:18px 25px; font-weight:800; font-size:16px;">₹{{ inv.total_amount }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--muted);">No invoices have been generated yet.</td></tr>
+                    {% endfor %}
+                </table>
             </div>
         </div>
-
     </div>
 
     <script>
-        // Initialize Icons
         lucide.createIcons();
 
-        // UI Tab Switcher
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -193,53 +177,39 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- THE POS SEARCH ENGINE (Vanilla JS Debounce) ---
         let searchTimeout = null;
-        let cart = []; // Array of {id, name, price}
+        let cart = []; 
 
         function debounceSearch(e) {
             clearTimeout(searchTimeout);
             const query = e.target.value;
             const resultsDiv = document.getElementById('search-results');
             
-            if(query.length < 2) {
-                resultsDiv.style.display = 'none';
-                return;
-            }
+            if(query.length < 2) { resultsDiv.style.display = 'none'; return; }
 
-            // Wait 300ms before hitting the backend
             searchTimeout = setTimeout(async () => {
                 try {
                     const res = await fetch(`/api/search-tests?q=${query}`);
                     const data = await res.json();
-                    
                     resultsDiv.innerHTML = '';
+                    
                     if(data.length > 0) {
                         data.forEach(test => {
-                            // Prevent rendering already selected tests
                             if(!cart.find(item => item.id === test.id)) {
                                 const div = document.createElement('div');
                                 div.className = 'search-item';
-                                div.innerHTML = `<span><strong>${test.name}</strong> (${test.code})</span> <span style="color:#0D9488; font-weight:800;">₹${test.price}</span>`;
+                                div.innerHTML = `<span style="font-size:15px;"><strong>${test.name}</strong> <span style="color:#64748B;">(${test.code})</span></span> <span style="color:#0D9488; font-weight:800; font-size:16px;">₹${test.price}</span>`;
                                 div.onclick = () => addToCart(test);
                                 resultsDiv.appendChild(div);
                             }
                         });
-                        resultsDiv.style.display = 'block';
                     } else {
-                        resultsDiv.innerHTML = '<div style="padding:12px; color:#64748B;">No tests found.</div>';
-                        resultsDiv.style.display = 'block';
+                        resultsDiv.innerHTML = '<div style="padding:15px; color:#64748B; font-weight:600;">No tests found.</div>';
                     }
-                } catch (err) {
-                    console.error("Search failed", err);
-                }
+                    resultsDiv.style.display = 'block';
+                } catch(e) { console.error("Search failed", e); }
             }, 300);
         }
-
-        // Hide search when clicking outside
-        document.addEventListener('click', (e) => {
-            if(!e.target.closest('.search-wrapper')) document.getElementById('search-results').style.display = 'none';
-        });
 
         function addToCart(test) {
             cart.push(test);
@@ -248,29 +218,24 @@
             renderCart();
         }
 
-        function removeFromCart(id) {
-            cart = cart.filter(t => t.id !== id);
-            renderCart();
-        }
+        function removeFromCart(id) { cart = cart.filter(t => t.id !== id); renderCart(); }
 
         function renderCart() {
             const container = document.getElementById('cart-container');
             container.innerHTML = '';
             let subtotal = 0;
-
             cart.forEach(test => {
                 subtotal += parseFloat(test.price);
                 container.innerHTML += `
-                    <div class="cart-item">
-                        <span style="font-weight:600; color:#0F172A;">${test.name}</span>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <span style="font-weight:800;">₹${test.price}</span>
-                            <i data-lucide="trash-2" style="color:#DC2626; cursor:pointer;" onclick="removeFromCart(${test.id})"></i>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid #F1F5F9;">
+                        <span style="font-weight:700; font-size:16px;">${test.name}</span>
+                        <div style="display:flex; align-items:center; gap:20px;">
+                            <span style="font-weight:800; font-size:16px;">₹${test.price}</span>
+                            <i data-lucide="trash-2" style="color:#DC2626; cursor:pointer; width:20px; transition:0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'" onclick="removeFromCart(${test.id})"></i>
                         </div>
                     </div>
                 `;
             });
-            
             document.getElementById('ui-subtotal').innerText = subtotal.toFixed(2);
             lucide.createIcons();
             updateTotals();
@@ -279,66 +244,62 @@
         function updateTotals() {
             const subtotal = parseFloat(document.getElementById('ui-subtotal').innerText);
             let discount = parseFloat(document.getElementById('ui-discount').value) || 0;
-            
-            // Prevent discount > subtotal
-            if(discount > subtotal) {
-                discount = subtotal;
-                document.getElementById('ui-discount').value = discount;
-            }
-
+            if(discount > subtotal) { discount = subtotal; document.getElementById('ui-discount').value = discount; }
             const payable = subtotal - discount;
-            document.getElementById('ui-payable').innerText = payable.toFixed(2);
             
-            // Auto-cap the advance input
+            document.getElementById('ui-payable').innerText = payable.toFixed(2);
             const advanceInput = document.getElementById('ui-advance');
-            if(parseFloat(advanceInput.value) > payable) {
-                advanceInput.value = payable;
-            }
+            if(parseFloat(advanceInput.value) > payable) advanceInput.value = payable;
             advanceInput.max = payable;
         }
 
-        // --- IDEMPOTENT TRANSACTION RECOVERY ---
-        async function processIdempotentCheckout() {
-            if(cart.length === 0) return alert("Select at least one test.");
+        async function processLiveCheckout() {
+            if(cart.length === 0) return alert("Please select at least one diagnostic test.");
 
-            const btn = document.getElementById('btn-checkout');
             const lock = document.getElementById('network-lock');
+            const lockTitle = document.getElementById('lock-title');
+            const lockMsg = document.getElementById('lock-msg');
+            const lockClose = document.getElementById('lock-close-btn');
+            const btn = document.getElementById('btn-checkout');
             
-            // 1. Generate Idempotency Key
-            const transactionUUID = crypto.randomUUID();
-            
-            // 2. Lock UI
+            // Activate overlay (The Idempotency Guard)
             btn.disabled = true;
             lock.style.display = 'flex';
+            lockTitle.innerText = "Processing Transaction...";
+            lockTitle.style.color = "#0F172A";
+            lockMsg.innerText = "Writing to PostgreSQL. Do not close this page.";
+            lockClose.style.display = 'none';
 
-            // Prepare Payload
-            const payload = {
-                idempotency_key: transactionUUID,
-                patient_id: 1, // Hardcoded for frontend demo
-                tests: cart.map(t => t.id),
-                discount: document.getElementById('ui-discount').value,
-                advance_payment: document.getElementById('ui-advance').value,
-                method: document.getElementById('ui-method').value
-            };
-
-            // 3. Save to localStorage for Draft Recovery (CPO Rule)
-            localStorage.setItem('pending_transaction', JSON.stringify(payload));
-
-            // SIMULATED BACKEND CALL (Since we don't have the full order endpoint wired yet)
-            setTimeout(() => {
-                alert(`Transaction ${transactionUUID} Successfully Committed to PostgreSQL! Invoice Issued.`);
+            try {
+                const response = await fetch('/api/create-order', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        idempotency_key: crypto.randomUUID(),
+                        tests: cart.map(t => t.id),
+                        discount: document.getElementById('ui-discount').value,
+                        advance_payment: document.getElementById('ui-advance').value,
+                        method: document.getElementById('ui-method').value
+                    })
+                });
                 
-                // Clear draft and UI
-                localStorage.removeItem('pending_transaction');
-                cart = [];
-                renderCart();
-                document.getElementById('ui-discount').value = '0';
-                document.getElementById('ui-advance').value = '0';
+                const data = await response.json();
                 
-                // Unlock UI
-                btn.disabled = false;
-                lock.style.display = 'none';
-            }, 1500);
+                if (data.status === 'success') {
+                    lockTitle.innerText = "Success!";
+                    lockTitle.style.color = "#0D9488";
+                    lockMsg.innerText = `Invoice generated safely. Transaction complete.`;
+                    lockClose.style.display = 'block';
+                } else {
+                    throw new Error(data.message || "Unknown server error");
+                }
+            } catch (err) {
+                // If the clinic loses wifi, tell them not to double-bill
+                lockTitle.innerText = "Transaction Uncertain";
+                lockTitle.style.color = "#DC2626";
+                lockMsg.innerText = "Network connection failed. Check the Financial Ledger before retrying to prevent double-billing.";
+                lockClose.style.display = 'block';
+            }
         }
     </script>
 </body>
