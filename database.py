@@ -1,22 +1,14 @@
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from datetime import datetime
 from flask import session
 
-# Ensure .env is loaded if running locally
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
 def get_db():
-    """Establish a fresh connection to the PostgreSQL database."""
+    """Establish a fresh connection to the Render PostgreSQL database."""
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
 def safe_execute(query, params=None):
-    """Executes a query and commits, rolling back on failure."""
+    """Executes a query and commits, rolling back on failure to prevent DB corruption."""
     conn = get_db()
     try: 
         cursor = conn.cursor()
@@ -30,7 +22,7 @@ def safe_execute(query, params=None):
         conn.close()
 
 def log_audit(entity_type, entity_id, action, old_state, new_state, notes=""):
-    """The Immutable Flight Recorder."""
+    """The Immutable Flight Recorder for clinical and financial compliance."""
     actor = session.get('role', 'system') if session else 'system'
     safe_execute("""
         INSERT INTO audit_logs (entity_type, entity_id, actor, action, old_state, new_state, notes) 
@@ -39,14 +31,14 @@ def log_audit(entity_type, entity_id, action, old_state, new_state, notes=""):
 
 def init_db():
     """
-    CareDrop V3 Master Schema. 
-    Creates the 12 domains specified by the Executive Council if they do not exist.
+    Idempotent schema initialization. 
+    Run this manually from the Render shell: python -c 'from database import init_db; init_db()'
     """
     conn = get_db()
     try:
         cursor = conn.cursor()
         
-        # 1. IDENTITY & PATIENTS (Account != Patient)
+        # 1. Identity & Patients
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY, phone VARCHAR(20) UNIQUE, email VARCHAR(255), 
@@ -57,20 +49,19 @@ def init_db():
             CREATE TABLE IF NOT EXISTS patients (
                 id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), patient_uid VARCHAR(50) UNIQUE,
                 full_name VARCHAR(255), dob DATE, age INT, sex VARCHAR(10), mobile VARCHAR(20),
-                merged_into_patient_id INT, status VARCHAR(50) DEFAULT 'ACTIVE', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                status VARCHAR(50) DEFAULT 'ACTIVE', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # 2. MASTER DATA (Catalog & Partners)
+        # 2. Master Data (Catalog)
         cursor.execute("CREATE TABLE IF NOT EXISTS tests (id SERIAL PRIMARY KEY, code VARCHAR(50), name VARCHAR(255), is_active BOOLEAN DEFAULT TRUE)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS partners (id SERIAL PRIMARY KEY, partner_name VARCHAR(255), type VARCHAR(50), is_active BOOLEAN DEFAULT TRUE)")
         cursor.execute("CREATE TABLE IF NOT EXISTS lab_pricing (id SERIAL PRIMARY KEY, test_id INT, partner_id INT, price DECIMAL(10,2))")
 
-        # 3. CLINICAL PIPELINE (Orders & Test Components)
+        # 3. Clinical Pipeline
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS orders (
                 id SERIAL PRIMARY KEY, order_ref VARCHAR(50) UNIQUE, patient_id INT REFERENCES patients(id),
-                partner_id INT, source VARCHAR(50), clinical_status VARCHAR(50) DEFAULT 'PENDING_COLLECTION',
+                source VARCHAR(50), clinical_status VARCHAR(50) DEFAULT 'PENDING_COLLECTION',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -82,16 +73,15 @@ def init_db():
             )
         """)
 
-        # 4. LOGISTICS & CHAIN OF CUSTODY (Samples)
+        # 4. Logistics
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS samples (
                 id SERIAL PRIMARY KEY, accession_id VARCHAR(50) UNIQUE, order_id INT REFERENCES orders(id),
-                parent_sample_id INT, status VARCHAR(50) DEFAULT 'EXPECTED', tube_type VARCHAR(100),
-                collected_by VARCHAR(100), collected_at TIMESTAMP, received_at TIMESTAMP
+                parent_sample_id INT, status VARCHAR(50) DEFAULT 'EXPECTED', tube_type VARCHAR(100)
             )
         """)
 
-        # 5. FINANCIAL LEDGER (Invoices & Payments with Idempotency)
+        # 5. Financial Ledger
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS invoices (
                 id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), invoice_ref VARCHAR(50) UNIQUE, 
@@ -108,7 +98,7 @@ def init_db():
             )
         """)
 
-        # 6. SYSTEM INFRASTRUCTURE (Audit, Outbox Jobs, Reports)
+        # 6. System Infrastructure
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS audit_logs (
                 id SERIAL PRIMARY KEY, entity_type VARCHAR(50), entity_id INT, actor VARCHAR(100), 
@@ -122,13 +112,6 @@ def init_db():
                 status VARCHAR(50) DEFAULT 'QUEUED', retry_count INT DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS reports (
-                id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), version INT DEFAULT 1,
-                pdf_data BYTEA, status VARCHAR(50) DEFAULT 'GENERATED', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
         conn.commit()
     except Exception as e:
         conn.rollback()
