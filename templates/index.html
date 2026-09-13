@@ -3,100 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop Diagnostics | Advanced Clinical Laboratory</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>CareDrop Diagnostics | Yamunanagar's Trusted Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
-        body { background: #F8FAFC; margin: 0; padding: 0; color: #0F172A; }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; color: #0F172A; }
+        header { background: #FFFFFF; padding: 20px 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
         
-        .nav { background: white; padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 24px; font-weight: 800; color: #0D9488; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .nav-links { display: flex; gap: 20px; }
-        .nav-links a { text-decoration: none; color: #475569; font-weight: 700; font-size: 15px; transition: 0.2s; }
-        .nav-links a:hover { color: #0D9488; }
-        .btn-primary { background: #0F172A; color: white !important; padding: 10px 20px; border-radius: 8px; font-weight: 800; }
+        .hero { padding: 100px 40px; text-align: center; background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); color: white; }
+        .hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 15px; letter-spacing: -0.5px; }
+        .hero p { font-size: 20px; opacity: 0.9; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.6; }
         
-        .hero { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white; padding: 100px 5%; text-align: center; }
-        .hero h1 { font-size: 48px; font-weight: 800; margin: 0 0 20px 0; line-height: 1.2; }
-        .hero p { font-size: 18px; color: #94A3B8; max-width: 600px; margin: 0 auto 40px auto; line-height: 1.6; font-weight: 500; }
-        .hero-btns { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .btn-large { background: #0D9488; color: white; padding: 16px 32px; border-radius: 8px; font-weight: 800; font-size: 16px; text-decoration: none; transition: 0.2s; }
-        .btn-large:hover { background: #0F766E; transform: translateY(-2px); }
-        .btn-outline { background: transparent; color: white; border: 2px solid white; padding: 14px 32px; border-radius: 8px; font-weight: 800; font-size: 16px; text-decoration: none; transition: 0.2s; }
-        .btn-outline:hover { background: white; color: #0F172A; }
+        .btn-primary { padding: 16px 32px; background: #FFFFFF; color: #0D9488; font-weight: 800; font-size: 16px; text-decoration: none; border-radius: 8px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .btn-primary:hover { transform: translateY(-2px); }
         
-        .section { padding: 80px 5%; max-width: 1200px; margin: 0 auto; }
-        .section-title { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 50px; color: #0F172A; }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 60px 40px; max-width: 1200px; margin: 0 auto; }
+        .feature-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; text-align: center; }
+        .feature-card h3 { color: #0D9488; margin-bottom: 10px; font-weight: 800; }
         
-        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        .feature-card { background: white; padding: 30px; border-radius: 16px; border: 1px solid #E2E8F0; text-align: left; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.06); border-color: #0D9488; }
-        .feature-icon { background: #F0FDF4; color: #0D9488; width: 60px; height: 60px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
-        .feature-card h3 { font-size: 20px; font-weight: 800; margin: 0 0 10px 0; }
-        .feature-card p { color: #64748B; font-size: 15px; line-height: 1.6; margin: 0; }
-        
-        .footer { background: #0F172A; color: white; padding: 40px 5%; text-align: center; margin-top: 50px; }
-        .footer p { color: #64748B; font-weight: 600; font-size: 14px; }
-        
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 32px; }
-            .nav-links { display: none; } /* Hide links on mobile, keep simple */
-        }
+        .footer { text-align: center; padding: 40px; color: #64748B; font-size: 14px; background: #FFFFFF; border-top: 1px solid #E2E8F0; }
     </style>
 </head>
 <body>
-
-    <nav class="nav">
-        <a href="/" class="logo"><i data-lucide="activity" style="width: 28px; height: 28px;"></i> CareDrop</a>
-        <div class="nav-links">
-            <a href="/tests">Lab Tests</a>
-            <a href="/tests">Health Packages</a>
-            <a href="/my-bookings" class="btn-primary">View Reports</a>
-        </div>
-    </nav>
+    <header>
+        <h2 style="margin: 0; color: #0D9488; font-weight: 800; font-size: 24px;">CareDrop</h2>
+        <a href="/dashboard" style="color: #64748B; text-decoration: none; font-weight: 700; border: 1px solid #E2E8F0; padding: 8px 16px; border-radius: 6px;">Staff Portal</a>
+    </header>
 
     <div class="hero">
-        <h1>Precision Diagnostics,<br>Delivered to Your Door.</h1>
-        <p>Book NABL-certified lab tests with free home sample collection. Receive digitally verified, QR-secured medical reports directly on your phone.</p>
-        <div class="hero-btns">
-            <a href="/tests" class="btn-large">Book a Lab Test</a>
-            <a href="/my-bookings" class="btn-outline">Download My Report</a>
-        </div>
+        <h1>Advanced Diagnostics in Yamunanagar</h1>
+        <p>Book verified pathology tests from the comfort of your home. Fast results, trusted technology, and professional care.</p>
+        <a href="#book" class="btn-primary">Book Home Collection</a>
     </div>
 
-    <div class="section">
-        <div class="section-title">Why Choose CareDrop?</div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="home" style="width: 32px; height: 32px;"></i></div>
-                <h3>Home Sample Collection</h3>
-                <p>Our certified phlebotomists will safely collect your blood and urine samples from the comfort of your home at your chosen time slot.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="shield-check" style="width: 32px; height: 32px;"></i></div>
-                <h3>NABL Certified Partner Labs</h3>
-                <p>We process all samples exclusively through strictly verified, high-end laboratory partners to guarantee absolute clinical accuracy.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="smartphone" style="width: 32px; height: 32px;"></i></div>
-                <h3>Smart Digital Reports</h3>
-                <p>Receive premium, enterprise-grade PDF reports directly to your WhatsApp and Email, complete with QR-code verification.</p>
-            </div>
-            <!-- Placeholder for future B2B expansion -->
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="building" style="width: 32px; height: 32px;"></i></div>
-                <h3>Corporate Wellness (B2B)</h3>
-                <p>Comprehensive health monitoring and annual checkup packages designed specifically for corporate teams and organizations.</p>
-            </div>
+    <div class="features">
+        <div class="feature-card">
+            <h3>Verified Accuracy</h3>
+            <p style="color: #64748B; line-height: 1.6;">Our multi-step LIMS verification ensures your clinical results are unconditionally accurate.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Smart Reports</h3>
+            <p style="color: #64748B; line-height: 1.6;">Scan the QR code on your invoice to access your secure PDF report instantly upon generation.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Transparent Pricing</h3>
+            <p style="color: #64748B; line-height: 1.6;">No hidden fees. Review our complete catalog and exactly what you'll pay before booking.</p>
         </div>
     </div>
 
     <div class="footer">
-        <h2 style="margin: 0 0 10px 0;">CareDrop Diagnostics</h2>
-        <p>© 2026 CareDrop Digital LIMS Platform. All rights reserved.</p>
+        <strong>Industrial Healthcare IHC Diagnostics</strong><br>
+        © 2026 CareDrop. Built for Yamunanagar.<br><br>
+        <a href="#" style="color: #94A3B8; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | <a href="#" style="color: #94A3B8; text-decoration: none; margin: 0 10px;">Terms of Service</a>
     </div>
-
-    <script>lucide.createIcons();</script>
 </body>
 </html>
