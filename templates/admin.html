@@ -25,17 +25,20 @@
         .btn-action { background: #F1F5F9; color: #0F172A; padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; }
         .btn-action.green { background: #DCFCE7; color: #166534; }
         .btn-action.red { background: #FEE2E2; color: #991B1B; }
-        .btn-action.orange { background: #FEF3C7; color: #B45309; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 30px; border-radius: 12px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
         .form-input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #CBD5E1; box-sizing: border-box; }
+        .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+        .metric-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; text-align: center; }
     </style>
 </head>
 <body>
-    <!-- SECURE SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-header">CareDrop LIMS</div>
-        <button class="nav-btn active" onclick="showTab('Orders')"><i data-lucide="clipboard-list"></i> Live Orders</button>
+        <button class="nav-btn active" onclick="showTab('Orders')"><i data-lucide="microscope"></i> Clinical Pipeline</button>
+        {% if user_role in ['admin', 'receptionist'] %}
+        <button class="nav-btn" onclick="showTab('Revenue')"><i data-lucide="indian-rupee"></i> Revenue & Ledger</button>
+        {% endif %}
         {% if user_role == 'admin' %}
         <button class="nav-btn" onclick="showTab('Audit')"><i data-lucide="shield-alert"></i> Flight Recorder</button>
         {% endif %}
@@ -48,19 +51,19 @@
             <div class="role-badge">Logged in as: {{ user_role }}</div>
         </div>
 
-        <!-- ORDERS TAB -->
+        <!-- 1. CLINICAL PIPELINE TAB -->
         <div id="Orders" class="tab-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h2 style="margin: 0;">{{ 'Verification Queue' if user_role == 'pathologist' else 'Live Patient Pipeline' }}</h2>
+                <h2 style="margin: 0;">Clinical Operations</h2>
                 {% if user_role in ['admin', 'receptionist'] %}
-                <button onclick="document.getElementById('walkin-modal').style.display='flex'" class="btn-primary">+ New Walk-In / B2B</button>
+                <button onclick="document.getElementById('walkin-modal').style.display='flex'" class="btn-primary">+ New Order (Cart)</button>
                 {% endif %}
             </div>
             
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th>Order ID / Accession</th><th>Patient Details</th><th>Status</th><th>Actions</th></tr>
+                        <tr><th>Order ID / Accession</th><th>Patient</th><th>Clinical Status</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                         {% for order in orders %}
@@ -71,9 +74,9 @@
                                 <br><span style="font-size:11px; background:#F1F5F9; padding:2px 4px; border-radius:3px; color:#475569;">{{ order.accession_id }}</span>
                                 {% endif %}
                             </td>
-                            <td><b style="font-size:15px;">{{ order.patient_name.title() }}</b><br><span style="font-size:12px; color:#64748B;">{{ order.collection_date }}</span></td>
+                            <td><b style="font-size:15px;">{{ order.patient_name.title() }}</b></td>
                             
-                            <!-- Status Display (Red if Rejected) -->
+                            <!-- Clinical Status Only -->
                             <td>
                                 {% if order.status == 'Sample Rejected' %}
                                 <span style="background: #FEE2E2; color:#991B1B; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{{ order.status }}</span>
@@ -84,19 +87,11 @@
                             
                             <td style="display: flex; gap: 5px; flex-wrap: wrap;">
                                 {% if order.accession_id and user_role in ['admin', 'receptionist', 'technician'] %}
-                                <a href="/admin/print-barcode/{{ order.id }}" target="_blank" class="btn-action" style="background:#E0F2FE; color:#0284C7;">Barcode</a>
+                                <a href="/admin/print-barcode/{{ order.id }}" target="_blank" class="btn-action">Barcode</a>
                                 {% endif %}
                                 
                                 {% if order.status in ['Received in Lab', 'Sample Collected'] and user_role == 'technician' %}
                                 <a href="/admin/fill-report/{{ order.id }}" class="btn-action green">Enter Results</a>
-                                <button onclick="rejectSample({{ order.id }})" class="btn-action red">Reject</button>
-                                {% endif %}
-                                
-                                {% if order.status == 'Sample Rejected' and user_role in ['admin', 'receptionist'] %}
-                                <form action="/admin/request-recollection" method="POST" style="margin:0;">
-                                    <input type="hidden" name="order_id" value="{{ order.id }}">
-                                    <button type="submit" class="btn-action orange">Request Recollection</button>
-                                </form>
                                 {% endif %}
                                 
                                 {% if order.status == 'Pending Verification' and user_role == 'pathologist' %}
@@ -114,14 +109,70 @@
             </div>
         </div>
 
-        <!-- AUDIT LOG TAB (Admin Only) -->
-        {% if user_role == 'admin' %}
-        <div id="Audit" class="tab-content" style="display: none;">
-            <h2 style="margin-bottom: 20px;">System Flight Recorder (Immutable)</h2>
+        <!-- 2. REVENUE & CASHIER TAB -->
+        {% if user_role in ['admin', 'receptionist'] %}
+        <div id="Revenue" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Financial Ledger</h2>
+                {% if user_role == 'admin' %}
+                <button onclick="document.getElementById('reconcile-modal').style.display='flex'" class="btn-primary" style="background:#16A34A;">Close Register (Reconcile)</button>
+                {% endif %}
+            </div>
+
+            <!-- Daily Totals -->
+            <div class="metric-grid">
+                {% for col in today_collections %}
+                <div class="metric-card">
+                    <h3 style="margin:0; font-size:12px; color:#64748B; text-transform:uppercase;">Today's {{ col.payment_method }}</h3>
+                    <h1 style="margin:10px 0 0 0; color:#0F172A;">₹{{ col.total }}</h1>
+                </div>
+                {% else %}
+                <div class="metric-card"><h3 style="margin:0; font-size:12px; color:#64748B;">Today's Collections</h3><h1 style="margin:10px 0 0 0; color:#0F172A;">₹0</h1></div>
+                {% endfor %}
+            </div>
+
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th>Timestamp</th><th>Order ID</th><th>User Role</th><th>Action</th><th>Transition</th><th>Notes</th></tr>
+                        <tr><th>Invoice Ref</th><th>Patient</th><th>Financial Status</th><th>Amount</th><th>Balance</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders if order.invoice_id %}
+                        <tr>
+                            <td style="font-weight: 800; color: #1E293B;">{{ order.invoice_ref }}</td>
+                            <td>{{ order.patient_name.title() }}</td>
+                            <td>
+                                {% if order.financial_status == 'PAID' %}
+                                <span style="background: #DCFCE7; color:#166534; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{{ order.financial_status }}</span>
+                                {% else %}
+                                <span style="background: #FEF2F2; color:#991B1B; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{{ order.financial_status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-weight:bold;">₹{{ order.total_amount }}</td>
+                            <td style="color:#DC2626; font-weight:bold;">₹{{ order.total_amount - order.amount_paid }}</td>
+                            <td>
+                                {% if (order.total_amount - order.amount_paid) > 0 %}
+                                <button onclick="openPaymentModal({{ order.invoice_id }}, {{ order.total_amount - order.amount_paid }})" class="btn-action green">Collect</button>
+                                {% else %}
+                                <span style="color:#64748B; font-size:12px;">Settled</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 3. AUDIT LOG TAB -->
+        {% if user_role == 'admin' %}
+        <div id="Audit" class="tab-content" style="display: none;">
+            <h2 style="margin-bottom: 20px;">System Flight Recorder</h2>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Timestamp</th><th>Order ID</th><th>User</th><th>Action</th><th>Transition</th><th>Notes</th></tr>
                     </thead>
                     <tbody>
                         {% for log in audit_logs %}
@@ -141,10 +192,10 @@
         {% endif %}
     </div>
 
-    <!-- WALK-IN MODAL (Simplified for space) -->
+    <!-- UPGRADED WALK-IN MODAL (Multi-Test Cart + Advances) -->
     <div id="walkin-modal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-top: 0;">New Walk-In Order</h3>
+            <h3 style="margin-top: 0;">New Order & Invoice</h3>
             <form action="/admin/walk-in" method="POST">
                 <input type="text" name="patient_name" placeholder="Patient Name" required class="form-input">
                 <input type="tel" name="phone" placeholder="Phone" required class="form-input">
@@ -152,26 +203,65 @@
                     <input type="number" name="age" placeholder="Age" required class="form-input">
                     <select name="gender" class="form-input"><option value="Male">Male</option><option value="Female">Female</option></select>
                 </div>
-                <select name="test_id" class="form-input" required>
-                    {% for test in all_tests %}<option value="{{ test.id }}">{{ test.name }}</option>{% endfor %}
+                
+                <p style="font-size:12px; font-weight:bold; margin-bottom:5px;">Select Tests (Hold Ctrl/Cmd to select multiple)</p>
+                <select name="test_ids" class="form-input" multiple required style="height: 100px;">
+                    {% for test in all_tests %}<option value="{{ test.id }}">{{ test.name }} (₹{{ test.price or 0 }})</option>{% endfor %}
                 </select>
-                <select name="lab_id" class="form-input" required>
-                    {% for lab in all_labs %}<option value="{{ lab.id }}">{{ lab.name }}</option>{% endfor %}
-                </select>
-                <input type="number" name="total_amount" placeholder="Total (₹)" required class="form-input">
+                
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" name="discount" placeholder="Discount (₹)" value="0" class="form-input">
+                    <input type="number" name="advance" placeholder="Advance Paid (₹)" value="0" class="form-input">
+                </div>
+                <select name="payment_method" class="form-input"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option></select>
+                
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" onclick="document.getElementById('walkin-modal').style.display='none'" class="btn-action">Cancel</button>
-                    <button type="submit" class="btn-primary">Generate Order</button>
+                    <button type="submit" class="btn-primary">Generate Order & Invoice</button>
                 </div>
             </form>
         </div>
     </div>
-    
-    <!-- REJECT SAMPLE MODAL (Hidden form generated by JS) -->
-    <form id="rejectForm" action="/admin/reject-sample" method="POST" style="display:none;">
-        <input type="hidden" name="order_id" id="reject_order_id">
-        <input type="hidden" name="reason" id="reject_reason">
-    </form>
+
+    <!-- COLLECT PAYMENT MODAL -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Record Payment</h3>
+            <form action="/admin/add-payment" method="POST">
+                <input type="hidden" name="invoice_id" id="pay_invoice_id">
+                <p style="font-size:14px; font-weight:bold; margin-bottom:10px;">Pending Balance: ₹<span id="pay_balance_display"></span></p>
+                
+                <input type="number" name="amount" id="pay_amount" placeholder="Amount Collecting Now" required class="form-input" style="font-weight:bold; color:#16A34A;">
+                
+                <select name="payment_method" required class="form-input">
+                    <option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option>
+                </select>
+                <input type="text" name="transaction_ref" placeholder="UPI UTR / Reference No. (Optional)" class="form-input">
+                <input type="text" name="notes" placeholder="Notes (Optional)" class="form-input">
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('payment-modal').style.display='none'" class="btn-action">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background:#16A34A;">Save Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RECONCILE CASH MODAL -->
+    <div id="reconcile-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Daily Cash Reconciliation</h3>
+            <form action="/admin/reconcile-cash" method="POST">
+                <p style="font-size:12px; color:#64748B;">Enter the actual physical cash counted in the register.</p>
+                <input type="number" name="actual_cash" placeholder="Physical Cash Count (₹)" required class="form-input">
+                <input type="text" name="notes" placeholder="Reason for discrepancy (if any)" class="form-input">
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('reconcile-modal').style.display='none'" class="btn-action">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background:#16A34A;">Submit Reconciliation</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         lucide.createIcons();
@@ -181,13 +271,12 @@
             document.getElementById(tabId).style.display = 'block';
             event.currentTarget.classList.add('active');
         }
-        function rejectSample(orderId) {
-            let reason = prompt("Enter reason for sample rejection (e.g., Hemolyzed, Insufficient):");
-            if(reason) {
-                document.getElementById('reject_order_id').value = orderId;
-                document.getElementById('reject_reason').value = reason;
-                document.getElementById('rejectForm').submit();
-            }
+        function openPaymentModal(invoiceId, balance) {
+            document.getElementById('pay_invoice_id').value = invoiceId;
+            document.getElementById('pay_balance_display').innerText = balance;
+            document.getElementById('pay_amount').value = balance; // Default to full balance
+            document.getElementById('pay_amount').max = balance; // Prevent overpayment in HTML
+            document.getElementById('payment-modal').style.display = 'flex';
         }
     </script>
 </body>
