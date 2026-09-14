@@ -25,6 +25,15 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(pos_bp)
 
 # ---------------------------------------------------------
+# DATABASE INITIALIZATION BACKDOOR (For Render Free Tier)
+# ---------------------------------------------------------
+@app.route('/setup-db')
+def setup_db():
+    """Temporary route to build PostgreSQL tables since Render Free lacks shell access."""
+    init_db()
+    return "Database tables built successfully! You can now navigate to /dashboard and log in."
+
+# ---------------------------------------------------------
 # 1. PUBLIC ROUTE: Patient Booking Portal
 # ---------------------------------------------------------
 @app.route('/')
