@@ -4,11 +4,15 @@ from psycopg2.extras import RealDictCursor
 from flask import session
 
 def get_db():
-    """Establish a fresh connection to the Render PostgreSQL database."""
-    return psycopg2.connect(os.environ.get("DATABASE_URL"))
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        raise ValueError("DATABASE_URL is missing. Please check your Render environment variables.")
+    # Fix Render's legacy postgres:// prefix
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    return psycopg2.connect(db_url)
 
 def safe_execute(query, params=None):
-    """Executes a query and commits, rolling back on failure to prevent DB corruption."""
     conn = get_db()
     try: 
         cursor = conn.cursor()
@@ -16,13 +20,11 @@ def safe_execute(query, params=None):
         conn.commit()
     except Exception as e: 
         conn.rollback()
-        print(f"DB Execution Error: {e}")
         raise e
     finally: 
         conn.close()
 
 def log_audit(entity_type, entity_id, action, old_state, new_state, notes=""):
-    """The Immutable Flight Recorder for clinical and financial compliance."""
     actor = session.get('role', 'system') if session else 'system'
     safe_execute("""
         INSERT INTO audit_logs (entity_type, entity_id, actor, action, old_state, new_state, notes) 
@@ -30,15 +32,10 @@ def log_audit(entity_type, entity_id, action, old_state, new_state, notes=""):
     """, (entity_type, entity_id, actor, action, old_state, new_state, notes))
 
 def init_db():
-    """
-    Idempotent schema initialization. 
-    Run this manually from the Render shell: python -c 'from database import init_db; init_db()'
-    """
     conn = get_db()
     try:
         cursor = conn.cursor()
         
-        # 1. Identity & Patients
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY, phone VARCHAR(20) UNIQUE, email VARCHAR(255), 
@@ -52,12 +49,8 @@ def init_db():
                 status VARCHAR(50) DEFAULT 'ACTIVE', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-
-        # 2. Master Data (Catalog)
         cursor.execute("CREATE TABLE IF NOT EXISTS tests (id SERIAL PRIMARY KEY, code VARCHAR(50), name VARCHAR(255), is_active BOOLEAN DEFAULT TRUE)")
         cursor.execute("CREATE TABLE IF NOT EXISTS lab_pricing (id SERIAL PRIMARY KEY, test_id INT, partner_id INT, price DECIMAL(10,2))")
-
-        # 3. Clinical Pipeline
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS orders (
                 id SERIAL PRIMARY KEY, order_ref VARCHAR(50) UNIQUE, patient_id INT REFERENCES patients(id),
@@ -72,16 +65,6 @@ def init_db():
                 verified_by VARCHAR(255), verified_at TIMESTAMP
             )
         """)
-
-        # 4. Logistics
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS samples (
-                id SERIAL PRIMARY KEY, accession_id VARCHAR(50) UNIQUE, order_id INT REFERENCES orders(id),
-                parent_sample_id INT, status VARCHAR(50) DEFAULT 'EXPECTED', tube_type VARCHAR(100)
-            )
-        """)
-
-        # 5. Financial Ledger
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS invoices (
                 id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), invoice_ref VARCHAR(50) UNIQUE, 
@@ -97,8 +80,6 @@ def init_db():
                 notes TEXT
             )
         """)
-
-        # 6. System Infrastructure
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS audit_logs (
                 id SERIAL PRIMARY KEY, entity_type VARCHAR(50), entity_id INT, actor VARCHAR(100), 
@@ -106,15 +87,25 @@ def init_db():
                 notes TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS background_jobs (
-                id SERIAL PRIMARY KEY, job_type VARCHAR(50), payload JSONB, 
-                status VARCHAR(50) DEFAULT 'QUEUED', retry_count INT DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+
+        cursor.execute("SELECT COUNT(*) FROM tests")
+        if cursor.fetchone()[0] == 0:
+            catalog = [
+                ('CBC', 'Complete Blood Count', 350.00),
+                ('LFT', 'Liver Function Test', 600.00),
+                ('KFT', 'Kidney Function Test', 550.00),
+                ('TSH', 'Thyroid Stimulating Hormone', 300.00),
+                ('HBA1C', 'HbA1c (Glycosylated Hemoglobin)', 450.00),
+                ('LIPID', 'Lipid Profile', 700.00)
+            ]
+            for code, name, price in catalog:
+                cursor.execute("INSERT INTO tests (code, name, is_active) VALUES (%s, %s, TRUE) RETURNING id", (code, name))
+                t_id = cursor.fetchone()[0]
+                cursor.execute("INSERT INTO lab_pricing (test_id, partner_id, price) VALUES (%s, NULL, %s)", (t_id, price))
+
         conn.commit()
     except Exception as e:
         conn.rollback()
-        print(f"Schema Initialization Error: {e}")
+        print(f"Database Init Error: {e}")
     finally:
         conn.close()
