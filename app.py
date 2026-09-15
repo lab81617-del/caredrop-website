@@ -4,104 +4,30 @@ from datetime import datetime
 from functools import wraps
 from flask import (
     Flask, render_template, request, redirect, 
-    url_for, session, jsonify, flash, send_file
+    url_for, session, jsonify, flash
 )
-
-# Optional imports from your local modular structure
-try:
-    from database import get_db_connection
-except ImportError:
-    get_db_connection = None
-
-try:
-    from pdf_engine import generate_report_pdf
-except ImportError:
-    generate_report_pdf = None
+from database import get_db_connection, init_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
 
-# -------------------------------------------------------------
-# DEFAULT IN-MEMORY CATALOG (Used if DB catalog is not yet populated)
-# -------------------------------------------------------------
-DEFAULT_TESTS = [
-    {
-        'id': 1,
-        'name': 'Complete Blood Count (CBC)',
-        'category': 'Hematology',
-        'price': 250,
-        'description': 'Checks overall health and detects infections, anemia, etc.',
-        'turnaround_time': '6 hrs',
-        'sample_type': 'EDTA Whole Blood',
-        'fasting_required': False
-    },
-    {
-        'id': 2,
-        'name': 'Thyroid Profile (T3, T4, TSH)',
-        'category': 'Endocrinology',
-        'price': 800,
-        'description': 'Evaluates thyroid function and metabolic rate.',
-        'turnaround_time': '6 hrs',
-        'sample_type': 'Serum',
-        'fasting_required': False
-    },
-    {
-        'id': 3,
-        'name': 'Lipid Profile',
-        'category': 'Biochemistry',
-        'price': 600,
-        'description': 'Checks cholesterol fractions and cardiovascular risk.',
-        'turnaround_time': '8 hrs',
-        'sample_type': 'Serum',
-        'fasting_required': True
-    },
-    {
-        'id': 4,
-        'name': 'Vitamin D (25 OH)',
-        'category': 'Immunology',
-        'price': 1200,
-        'description': 'Assesses vitamin D levels for bone and immune health.',
-        'turnaround_time': '24 hrs',
-        'sample_type': 'Serum',
-        'fasting_required': False
-    },
-    {
-        'id': 5,
-        'name': 'Liver Function Test (LFT)',
-        'category': 'Biochemistry',
-        'price': 700,
-        'description': 'Evaluates hepatic enzymes, bilirubin, and protein synthesis.',
-        'turnaround_time': '8 hrs',
-        'sample_type': 'Serum',
-        'fasting_required': False
-    }
-]
+# Initialize DB tables on startup
+init_db()
 
 # -------------------------------------------------------------
-# AUTHENTICATION & ACCESS DECORATORS
+# AUTHENTICATION
 # -------------------------------------------------------------
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash("Please authenticate to access this dashboard.")
+            flash("Please log in to continue.")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
-def role_required(role_name):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if session.get('role') != role_name and session.get('role') != 'admin':
-                flash("Unauthorized access level.")
-                return redirect(url_for('login'))
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
 # -------------------------------------------------------------
-# PUBLIC INTERFACE & CATALOG
+# PUBLIC CATALOG & HOMEPAGE
 # -------------------------------------------------------------
 @app.route('/')
 def index():
@@ -109,25 +35,9 @@ def index():
 
 @app.route('/tests')
 def tests_catalogue():
-    tests = DEFAULT_TESTS
-    if get_db_connection:
-        try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute("SELECT id, name, category, price, description, turnaround_time, sample_type, fasting_required FROM tests WHERE is_active = TRUE ORDER BY id ASC;")
-            rows = cur.fetchall()
-            if rows:
-                tests = [
-                    {
-                        'id': r[0], 'name': r[1], 'category': r[2], 'price': r[3],
-                        'description': r[4], 'turnaround_time': r[5], 'sample_type': r[6],
-                        'fasting_required': r[7]
-                    } for r in rows
-                ]
-            cur.close()
-            conn.close()
-        except Exception as e:
-            print(f"[DB WARN] Fallback to default catalog: {e}")
+    conn = get_db_connection()
+    tests = conn.execute('SELECT * FROM tests WHERE is_active = 1 ORDER BY id ASC').fetchall()
+    conn.close()
     return render_template('tests.html', tests=tests)
 
 # -------------------------------------------------------------
@@ -162,18 +72,21 @@ def remove_from_cart(test_id):
     })
 
 # -------------------------------------------------------------
-# CHECKOUT & ORDER SUBMISSION
+# CHECKOUT & BOOKINGS (Real DB Inserts)
 # -------------------------------------------------------------
 @app.route('/checkout')
 def checkout():
     cart_ids = session.get('cart', [])
     if not cart_ids:
-        flash("Your selection is currently empty.")
+        flash("Your cart is empty.")
         return redirect(url_for('tests_catalogue'))
 
-    items = [t for t in DEFAULT_TESTS if t['id'] in cart_ids]
-    total_amount = sum(t['price'] for t in items)
+    conn = get_db_connection()
+    placeholders = ','.join('?' for _ in cart_ids)
+    items = conn.execute(f'SELECT * FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
+    conn.close()
 
+    total_amount = sum(t['price'] for t in items)
     return render_template('checkout.html', items=items, total=total_amount)
 
 @app.route('/book_test', methods=['POST'])
@@ -182,94 +95,149 @@ def book_test():
     phone = request.form.get('phone')
     address = request.form.get('address')
     tests_requested = request.form.get('tests_requested')
+    total_bill = request.form.get('total_bill')
 
+    conn = get_db_connection()
+    
+    # Calculate costs if submitted via cart
     if not tests_requested and 'cart' in session:
-        cart_items = [t['name'] for t in DEFAULT_TESTS if t['id'] in session['cart']]
-        tests_requested = ", ".join(cart_items)
+        cart_ids = session['cart']
+        placeholders = ','.join('?' for _ in cart_ids)
+        items = conn.execute(f'SELECT name, price, b2b_cost FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
+        tests_requested = ", ".join([i['name'] for i in items])
+        total_bill = sum(i['price'] for i in items)
+        b2b_cost = sum(i['b2b_cost'] for i in items)
+    else:
+        total_bill = float(total_bill or 0.0)
+        b2b_cost = total_bill * 0.40 # Fallback 40% B2B margin approximation
 
-    print(f"[ORDER DISPATCH] Patient: {full_name} | Tel: {phone} | Addr: {address} | Profile: {tests_requested}")
+    order_code = f"CD-{random.randint(1000, 9999)}"
 
-    # Clear patient cart session
+    conn.execute('''
+        INSERT INTO orders (order_code, full_name, phone, address, tests_requested, total_bill, b2b_total_cost, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending');
+    ''', (order_code, full_name, phone, address, tests_requested, total_bill, b2b_cost))
+    
+    conn.commit()
+    conn.close()
+
     session.pop('cart', None)
-
-    flash("Home collection request confirmed. Our technician has been dispatched.")
+    flash(f"Booking {order_code} confirmed successfully.")
     return redirect(url_for('my_bookings') if 'user_id' in session else url_for('index'))
 
 # -------------------------------------------------------------
-# PATIENT OTP AUTHENTICATION
+# ADMIN OPERATIONS
 # -------------------------------------------------------------
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/admin')
+def admin():
+    conn = get_db_connection()
+    orders = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
+    tests = conn.execute('SELECT * FROM tests WHERE is_active = 1 ORDER BY id DESC').fetchall()
+    
+    # Metrics
+    metrics = conn.execute('''
+        SELECT 
+            COALESCE(SUM(total_bill), 0) as total_rev,
+            COALESCE(SUM(b2b_total_cost), 0) as total_b2b
+        FROM orders;
+    ''').fetchone()
+    
+    conn.close()
+    return render_template('admin.html', orders=orders, tests=tests, metrics=metrics)
+
+@app.route('/admin/add_test', methods=['POST'])
+def admin_add_test():
+    name = request.form.get('name')
+    category = request.form.get('category')
+    sample_type = request.form.get('sample_type')
+    b2b_cost = float(request.form.get('b2b_cost') or 0.0)
+    retail_price = float(request.form.get('retail_price') or 0.0)
+    turnaround_time = request.form.get('turnaround_time') or 'Same Day'
+    partner_lab = request.form.get('partner_lab') or 'Accu Probe'
+
+    conn = get_db_connection()
+    conn.execute('''
+        INSERT INTO tests (name, category, sample_type, b2b_cost, price, turnaround_time, partner_lab)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+    ''', (name, category, sample_type, b2b_cost, retail_price, turnaround_time, partner_lab))
+    conn.commit()
+    conn.close()
+
+    flash(f"Test '{name}' successfully added to catalog.")
+    return redirect(url_for('admin'))
+
+# -------------------------------------------------------------
+# RIDER FIELD APP
+# -------------------------------------------------------------
+@app.route('/rider')
+@app.route('/rider_dashboard')
+def rider_dashboard():
+    conn = get_db_connection()
+    orders = conn.execute("SELECT * FROM orders WHERE status != 'Completed' ORDER BY id DESC").fetchall()
+    cash_collected = conn.execute("SELECT COALESCE(SUM(total_bill), 0) FROM orders WHERE is_paid = 1 AND payment_mode = 'Cash'").fetchone()[0]
+    conn.close()
+    return render_template('rider_dashboard.html', orders=orders, cash_collected=cash_collected)
+
+@app.route('/api/rider/complete', methods=['POST'])
+def rider_complete():
+    order_id = request.form.get('order_id')
+    barcode = request.form.get('barcode')
+    temp_log = request.form.get('temperature')
+    payment_mode = request.form.get('payment_mode')
+
+    conn = get_db_connection()
+    conn.execute('''
+        UPDATE orders 
+        SET barcode = ?, temp_log = ?, payment_mode = ?, status = 'Sample Collected', is_paid = 1
+        WHERE id = ? OR order_code = ?;
+    ''', (barcode, temp_log, payment_mode, order_id, order_id))
+    conn.commit()
+    conn.close()
+
+    flash(f"Sample registered under Barcode {barcode}.")
+    return redirect(url_for('rider_dashboard'))
+
+# -------------------------------------------------------------
+# DYNAMIC LIMS LAB REPORT
+# -------------------------------------------------------------
+@app.route('/lims_report/<int:order_id>')
+def lims_report(order_id):
+    conn = get_db_connection()
+    order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
+    
+    if not order:
+        # Fallback to demo object if ID not found
+        order = {
+            'id': order_id,
+            'order_code': f'CD-{order_id}',
+            'full_name': 'Walk-in Patient',
+            'tests_requested': 'Routine Investigation',
+            'barcode': f'BC-{random.randint(100000, 999999)}',
+            'temp_log': '4.0°C',
+            'created_at': datetime.now().strftime('%d-%b-%Y %I:%M %p')
+        }
+    
+    conn.close()
+    return render_template('lims_report.html', order=order)
+
+# -------------------------------------------------------------
+# PATIENT PORTAL
+# -------------------------------------------------------------
+@app.route('/my_bookings')
+def my_bookings():
+    conn = get_db_connection()
+    bookings = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
+    conn.close()
+    return render_template('my_bookings.html', bookings=bookings)
+
+@app.route('/login')
 def login():
-    if request.method == 'POST':
-        identifier = request.form.get('identifier')
-        # Generate 6-digit verification code
-        otp = str(random.randint(100000, 999999))
-        session['pending_identifier'] = identifier
-        session['current_otp'] = otp
-
-        # In production: route via email/SMS gateway. Printed to console for setup:
-        print(f"[AUTH GATEWAY] OTP for {identifier}: {otp}")
-        return render_template('auth.py', stage='verify', identifier=identifier) if os.path.exists('templates/auth.html') else redirect(url_for('verify_otp'))
-
     return render_template('auth.html') if os.path.exists('templates/auth.html') else render_template('index.html')
-
-@app.route('/verify_otp', methods=['GET', 'POST'])
-def verify_otp():
-    if request.method == 'POST':
-        user_otp = request.form.get('otp')
-        if user_otp == session.get('current_otp') or user_otp == '123456':
-            session['user_id'] = session.get('pending_identifier')
-            session['role'] = 'patient'
-            session.pop('current_otp', None)
-            return redirect(url_for('my_bookings'))
-        flash("Invalid verification code.")
-    return render_template('auth.html', stage='verify') if os.path.exists('templates/auth.html') else redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
-
-# -------------------------------------------------------------
-# INTERNAL PORTALS: ADMIN, RIDER, & LIMS
-# -------------------------------------------------------------
-@app.route('/my_bookings')
-@login_required
-def my_bookings():
-    return render_template('my_bookings.html')
-
-@app.route('/dashboard')
-def dashboard():
-    # Diagnostic staff portal view
-    return render_template('dashboard.html')
-
-@app.route('/admin')
-def admin():
-    return render_template('admin.html')
-
-@app.route('/admin/new_order')
-def admin_new_order():
-    return render_template('admin_new_order.html')
-
-@app.route('/rider')
-@app.route('/rider_dashboard')
-def rider_dashboard():
-    return render_template('rider_dashboard.html')
-
-@app.route('/doctor_dashboard')
-def doctor_dashboard():
-    return render_template('doctor_dashboard.html')
-
-@app.route('/lims_report/<int:order_id>')
-def lims_report(order_id):
-    return render_template('lims_report.html', order_id=order_id)
-
-# -------------------------------------------------------------
-# HEALTHCHECK & APPLICATION LAUNCH
-# -------------------------------------------------------------
-@app.route('/healthz')
-def healthz():
-    return jsonify({'status': 'operational', 'timestamp': datetime.utcnow().isoformat()}), 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
