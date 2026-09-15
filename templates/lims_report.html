@@ -3,99 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIMS Result Entry | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <title>CareDrop Diagnostics | Laboratory Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' },
+                        navy: { 900: '#0b192c', 950: '#060d17' }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
-        body { background: #e2e8f0; margin: 0; padding: 20px; color: #0f172a; }
-        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-top: 5px solid #0D9488; border-radius: 8px; }
-        
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
-        .top-bar h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; }
-        .back-btn { text-decoration: none; color: #475569; font-weight: 800; font-size: 13px; background: #f1f5f9; padding: 10px 18px; border-radius: 6px; border: 1px solid #cbd5e1; transition: 0.2s; }
-        .back-btn:hover { background: #e2e8f0; }
-        
-        .patient-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: #f8fafc; padding: 20px; border: 1px solid #cbd5e1; margin-bottom: 35px; border-radius: 6px; }
-        .grid-item { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        .grid-val { display: block; font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 6px; text-transform: capitalize; }
-        
-        .test-group { margin-bottom: 40px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; }
-        .test-header { background: #f1f5f9; padding: 15px 20px; font-size: 15px; font-weight: 800; color: #0D9488; border-bottom: 1px solid #cbd5e1; text-transform: uppercase; }
-        
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { border-bottom: 1px solid #e2e8f0; padding: 14px 20px; text-align: left; vertical-align: middle; }
-        th { background: #0f172a; color: white; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        td { font-size: 14px; font-weight: 700; color: #334155; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #f8fafc; }
-        
-        input[type="text"] { width: 100%; max-width: 300px; padding: 10px 15px; border: 1px solid #94a3b8; outline: none; font-weight: 800; font-size: 14px; color: #0f172a; border-radius: 4px; transition: 0.2s; }
-        input[type="text"]:focus { border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
-        input[type="checkbox"] { width: 18px; height: 18px; accent-color: #0D9488; cursor: pointer; }
-        
-        .ref-range { color: #64748b; font-size: 13px; font-weight: 600; }
-        .unit-badge { background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; color: #475569; margin-left: 8px; }
-        
-        .btn-save { background: #0D9488; color: white; padding: 18px 40px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; float: right; margin-top: 20px; border-radius: 6px; transition: 0.2s; box-shadow: 0 4px 12px rgba(13,148,136,0.2); }
-        .btn-save:hover { background: #0f766e; transform: translateY(-1px); }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; padding: 0 !important; }
+            .print-container { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+            @page { margin: 12mm; size: A4 portrait; }
+        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="top-bar">
-            <h1>Clinical Data Entry</h1>
-            <a href="/admin" class="back-btn">Cancel & Return</a>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased selection:bg-brand-500 selection:text-white p-4 md:p-8">
+
+    <!-- Top Action Bar (Screen Only) -->
+    <div class="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-4 no-print bg-white p-4 rounded-2xl shadow-xs border border-gray-200">
+        <div class="flex items-center gap-3">
+            <a href="/admin" class="text-xs font-bold text-gray-500 hover:text-brand-600 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> Admin Console
+            </a>
+            <span class="text-gray-300">|</span>
+            <span class="text-xs font-black text-navy-900 uppercase tracking-wider">Report #CD-{{ order_id or '9040' }}</span>
         </div>
-
-        <div class="patient-grid">
-            <div class="grid-item">Patient Demographics<span class="grid-val">{{ order.patient_name }}</span></div>
-            <div class="grid-item">Age / Gender<span class="grid-val">{{ order.age }} Yrs / {{ order.gender }}</span></div>
-            <div class="grid-item">Order Reference<span class="grid-val">{{ order.order_ref }}</span></div>
-            <div class="grid-item">Patient UID<span class="grid-val" style="color: #0D9488;">{{ order.patient_uid }}</span></div>
+        <div class="flex items-center gap-3">
+            <button onclick="window.print()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-5 py-2 rounded-xl flex items-center gap-2 shadow-md shadow-brand-600/20 transition-all">
+                <i class="fa-solid fa-print"></i> Print / Save PDF
+            </a>
+            <a href="https://wa.me/919876543210?text=Dear%20Patient,%20your%20CareDrop%20diagnostic%20report%20is%20ready%20for%20download." target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp Patient
+            </a>
         </div>
-
-        <form action="/admin/save-results/{{ order.id }}" method="POST">
-            {% if not tests %}
-                <div style="padding: 20px; background: #fef2f2; color: #dc2626; font-weight: 800; text-align: center; border: 1px solid #fca5a5; border-radius: 6px;">Error: No investigations found for this order.</div>
-            {% else %}
-                {% for t in tests %}
-                    {% if t.parameters %}
-                    <div class="test-group">
-                        <div class="test-header">{{ t.test_name }}</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 50px; text-align: center;">Print</th>
-                                    <th style="width: 35%;">Investigation Parameter</th>
-                                    <th style="width: 25%;">Observed Result</th>
-                                    <th style="width: 40%;">Biological Ref. Interval</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for p in t.parameters %}
-                                <tr>
-                                    <td style="text-align: center;"><input type="checkbox" name="print_{{ p.id }}" checked title="Uncheck to hide from final PDF"></td>
-                                    <td style="color: #0f172a;">{{ p.parameter_name }}</td>
-                                    <td><input type="text" name="param_{{ p.id }}" placeholder="Enter value..." required></td>
-                                    <td class="ref-range">{{ p.reference_range }} <span class="unit-badge">{{ p.unit }}</span></td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="test-group">
-                        <div class="test-header">{{ t.test_name }}</div>
-                        <div style="padding: 20px; background: #fffbeb; color: #b45309; border-top: 1px solid #cbd5e1; font-weight: 700; font-size: 13px;">⚠️ No parameters defined. Inject the Master Dictionary from the Admin Panel.</div>
-                    </div>
-                    {% endif %}
-                {% endfor %}
-
-                <div style="overflow: hidden; padding-bottom: 20px;">
-                    <button type="submit" class="btn-save">Authorize & Generate A4 Report &rarr;</button>
-                </div>
-            {% endif %}
-        </form>
     </div>
+
+    <!-- Printable Report Container (A4 Formatted) -->
+    <div class="print-container max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12 relative overflow-hidden">
+        
+        <!-- Header: Enterprise CareDrop Letterhead -->
+        <header class="border-b-2 border-brand-600 pb-6 mb-6">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center text-white text-2xl shadow-md">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-black text-navy-900 tracking-tight leading-none">CareDrop</h1>
+                        <span class="text-[10px] font-bold tracking-widest text-brand-700 uppercase mt-1 block">Diagnostics • Clinical Pathology • Quality Care</span>
+                    </div>
+                </div>
+                <div class="text-right text-xs text-gray-500">
+                    <span class="bg-brand-50 border border-brand-200 text-brand-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full block mb-1">NABL Accredited Partner Lab</span>
+                    <p class="font-semibold text-gray-700">Central Diagnostics Hub, Yamunanagar - Jagadhri</p>
+                    <p>Phone: +91 98765 43210 | care@caredrop.in</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Patient & Specimen Demographics Grid -->
+        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div>
+                <span class="text-gray-400 uppercase text-[10px] font-bold block">Patient Name</span>
+                <span class="font-black text-navy-900 text-sm">Suresh Mehta</span>
+                <span class="text-gray-500 text-[11px] block">48 Yrs / Male</span>
+            </div>
+            <div>
+                <span class="text-gray-400 uppercase text-[10px] font-bold block">Sample ID / Barcode</span>
+                <span class="font-mono font-bold text-navy-900">BC-89012344</span>
+                <span class="text-[10px] text-brand-700 block font-semibold">EDTA Whole Blood</span>
+            </div>
+            <div>
+                <span class="text-gray-400 uppercase text-[10px] font-bold block">Collection Date & Time</span>
+                <span class="font-bold text-gray-800">15-Sep-2026 07:45 AM</span>
+                <span class="text-gray-500 text-[10px] block">Temp: 4.2°C (Cold-Chain Verified)</span>
+            </div>
+            <div>
+                <span class="text-gray-400 uppercase text-[10px] font-bold block">Referring Doctor</span>
+                <span class="font-bold text-gray-800">Dr. Verma (Self / Direct)</span>
+                <span class="text-gray-500 text-[10px] block">Reported: 15-Sep-2026 02:15 PM</span>
+            </div>
+        </div>
+
+        <!-- Investigation Title -->
+        <div class="border-b border-gray-200 pb-2 mb-4 flex justify-between items-end">
+            <div>
+                <h2 class="text-base font-black text-navy-900 uppercase tracking-wider">Complete Blood Count (CBC)</h2>
+                <span class="text-[11px] text-gray-500">Method: Automated 5-Part Differential Analyzer & Microscopy</span>
+            </div>
+            <span class="text-[10px] font-bold text-gray-400 uppercase">Department of Hematology</span>
+        </div>
+
+        <!-- Parameters Table -->
+        <table class="w-full text-left text-xs mb-8">
+            <thead class="bg-gray-100 text-gray-600 uppercase font-bold border-b border-gray-200">
+                <tr>
+                    <th class="py-2.5 px-3">Investigation Parameter</th>
+                    <th class="py-2.5 px-3">Observed Value</th>
+                    <th class="py-2.5 px-3">Flag</th>
+                    <th class="py-2.5 px-3">Units</th>
+                    <th class="py-2.5 px-3">Biological Reference Interval</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-medium">
+                
+                <!-- Parameter: Hemoglobin -->
+                <tr>
+                    <td class="py-2 px-3 font-bold text-gray-800">Hemoglobin (Hb)</td>
+                    <td class="py-2 px-3">
+                        <input type="text" value="13.8" class="font-bold text-navy-900 bg-transparent border-b border-dashed border-gray-300 focus:border-brand-600 outline-none w-16">
+                    </td>
+                    <td class="py-2 px-3"><span class="text-gray-400 font-semibold text-[10px]">NORMAL</span></td>
+                    <td class="py-2 px-3 text-gray-500">g/dL</td>
+                    <td class="py-2 px-3 text-gray-500">13.0 - 17.0</td>
+                </tr>
+
+                <!-- Parameter: TLC (Total Leukocyte Count) -->
+                <tr>
+                    <td class="py-2 px-3 font-bold text-gray-800">Total Leukocyte Count (TLC)</td>
+                    <td class="py-2 px-3">
+                        <input type="text" value="11,500" class="font-bold text-red-600 bg-transparent border-b border-dashed border-gray-300 focus:border-brand-600 outline-none w-16">
+                    </td>
+                    <td class="py-2 px-3"><span class="bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded text-[10px] font-bold">HIGH</span></td>
+                    <td class="py-2 px-3 text-gray-500">cells/cumm</td>
+                    <td class="py-2 px-3 text-gray-500">4,000 - 10,000</td>
+                </tr>
+
+                <!-- Parameter: Platelet Count -->
+                <tr>
+                    <td class="py-2 px-3 font-bold text-gray-800">Platelet Count</td>
+                    <td class="py-2 px-3">
+                        <input type="text" value="2.4" class="font-bold text-navy-900 bg-transparent border-b border-dashed border-gray-300 focus:border-brand-600 outline-none w-16">
+                    </td>
+                    <td class="py-2 px-3"><span class="text-gray-400 font-semibold text-[10px]">NORMAL</span></td>
+                    <td class="py-2 px-3 text-gray-500">Lakh/cumm</td>
+                    <td class="py-2 px-3 text-gray-500">1.5 - 4.5</td>
+                </tr>
+
+                <!-- Parameter: RBC Count -->
+                <tr>
+                    <td class="py-2 px-3 font-bold text-gray-800">Total RBC Count</td>
+                    <td class="py-2 px-3">
+                        <input type="text" value="4.8" class="font-bold text-navy-900 bg-transparent border-b border-dashed border-gray-300 focus:border-brand-600 outline-none w-16">
+                    </td>
+                    <td class="py-2 px-3"><span class="text-gray-400 font-semibold text-[10px]">NORMAL</span></td>
+                    <td class="py-2 px-3 text-gray-500">mil/cumm</td>
+                    <td class="py-2 px-3 text-gray-500">4.5 - 5.5</td>
+                </tr>
+
+                <!-- Parameter: PCV / Hematocrit -->
+                <tr>
+                    <td class="py-2 px-3 font-bold text-gray-800">Packed Cell Volume (PCV)</td>
+                    <td class="py-2 px-3">
+                        <input type="text" value="42.0" class="font-bold text-navy-900 bg-transparent border-b border-dashed border-gray-300 focus:border-brand-600 outline-none w-16">
+                    </td>
+                    <td class="py-2 px-3"><span class="text-gray-400 font-semibold text-[10px]">NORMAL</span></td>
+                    <td class="py-2 px-3 text-gray-500">%</td>
+                    <td class="py-2 px-3 text-gray-500">40.0 - 50.0</td>
+                </tr>
+
+                <!-- Differential Leukocyte Count (DLC) Subheader -->
+                <tr class="bg-gray-50 font-bold text-navy-900">
+                    <td colspan="5" class="py-1 px-3 text-[11px] uppercase tracking-wider text-brand-800">Differential Leukocyte Count (DLC)</td>
+                </tr>
+                <tr>
+                    <td class="py-2 px-3 text-gray-700 pl-6">• Neutrophils</td>
+                    <td class="py-2 px-3 font-bold text-navy-900">72</td>
+                    <td class="py-2 px-3"><span class="text-gray-400 font-semibold text-[10px]">NORMAL</span></td>
+                    <td class="py-2 px-3 text-gray-500">%</td>
+                    <td class="py-2 px-3 text-gray-500">40 - 75</td>
+                </tr>
+                <tr>
+                    <td class="py-2 px-3 text-gray-700 pl-6">• Lymphocytes</td>
+                    <td class="py-2 px-3 font-bold text-navy-900">22</td>
+                    <td class="py-2 px-3"><span class="text-gray-400 font-semibold text-[10px]">NORMAL</span></td>
+                    <td class="py-2 px-3 text-gray-500">%</td>
+                    <td class="py-2 px-3 text-gray-500">20 - 45</td>
+                </tr>
+                <tr>
+                    <td class="py-2 px-3 text-gray-700 pl-6">• Eosinophils</td>
+                    <td class="py-2 px-3 font-bold text-red-600">06</td>
+                    <td class="py-2 px-3"><span class="bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded text-[10px] font-bold">HIGH</span></td>
+                    <td class="py-2 px-3 text-gray-500">%</td>
+                    <td class="py-2 px-3 text-gray-500">01 - 06</td>
+                </tr>
+                <tr>
+                    <td class="py-2 px-3 text-gray-700 pl-6">• Monocytes</td>
+                    <td class="py-2 px-3 font-bold text-navy-900">02</td>
+                    <td class="py-2 px-3"><span class="text-gray-400 font-semibold text-[10px]">NORMAL</span></td>
+                    <td class="py-2 px-3 text-gray-500">%</td>
+                    <td class="py-2 px-3 text-gray-500">02 - 10</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Clinical Notes & End of Report Banner -->
+        <div class="border-t border-gray-200 pt-3 mb-8 text-[11px] text-gray-500">
+            <p><span class="font-bold text-gray-700">Clinical Interpretation:</span> Leukocytosis noted with mild eosinophilia. Correlation with clinical symptoms is advised.</p>
+            <p class="mt-1 text-center font-bold tracking-widest text-gray-400 uppercase text-[9px]">— End of Diagnostic Examination Report —</p>
+        </div>
+
+        <!-- Verification QR & Dual Authorization Sign-Off -->
+        <footer class="border-t-2 border-gray-200 pt-6 grid grid-cols-3 gap-6 items-end">
+            <!-- QR Code Section -->
+            <div class="flex items-center gap-3">
+                <div id="qrcode" class="w-16 h-16 p-1 bg-white border border-gray-200 rounded-lg shrink-0"></div>
+                <div class="text-[10px] text-gray-400 leading-tight">
+                    <span class="font-bold text-gray-700 block">Scan to Verify</span>
+                    <span>Digital Authenticity Token #CD-TOKEN-9040</span>
+                </div>
+            </div>
+
+            <!-- Lab Technologist Sign-off -->
+            <div class="text-center">
+                <div class="h-10 flex items-center justify-center font-cursive text-gray-400 italic text-sm">
+                    K. Bhardwaj
+                </div>
+                <div class="border-t border-gray-300 pt-1">
+                    <span class="font-bold text-navy-900 text-xs block">Medical Lab Technologist</span>
+                    <span class="text-[10px] text-gray-400">Quality Control Verified</span>
+                </div>
+            </div>
+
+            <!-- MD Pathologist Digital Authorization -->
+            <div class="text-right">
+                <div class="h-10 flex items-center justify-end font-cursive text-brand-700 italic text-base font-bold pr-2">
+                    Dr. S. K. Aggarwal
+                </div>
+                <div class="border-t border-gray-300 pt-1">
+                    <span class="font-bold text-navy-900 text-xs block">Consultant Pathologist</span>
+                    <span class="text-[10px] text-gray-400">MD (Pathology) • Reg No: 44102-HR</span>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Institutional Legal Footnote -->
+        <div class="mt-8 pt-3 border-t border-gray-100 flex justify-between items-center text-[9px] text-gray-400">
+            <span>Powered by Industrial Healthcare IHC Diagnostics</span>
+            <span>Accredited Partner Network: Yamunanagar - Jagadhri</span>
+        </div>
+
+    </div>
+
+    <!-- Script to render verification QR Code -->
+    <script>
+        new QRCode(document.getElementById("qrcode"), {
+            text: "https://caredrop.in/lims_report/9040",
+            width: 60,
+            height: 60,
+            colorDark : "#0b192c",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.M
+        });
+    </script>
 </body>
 </html>
