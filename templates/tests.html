@@ -3,217 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Test Catalog | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
-        body { background: #F8FAFC; margin: 0; padding: 0; color: #0F172A; }
-        
-        .nav { background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 800; color: #0D9488; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        
-        .page-header { background: #0F172A; color: white; padding: 40px 5%; text-align: center; }
-        .page-header h1 { margin: 0 0 10px 0; font-size: 28px; font-weight: 800; }
-        .page-header p { color: #94A3B8; font-size: 15px; margin: 0; font-weight: 500; }
-        
-        .container { max-width: 800px; margin: 30px auto 100px auto; padding: 0 15px; }
-        
-        .filter-section { margin-bottom: 25px; }
-        .filter-title { font-size: 12px; font-weight: 800; color: #64748B; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .symptom-filters { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 5px; scrollbar-width: none; }
-        .symptom-filters::-webkit-scrollbar { display: none; }
-        .symptom-btn { background: white; border: 1px solid #CBD5E1; padding: 10px 18px; border-radius: 50px; font-weight: 800; font-size: 13px; color: #334155; cursor: pointer; transition: 0.2s; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .symptom-btn.active { background: #0F172A; color: white; border-color: #0F172A; }
-        
-        .test-list { display: flex; flex-direction: column; gap: 15px; }
-        .test-item { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .test-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .test-name { font-size: 18px; font-weight: 800; color: #0F172A; text-transform: capitalize; margin: 0 0 8px 0; line-height: 1.3; }
-        .test-meta { display: flex; gap: 10px; font-size: 12px; font-weight: 800; color: #64748B; text-transform: uppercase; }
-        .fasting-badge { color: #C2410C; background: #FFF7ED; padding: 4px 8px; border-radius: 4px; border: 1px solid #FFEDD5; }
-        
-        .param-list { background: #F8FAFC; border-radius: 8px; padding: 12px 15px; font-size: 13px; color: #475569; font-weight: 500; line-height: 1.6; margin-bottom: 20px; border: 1px solid #E2E8F0; }
-        .param-list strong { color: #0F172A; font-weight: 800; }
-        
-        .action-row { background: #F1F5F9; padding: 15px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
-        .lab-select { flex: 1; min-width: 200px; padding: 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 14px; font-weight: 700; color: #0F172A; outline: none; }
-        .price-box { display: flex; align-items: center; gap: 20px; }
-        .price-display { font-size: 22px; font-weight: 800; color: #0D9488; }
-        .btn-add { background: #0F172A; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .btn-add.added { background: #16A34A; }
-
-        .floating-cart { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #0D9488; color: white; padding: 15px 25px; border-radius: 50px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px rgba(13,148,136,0.3); cursor: pointer; display: none; z-index: 1000; }
-        .cart-info { font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 12px; }
-        .cart-count { background: white; color: #0D9488; width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: 800; }
-        
-        @media (max-width: 600px) {
-            .action-row { flex-direction: column; align-items: stretch; }
-            .price-box { justify-content: space-between; }
+    <title>Test Catalogue | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        navy: {
+                            900: '#0b192c',
+                            950: '#060d17',
+                        }
+                    }
+                }
+            }
         }
-    </style>
+    </script>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-24">
 
-    <nav class="nav">
-        <a href="/" class="logo"><i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i> Home</a>
-    </nav>
-
-    <div class="page-header">
-        <h1>Lab Test Catalog</h1>
-        <p>Select your required investigations.</p>
-    </div>
-
-    <div class="container">
-        <div class="filter-section">
-            <div class="filter-title">Filter by Health Concern</div>
-            <div class="symptom-filters">
-                <button class="symptom-btn active" onclick="filterBySymptom('All', this)">All Tests</button>
-                <button class="symptom-btn" onclick="filterBySymptom('Fever', this)">Fever</button>
-                <button class="symptom-btn" onclick="filterBySymptom('Fatigue', this)">Fatigue</button>
-                <button class="symptom-btn" onclick="filterBySymptom('Hair Fall', this)">Hair Fall</button>
-                <button class="symptom-btn" onclick="filterBySymptom('Joint Pain', this)">Joint Pain</button>
-                <button class="symptom-btn" onclick="filterBySymptom('Diabetes', this)">Diabetes</button>
+    <!-- Top Navigation -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                </div>
+                <span class="text-xl font-black text-navy-900">CareDrop</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="/checkout" class="relative bg-brand-50 text-brand-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-brand-200">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span>Cart</span>
+                    <span id="nav-cart-count" class="bg-brand-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]">
+                        {{ session.get('cart', [])|length }}
+                    </span>
+                </a>
             </div>
         </div>
-        
-        <div class="test-list" id="testListContainer"></div>
-    </div>
+    </header>
 
-    <div class="floating-cart" id="floatingCart" onclick="window.location.href='/book'">
-        <div class="cart-info">
-            <div class="cart-count" id="cartCount">0</div>
-            <span>Items Selected</span>
+    <!-- Search & Filter Banner -->
+    <section class="bg-white border-b border-gray-200 py-6">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="max-w-2xl">
+                <h1 class="text-2xl font-black text-navy-900">Diagnostic Tests & Health Packages</h1>
+                <p class="text-xs text-gray-500 mt-1">Select individual tests or comprehensive profiles for doorstep sample collection.</p>
+                
+                <div class="relative mt-4">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+                    <input type="text" id="test-search" onkeyup="filterTests()" placeholder="Search test name (e.g. CBC, Lipid, Thyroid)..." 
+                        class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition">
+                </div>
+            </div>
         </div>
-        <div style="font-weight: 800; font-size: 15px;">Proceed to Book &rarr;</div>
+    </section>
+
+    <!-- Test Cards Grid -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="catalog-grid">
+            {% for test in tests %}
+            <div class="test-card bg-white rounded-2xl p-6 border border-gray-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between" data-name="{{ test.name|lower }}">
+                <div>
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-700 px-2.5 py-1 rounded-md border border-brand-100">
+                            {{ test.category or 'Diagnostic' }}
+                        </span>
+                        {% if test.fasting_required %}
+                        <span class="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Fasting Required</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-base font-bold text-navy-900 mt-2">{{ test.name }}</h3>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ test.description or 'Standard diagnostic pathology investigation.' }}</p>
+                    
+                    <div class="mt-4 flex items-center gap-4 text-xs text-gray-400">
+                        <span><i class="fa-regular fa-clock mr-1 text-brand-600"></i> {{ test.turnaround_time or 'Same Day' }}</span>
+                        <span><i class="fa-solid fa-vial mr-1 text-brand-600"></i> {{ test.sample_type or 'Blood' }}</span>
+                    </div>
+                </div>
+
+                <div class="pt-6 mt-4 border-t border-gray-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-gray-400 block font-medium">Standard Fee</span>
+                        <span class="text-lg font-black text-navy-900">₹{{ test.price }}</span>
+                    </div>
+                    
+                    <button onclick="addToCart({{ test.id }}, this)" 
+                        class="px-5 py-2 rounded-xl text-xs font-bold transition-all border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full text-center py-16">
+                <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-flask text-lg"></i>
+                </div>
+                <h4 class="text-sm font-bold text-gray-700">No Tests Available</h4>
+                <p class="text-xs text-gray-400 mt-1">Configure your test catalog in the admin panel to populate this list.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- Floating Cart Bar for Mobile -->
+    <div id="sticky-cart-bar" class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 p-4 z-40 hidden shadow-xl">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Items Added</span>
+                <span class="text-sm font-black text-navy-900" id="sticky-item-label">0 Tests in Cart</span>
+            </div>
+            <a href="/checkout" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md">
+                Review & Book <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </a>
+        </div>
     </div>
 
+    <!-- Client Script for Search & Cart Synchronization -->
     <script>
-        lucide.createIcons();
-        
-        const rawTests = [];
-        {% for cat, tests in grouped_tests.items() %}
-            {% for t in tests %}
-                rawTests.push({
-                    id: '{{ t.id }}',
-                    name: '{{ t.name|replace("'", "\\'") }}',
-                    category: '{{ cat|replace("'", "\\'") }}',
-                    fasting: '{{ t.fasting_requirement or "None" }}',
-                    symptoms: '{{ t.symptoms or "" }}'.toLowerCase()
-                });
-            {% endfor %}
-        {% endfor %}
-        
-        const pricingData = {{ pricing|safe }};
-        const paramData = {{ param_dict|safe }};
-        let cart = JSON.parse(localStorage.getItem('caredrop_cart')) || [];
-        
-        const testPrices = {};
-        pricingData.forEach(p => {
-            if(!testPrices[p.test_id]) testPrices[p.test_id] = [];
-            testPrices[p.test_id].push(p);
-        });
-
-        let currentFilter = 'all';
-
-        function filterBySymptom(symptom, btnElement) {
-            document.querySelectorAll('.symptom-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
-            currentFilter = symptom.toLowerCase();
-            renderTests();
-        }
-
-        function renderTests() {
-            const container = document.getElementById('testListContainer');
-            let html = '';
-            
-            rawTests.forEach(test => {
-                const labs = testPrices[test.id];
-                if(!labs || labs.length === 0) return;
-                if(currentFilter !== 'all' && !test.symptoms.includes(currentFilter)) return;
-
-                const cartItem = cart.find(item => item.id === test.id);
-                const isAdded = !!cartItem;
-                const defaultLabId = cartItem ? cartItem.selectedLabId : labs[0].lab_id;
-                const displayPrice = cartItem ? cartItem.currentPrice : labs[0].price;
-
-                let selectOptions = '';
-                labs.forEach(lab => {
-                    const selected = (lab.lab_id.toString() === defaultLabId.toString()) ? 'selected' : '';
-                    selectOptions += `<option value="${lab.lab_id}" data-price="${lab.price}" data-name="${lab.lab_name}" ${selected}>${lab.lab_name} (★ ${lab.rating})</option>`;
-                });
-
-                let params = paramData[test.id];
-                let paramHtml = '';
-                if(params && params.length > 0) {
-                    paramHtml = `<div class="param-list"><strong>Parameters Included:</strong> ${params.join(', ')}</div>`;
-                }
-
-                html += `
-                    <div class="test-item">
-                        <h2 class="test-name">${test.name}</h2>
-                        <div class="test-meta">
-                            <span>${test.category}</span>
-                            ${test.fasting && test.fasting.toLowerCase() !== 'none' ? `<span class="fasting-badge">${test.fasting}</span>` : ''}
-                        </div>
-                        
-                        ${paramHtml}
-                        
-                        <div class="action-row">
-                            <select class="lab-select" id="select-${test.id}" onchange="updatePrice('${test.id}')" ${isAdded ? 'disabled' : ''}>
-                                ${selectOptions}
-                            </select>
-                            <div class="price-box">
-                                <div class="price-display" id="price-${test.id}">₹${displayPrice}</div>
-                                <button class="btn-add ${isAdded ? 'added' : ''}" id="btn-${test.id}" onclick="toggleCart('${test.id}', '${test.name}')">
-                                    ${isAdded ? '✓ Added' : '+ Add Test'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+        function filterTests() {
+            const query = document.getElementById('test-search').value.toLowerCase();
+            const cards = document.querySelectorAll('.test-card');
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name');
+                card.style.display = name.includes(query) ? 'flex' : 'none';
             });
-
-            container.innerHTML = html === '' ? `<div style="padding: 40px; text-align: center; color: #64748B; font-weight: 800; border: 1px dashed #CBD5E1; border-radius: 12px;">No specific tests found for this category.</div>` : html;
         }
 
-        function updatePrice(testId) {
-            const select = document.getElementById(`select-${testId}`);
-            document.getElementById(`price-${testId}`).innerText = `₹${select.options[select.selectedIndex].getAttribute('data-price')}`;
-        }
-
-        function toggleCart(testId, testName) {
-            const btn = document.getElementById(`btn-${testId}`);
-            const select = document.getElementById(`select-${testId}`);
-            const existingIndex = cart.findIndex(item => item.id === testId);
+        async function addToCart(testId, btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i>';
             
-            if (existingIndex > -1) {
-                cart.splice(existingIndex, 1);
-                select.disabled = false;
-                btn.classList.remove('added');
-                btn.innerText = '+ Add Test';
-            } else {
-                cart.push({ id: testId, name: testName, selectedLabId: select.value, labName: select.options[select.selectedIndex].getAttribute('data-name'), currentPrice: select.options[select.selectedIndex].getAttribute('data-price'), type: 'test' });
-                select.disabled = true;
-                btn.classList.add('added');
-                btn.innerText = '✓ Added';
+            try {
+                const res = await fetch(`/api/cart/add/${testId}`, { method: 'POST' });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    btn.classList.remove('border-brand-600', 'text-brand-600', 'hover:bg-brand-600');
+                    btn.classList.add('bg-brand-600', 'text-white');
+                    btn.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> Added';
+                    
+                    // Update Counters
+                    const countEl = document.getElementById('nav-cart-count');
+                    if (countEl) countEl.innerText = data.total_items;
+                    
+                    const stickyBar = document.getElementById('sticky-cart-bar');
+                    const stickyLabel = document.getElementById('sticky-item-label');
+                    if (stickyBar && data.total_items > 0) {
+                        stickyBar.classList.remove('hidden');
+                        stickyLabel.innerText = `${data.total_items} Test${data.total_items > 1 ? 's' : ''} Selected`;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                btn.innerHTML = 'Error';
+            } finally {
+                btn.disabled = false;
             }
-            localStorage.setItem('caredrop_cart', JSON.stringify(cart));
-            updateCartUI();
         }
-
-        function updateCartUI() {
-            const count = cart.length;
-            const cartEl = document.getElementById('floatingCart');
-            if (count > 0) {
-                cartEl.style.display = 'flex';
-                document.getElementById('cartCount').innerText = count;
-            } else {
-                cartEl.style.display = 'none';
-            }
-        }
-
-        window.onload = () => { renderTests(); updateCartUI(); };
     </script>
 </body>
 </html>
