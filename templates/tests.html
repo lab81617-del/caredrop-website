@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Catalogue | CareDrop</title>
+    <title>Diagnostic Tests & Packages | CareDrop Yamunanagar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -30,22 +30,26 @@
         }
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-24">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-28 selection:bg-brand-500 selection:text-white">
 
     <!-- Top Navigation -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
+            <a href="/" class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center text-white shadow-xs">
                     <i class="fa-solid fa-plus text-sm"></i>
                 </div>
-                <span class="text-xl font-black text-navy-900">CareDrop</span>
+                <div>
+                    <span class="text-xl font-black tracking-tight text-navy-900 block leading-none">CareDrop</span>
+                    <span class="text-[9px] font-semibold text-gray-400 uppercase tracking-widest block mt-0.5">Yamunanagar - Jagadhri</span>
+                </div>
             </a>
-            <div class="flex items-center gap-4">
-                <a href="/checkout" class="relative bg-brand-50 text-brand-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-brand-200">
-                    <i class="fa-solid fa-cart-shopping"></i>
+            
+            <div class="flex items-center gap-3">
+                <a href="/checkout" class="relative bg-brand-50 hover:bg-brand-100 text-brand-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-brand-200 transition">
+                    <i class="fa-solid fa-cart-shopping text-sm"></i>
                     <span>Cart</span>
-                    <span id="nav-cart-count" class="bg-brand-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]">
+                    <span id="nav-cart-count" class="bg-brand-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black shadow-xs">
                         {{ session.get('cart', [])|length }}
                     </span>
                 </a>
@@ -53,83 +57,114 @@
         </div>
     </header>
 
-    <!-- Search & Filter Banner -->
+    <!-- Search & Category Filter Section -->
     <section class="bg-white border-b border-gray-200 py-6">
         <div class="max-w-7xl mx-auto px-4">
             <div class="max-w-2xl">
-                <h1 class="text-2xl font-black text-navy-900">Diagnostic Tests & Health Packages</h1>
-                <p class="text-xs text-gray-500 mt-1">Select individual tests or comprehensive profiles for doorstep sample collection.</p>
+                <h1 class="text-2xl font-black text-navy-900 tracking-tight">Diagnostic Test Catalogue</h1>
+                <p class="text-xs text-gray-500 mt-1">Select verified pathology investigations and preventative profiles for certified home sample collection.</p>
                 
+                <!-- Search Box -->
                 <div class="relative mt-4">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400 text-sm"></i>
-                    <input type="text" id="test-search" onkeyup="filterTests()" placeholder="Search test name (e.g. CBC, Lipid, Thyroid)..." 
-                        class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition">
+                    <input type="text" id="test-search" onkeyup="filterTests()" placeholder="Search test name or organ profile (e.g. CBC, Lipid, Thyroid, LFT)..." 
+                        class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition">
+                </div>
+
+                <!-- Category Quick Pills -->
+                <div class="flex flex-wrap gap-2 mt-4 text-[11px] font-bold text-gray-600">
+                    <button onclick="filterCategory('all')" class="category-pill bg-brand-600 text-white px-3 py-1.5 rounded-lg border border-brand-600">All Tests</button>
+                    <button onclick="filterCategory('hematology')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Hematology</button>
+                    <button onclick="filterCategory('biochemistry')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Biochemistry</button>
+                    <button onclick="filterCategory('endocrinology')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Endocrinology</button>
+                    <button onclick="filterCategory('immunology')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Immunology</button>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Test Cards Grid -->
+    <!-- Dynamic Tests Grid -->
     <main class="max-w-7xl mx-auto px-4 py-8">
+        {% set cart = session.get('cart', []) %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="catalog-grid">
             {% for test in tests %}
-            <div class="test-card bg-white rounded-2xl p-6 border border-gray-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between" data-name="{{ test.name|lower }}">
+            {% set in_cart = test.id in cart %}
+            <div class="test-card bg-white rounded-2xl p-6 border border-gray-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between" 
+                 data-name="{{ test.name|lower }}" 
+                 data-category="{{ (test.category or 'general')|lower }}">
                 <div>
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-700 px-2.5 py-1 rounded-md border border-brand-100">
+                        <span class="text-[10px] font-black uppercase tracking-wider bg-brand-50 text-brand-700 px-2.5 py-1 rounded-md border border-brand-100">
                             {{ test.category or 'Diagnostic' }}
                         </span>
                         {% if test.fasting_required %}
-                        <span class="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Fasting Required</span>
+                        <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                            <i class="fa-solid fa-clock mr-1"></i> Fasting Req.
+                        </span>
                         {% endif %}
                     </div>
                     <h3 class="text-base font-bold text-navy-900 mt-2">{{ test.name }}</h3>
-                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ test.description or 'Standard diagnostic pathology investigation.' }}</p>
+                    <p class="text-xs text-gray-500 mt-1 leading-relaxed">{{ test.description or 'Certified diagnostic investigation handled under sterile cold-chain protocol.' }}</p>
                     
                     <div class="mt-4 flex items-center gap-4 text-xs text-gray-400">
-                        <span><i class="fa-regular fa-clock mr-1 text-brand-600"></i> {{ test.turnaround_time or 'Same Day' }}</span>
-                        <span><i class="fa-solid fa-vial mr-1 text-brand-600"></i> {{ test.sample_type or 'Blood' }}</span>
+                        <span><i class="fa-regular fa-clock mr-1 text-brand-600"></i> {{ test.turnaround_time or '6 hrs' }}</span>
+                        <span><i class="fa-solid fa-vial mr-1 text-brand-600"></i> {{ test.sample_type or 'Blood Specimen' }}</span>
                     </div>
                 </div>
 
                 <div class="pt-6 mt-4 border-t border-gray-100 flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] text-gray-400 block font-medium">Standard Fee</span>
+                        <span class="text-[10px] text-gray-400 block font-semibold uppercase">Standard Fee</span>
                         <span class="text-lg font-black text-navy-900">₹{{ test.price }}</span>
                     </div>
                     
-                    <button onclick="addToCart({{ test.id }}, this)" 
-                        class="px-5 py-2 rounded-xl text-xs font-bold transition-all border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-white flex items-center gap-1.5">
-                        <i class="fa-solid fa-plus text-[10px]"></i> Add
+                    <button onclick="toggleCart({{ test.id }}, this)" 
+                        data-in-cart="{{ 'true' if in_cart else 'false' }}"
+                        class="cart-btn px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 
+                        {% if in_cart %}
+                            bg-brand-600 text-white border border-brand-600 hover:bg-brand-700
+                        {% else %}
+                            border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-white
+                        {% endif %}">
+                        {% if in_cart %}
+                            <i class="fa-solid fa-check text-[10px]"></i> Added
+                        {% else %}
+                            <i class="fa-solid fa-plus text-[10px]"></i> Add
+                        {% endif %}
                     </button>
                 </div>
             </div>
             {% else %}
-            <div class="col-span-full text-center py-16">
-                <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
+            <div class="col-span-full text-center py-16 bg-white rounded-2xl border border-gray-200">
+                <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-3">
                     <i class="fa-solid fa-flask text-lg"></i>
                 </div>
-                <h4 class="text-sm font-bold text-gray-700">No Tests Available</h4>
-                <p class="text-xs text-gray-400 mt-1">Configure your test catalog in the admin panel to populate this list.</p>
+                <h4 class="text-sm font-bold text-navy-900">No Tests Configured Yet</h4>
+                <p class="text-xs text-gray-400 mt-1">Open the CareDrop Admin panel to define tests and pricing.</p>
+                <a href="/admin" class="mt-4 inline-block text-xs font-bold bg-navy-900 text-white px-4 py-2 rounded-xl">Go to Admin</a>
             </div>
             {% endfor %}
         </div>
     </main>
 
-    <!-- Floating Cart Bar for Mobile -->
-    <div id="sticky-cart-bar" class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 p-4 z-40 hidden shadow-xl">
-        <div class="max-w-md mx-auto flex items-center justify-between">
+    <!-- Floating Sticky Cart Bar (Appears when items are selected) -->
+    <div id="sticky-cart-bar" class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 p-4 z-40 shadow-2xl transition-transform duration-300 {% if cart|length == 0 %}hidden translate-y-full{% endif %}">
+        <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
             <div>
-                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Items Added</span>
-                <span class="text-sm font-black text-navy-900" id="sticky-item-label">0 Tests in Cart</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Home Collection Selected</span>
+                <span class="text-sm font-black text-navy-900" id="sticky-item-label">
+                    {{ cart|length }} Test{{ 's' if cart|length != 1 else '' }} in Cart
+                </span>
             </div>
-            <a href="/checkout" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md">
-                Review & Book <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="/checkout" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-brand-600/30 transition active:scale-95">
+                    Proceed to Booking <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Client Script for Search & Cart Synchronization -->
+    <!-- Interactive Filtering & Real-Time Cart Synchronization -->
     <script>
         function filterTests() {
             const query = document.getElementById('test-search').value.toLowerCase();
@@ -140,33 +175,65 @@
             });
         }
 
-        async function addToCart(testId, btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i>';
+        function filterCategory(cat) {
+            const cards = document.querySelectorAll('.test-card');
+            const pills = document.querySelectorAll('.category-pill');
             
+            pills.forEach(p => {
+                p.classList.remove('bg-brand-600', 'text-white', 'border-brand-600');
+                p.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-200');
+            });
+            event.target.classList.add('bg-brand-600', 'text-white', 'border-brand-600');
+            event.target.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-200');
+
+            cards.forEach(card => {
+                const category = card.getAttribute('data-category');
+                if (cat === 'all' || category.includes(cat)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        async function toggleCart(testId, btn) {
+            btn.disabled = true;
+            const isInCart = btn.getAttribute('data-in-cart') === 'true';
+            const endpoint = isInCart ? `/api/cart/remove/${testId}` : `/api/cart/add/${testId}`;
+
             try {
-                const res = await fetch(`/api/cart/add/${testId}`, { method: 'POST' });
+                const res = await fetch(endpoint, { method: 'POST' });
                 const data = await res.json();
                 
                 if (res.ok) {
-                    btn.classList.remove('border-brand-600', 'text-brand-600', 'hover:bg-brand-600');
-                    btn.classList.add('bg-brand-600', 'text-white');
-                    btn.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> Added';
+                    if (isInCart) {
+                        btn.setAttribute('data-in-cart', 'false');
+                        btn.className = "cart-btn px-5 py-2 rounded-xl text-xs font-bold transition-all border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-white flex items-center gap-1.5";
+                        btn.innerHTML = '<i class="fa-solid fa-plus text-[10px]"></i> Add';
+                    } else {
+                        btn.setAttribute('data-in-cart', 'true');
+                        btn.className = "cart-btn px-5 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white border border-brand-600 hover:bg-brand-700 flex items-center gap-1.5";
+                        btn.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> Added';
+                    }
                     
-                    // Update Counters
+                    // Update navigation counter
                     const countEl = document.getElementById('nav-cart-count');
                     if (countEl) countEl.innerText = data.total_items;
                     
+                    // Update bottom floating drawer
                     const stickyBar = document.getElementById('sticky-cart-bar');
                     const stickyLabel = document.getElementById('sticky-item-label');
-                    if (stickyBar && data.total_items > 0) {
-                        stickyBar.classList.remove('hidden');
-                        stickyLabel.innerText = `${data.total_items} Test${data.total_items > 1 ? 's' : ''} Selected`;
+                    if (stickyBar) {
+                        if (data.total_items > 0) {
+                            stickyBar.classList.remove('hidden', 'translate-y-full');
+                            stickyLabel.innerText = `${data.total_items} Test${data.total_items > 1 ? 's' : ''} in Cart`;
+                        } else {
+                            stickyBar.classList.add('hidden', 'translate-y-full');
+                        }
                     }
                 }
             } catch (err) {
-                console.error(err);
-                btn.innerHTML = 'Error';
+                console.error("Cart error:", err);
             } finally {
                 btn.disabled = false;
             }
