@@ -3,185 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Checkout | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
-        body { background: #F8FAFC; margin: 0; padding: 0; color: #0F172A; }
-        
-        .nav { background: white; padding: 15px 20px; display: flex; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 800; color: #0D9488; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        
-        .container { max-width: 800px; margin: 30px auto 100px auto; padding: 0 15px; display: grid; gap: 25px; }
-        
-        .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; }
-        .card-title { font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #F1F5F9; padding-bottom: 12px; }
-        
-        .cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 0; border-bottom: 1px dashed #E2E8F0; }
-        .cart-item:last-child { border-bottom: none; }
-        .item-name { font-weight: 800; font-size: 15px; color: #1E293B; margin-bottom: 4px; }
-        .item-lab { font-size: 12px; font-weight: 700; color: #64748B; }
-        .item-price { font-weight: 800; font-size: 16px; color: #0D9488; }
-        
-        .total-row { display: flex; justify-content: space-between; align-items: center; background: #F0FDF4; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #BBF7D0; }
-        .total-label { font-weight: 800; font-size: 16px; color: #166534; }
-        .total-price { font-weight: 800; font-size: 24px; color: #166534; }
-
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .full-width { grid-column: 1 / -1; }
-        
-        .input-group label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 6px; color: #475569; text-transform: uppercase; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 14px; font-weight: 600; color: #0F172A; outline: none; transition: 0.2s; background: #F8FAFC; }
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: #0D9488; background: white; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
-        
-        .btn-submit { background: #0F172A; color: white; border: none; padding: 16px; border-radius: 8px; font-weight: 800; font-size: 16px; width: 100%; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(15,23,42,0.2); margin-top: 10px; }
-        .btn-submit:hover { background: #1E293B; transform: translateY(-1px); }
-
-        #emptyCart { text-align: center; padding: 40px 20px; }
-        #emptyCart h2 { color: #0F172A; font-weight: 800; margin-bottom: 10px; }
-        #emptyCart a { display: inline-block; background: #0D9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; margin-top: 15px; }
-
-        @media (max-width: 600px) {
-            .form-grid { grid-template-columns: 1fr; }
+    <title>Review & Book Collection | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        navy: {
+                            900: '#0b192c',
+                            950: '#060d17',
+                        }
+                    }
+                }
+            }
         }
-    </style>
+    </script>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-16">
 
-    <nav class="nav">
-        <a href="/tests" class="logo"><i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i> Back to Tests</a>
-    </nav>
-
-    <div class="container" id="checkoutFlow">
-        
-        <div class="card">
-            <div class="card-title"><i data-lucide="shopping-bag" style="color: #0D9488;"></i> Order Summary</div>
-            <div id="cartItems"></div>
-            <div class="total-row">
-                <div class="total-label">Amount to Pay</div>
-                <div class="total-price" id="cartTotal">₹0</div>
+    <!-- App Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/tests" class="text-xs font-bold text-gray-500 hover:text-brand-600 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left"></i> Back to Catalog
+            </a>
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-brand-600 flex items-center justify-center text-white text-xs">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <span class="text-base font-black text-navy-900">CareDrop</span>
             </div>
-            <div style="font-size: 11px; font-weight: 700; color: #64748B; text-align: center; margin-top: 10px;">Free Home Sample Collection Included</div>
+            <div class="text-xs font-semibold text-gray-400">Step 2 of 2</div>
         </div>
+    </header>
 
-        <div class="card">
-            <div class="card-title"><i data-lucide="user" style="color: #0D9488;"></i> Patient Details</div>
-            <form id="checkoutForm">
-                <div class="form-grid">
-                    <div class="input-group full-width"><label>Patient Full Name</label><input type="text" id="p_name" required></div>
-                    <div class="input-group"><label>Age</label><input type="number" id="p_age" required></div>
-                    <div class="input-group">
-                        <label>Gender</label>
-                        <select id="p_gender" required>
-                            <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="input-group"><label>Mobile Number (For WhatsApp Reports)</label><input type="tel" id="p_phone" pattern="[0-9]{10}" required></div>
-                    <div class="input-group"><label>Email Address</label><input type="email" id="p_email" required></div>
-                    
-                    <div class="input-group full-width" style="margin-top: 15px;">
-                        <label>Home Collection Address</label>
-                        <textarea id="p_address" rows="3" placeholder="House No, Street, Landmark, City..." required></textarea>
-                    </div>
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-black text-navy-900 mb-6">Confirm Doorstep Collection</h1>
 
-                    <div class="input-group"><label>Preferred Date</label><input type="date" id="p_date" required></div>
-                    <div class="input-group">
-                        <label>Preferred Time Slot</label>
-                        <select id="p_time" required>
-                            <option value="06:00 AM - 08:00 AM">06:00 AM - 08:00 AM</option>
-                            <option value="08:00 AM - 10:00 AM">08:00 AM - 10:00 AM</option>
-                            <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
-                            <option value="12:00 PM - 03:00 PM">12:00 PM - 03:00 PM</option>
-                            <option value="03:00 PM - 06:00 PM">03:00 PM - 06:00 PM</option>
-                        </select>
+        <form action="/book_test" method="POST" class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            
+            <!-- Left: Patient Details & Schedule -->
+            <div class="md:col-span-7 space-y-6">
+                
+                <!-- Patient Info Card -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                    <h2 class="text-sm font-bold text-navy-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-user-pen text-brand-600"></i> Patient Particulars
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                            <input type="text" name="full_name" required placeholder="Patient legal name" 
+                                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Mobile</label>
+                                <input type="tel" name="phone" required placeholder="10-digit mobile" 
+                                    class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Preferred Slot</label>
+                                <select name="time_slot" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition">
+                                    <option>06:00 AM - 08:00 AM (Fasting)</option>
+                                    <option>08:00 AM - 10:00 AM</option>
+                                    <option>10:00 AM - 12:00 PM</option>
+                                    <option>04:00 PM - 07:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking & Pay at Home &rarr;</button>
-            </form>
-        </div>
-    </div>
 
-    <div class="container" id="emptyCart" style="display: none;">
-        <h2>Your Cart is Empty</h2>
-        <p style="color: #64748B; font-weight: 600;">Looks like you haven't added any tests yet.</p>
-        <a href="/tests">Browse Lab Tests</a>
-    </div>
+                <!-- Collection Address Card -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                    <h2 class="text-sm font-bold text-navy-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-location-dot text-brand-600"></i> Doorstep Address
+                    </h2>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Address in Yamunanagar - Jagadhri</label>
+                        <textarea name="address" rows="3" required placeholder="House/Flat No., Landmark, Colony/Sector" 
+                            class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition"></textarea>
+                    </div>
+                </div>
 
-    <script>
-        lucide.createIcons();
-        let cart = JSON.parse(localStorage.getItem('caredrop_cart')) || [];
-        let total = 0;
-
-        function loadCart() {
-            if (cart.length === 0) {
-                document.getElementById('checkoutFlow').style.display = 'none';
-                document.getElementById('emptyCart').style.display = 'block';
-                return;
-            }
-
-            let html = '';
-            cart.forEach(item => {
-                html += `
-                    <div class="cart-item">
-                        <div>
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-lab">${item.labName}</div>
+                <!-- Payment Selection -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                    <h2 class="text-sm font-bold text-navy-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-wallet text-brand-600"></i> Settlement Method
+                    </h2>
+                    <div class="p-3 border border-brand-200 bg-brand-50/50 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="payment_method" value="COD" checked class="accent-brand-600">
+                            <div>
+                                <span class="text-xs font-bold text-navy-900 block">Pay on Sample Collection</span>
+                                <span class="text-[11px] text-gray-500">Cash or UPI QR directly to the phlebotomist</span>
+                            </div>
                         </div>
-                        <div class="item-price">₹${item.currentPrice}</div>
-                    </div>`;
-                total += parseInt(item.currentPrice);
-            });
-            
-            document.getElementById('cartItems').innerHTML = html;
-            document.getElementById('cartTotal').innerText = `₹${total}`;
-            
-            // Set min date to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('p_date').setAttribute('min', today);
-        }
+                        <i class="fa-solid fa-qrcode text-brand-600 text-lg"></i>
+                    </div>
+                </div>
 
-        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = 'Processing Booking...';
-            btn.disabled = true;
+            </div>
 
-            const formData = new FormData();
-            formData.append('patient_name', document.getElementById('p_name').value);
-            formData.append('age', document.getElementById('p_age').value);
-            formData.append('gender', document.getElementById('p_gender').value);
-            formData.append('phone', document.getElementById('p_phone').value);
-            formData.append('email', document.getElementById('p_email').value);
-            formData.append('address', document.getElementById('p_address').value);
-            formData.append('date', document.getElementById('p_date').value);
-            formData.append('time_slot', document.getElementById('p_time').value);
-            formData.append('total', total);
-            formData.append('cart', JSON.stringify(cart));
+            <!-- Right: Order Breakdown -->
+            <div class="md:col-span-5 space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                    <h2 class="text-sm font-bold text-navy-900 uppercase tracking-wider mb-4">Diagnostic Summary</h2>
+                    
+                    <!-- Selected Tests -->
+                    <div class="divide-y divide-gray-100 mb-4">
+                        {% for item in items %}
+                        <div class="py-3 flex justify-between items-center text-xs">
+                            <div>
+                                <span class="font-bold text-navy-900 block">{{ item.name }}</span>
+                                <span class="text-gray-400 text-[10px]">NABL Accredited Partner Lab</span>
+                            </div>
+                            <span class="font-bold text-navy-900">₹{{ item.price }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
 
-            try {
-                // Since this is a public form, we bypass the strict OTP check during booking and just place the order
-                // The OTP will only be strictly required to VIEW the medical reports later.
-                const res = await fetch('/api/place-order', { method: 'POST', body: formData });
-                const data = await res.json();
-                
-                if (data.success || data.message === "Verify email.") {
-                    localStorage.removeItem('caredrop_cart');
-                    alert("Booking Successful! A phlebotomist will contact you shortly.");
-                    window.location.href = `/my-bookings?email=${document.getElementById('p_email').value}`;
-                } else {
-                    alert('Booking failed. Please try again.');
-                    btn.innerText = 'Confirm Booking & Pay at Home';
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                alert('Connection Error.');
-                btn.innerText = 'Confirm Booking & Pay at Home';
-                btn.disabled = false;
-            }
-        });
+                    <!-- Price Calculations -->
+                    <div class="pt-4 border-t border-gray-200 space-y-2 text-xs">
+                        <div class="flex justify-between text-gray-500">
+                            <span>Test Investigations Subtotal</span>
+                            <span>₹{{ total }}</span>
+                        </div>
+                        <div class="flex justify-between text-gray-500">
+                            <span>Sterile Cold-Chain Logistics</span>
+                            <span class="text-green-600 font-semibold">FREE</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <span class="text-sm font-bold text-navy-900">Total Payable</span>
+                            <span class="text-xl font-black text-brand-700">₹{{ total }}</span>
+                        </div>
+                    </div>
 
-        window.onload = loadCart;
-    </script>
+                    <!-- Action Button -->
+                    <button type="submit" 
+                        class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-brand-600/30 transition-all text-sm uppercase tracking-wider mt-6 active:scale-95">
+                        Confirm Appointment <i class="fa-solid fa-check ml-1"></i>
+                    </button>
+                    
+                    <p class="text-[11px] text-center text-gray-400 mt-3">
+                        <i class="fa-solid fa-shield-halved text-brand-600 mr-1"></i> Pathologist authorized digital reports
+                    </p>
+                </div>
+            </div>
+
+        </form>
+    </main>
+
 </body>
 </html>
