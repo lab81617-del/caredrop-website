@@ -3,80 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop | Home Blood Testing</title>
+    <title>CareDrop | Premium Home Blood Tests</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Smooth scrolling and hidden scrollbars for clean UI */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        html { scroll-behavior: smooth; }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
 
-    <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-md p-4 sticky top-0 z-50">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">
-                <i class="fa-solid fa-droplet text-red-400 mr-2"></i>CareDrop
-            </h1>
-            <a href="/dashboard" class="text-xs bg-blue-700 px-3 py-1.5 rounded-full shadow-inner border border-blue-500 font-medium">Staff Login</a>
+    <!-- Top Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <i class="fa-solid fa-droplet text-white"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-tight text-gray-900">CareDrop</span>
+            </div>
+            <div class="flex gap-3">
+                <a href="#book" class="hidden md:inline-flex bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition-colors">Book Test</a>
+                <a href="/dashboard" class="text-sm border border-gray-300 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 font-medium transition-colors">Staff Login</a>
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-md mx-auto p-4 mt-2">
+    <!-- Main Hero Section (Desktop & Mobile optimized) -->
+    <main class="max-w-6xl mx-auto px-4 py-8 md:py-12 md:grid md:grid-cols-2 md:gap-12 items-center">
         
-        <!-- Trust Banner -->
-        <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6 flex items-center shadow-sm">
-            <i class="fa-solid fa-truck-medical text-blue-500 text-xl mr-3"></i>
-            <p class="text-sm text-blue-800 font-medium">Fast home sample collection across Yamunanagar.</p>
+        <!-- Left Column: Value Proposition -->
+        <div class="mb-10 md:mb-0">
+            <div class="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold mb-4 border border-blue-100">
+                <i class="fa-solid fa-location-dot mr-1"></i> Serving Yamunanagar
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
+                Lab Tests at Home in <span class="text-blue-600">60 Minutes.</span>
+            </h1>
+            <p class="text-gray-600 text-lg mb-8">
+                Skip the clinic queue. Get verified, painless blood sample collection at your doorstep by clinical experts. NABL-accredited reports delivered via WhatsApp.
+            </p>
+            
+            <!-- Trust Indicators -->
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-green-100 text-green-600 p-2 rounded-full w-10 h-10 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-shield-check text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900">NABL Accredited Partners</h4>
+                        <p class="text-sm text-gray-500">Doctor-verified digital reports.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 text-blue-600 p-2 rounded-full w-10 h-10 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-snowflake text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900">Temperature Controlled</h4>
+                        <p class="text-sm text-gray-500">Samples transported strictly at 2-8°C.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-purple-100 text-purple-600 p-2 rounded-full w-10 h-10 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-syringe text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900">Painless Single-Prick</h4>
+                        <p class="text-sm text-gray-500">Collected strictly by experienced technicians.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Booking Form -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100">
-            <h2 class="text-xl font-bold mb-1">Book a Test</h2>
-            <p class="text-gray-500 text-sm mb-6">Verified phlebotomists. NABL accurate reports.</p>
+        <!-- Right Column: The Booking Engine -->
+        <div id="book" class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-6 md:p-8 border border-gray-100 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-blue-600"></div>
+            <h2 class="text-2xl font-bold mb-1 text-gray-900">Book Home Collection</h2>
+            <p class="text-gray-500 text-sm mb-6">Enter details and our phlebotomist will arrive shortly.</p>
             
-            <form action="/book_test" method="POST" class="space-y-4">
-                
-                <!-- Patient Name -->
+            <form action="/book_test" method="POST" class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Patient Name</label>
                     <input type="text" name="full_name" required 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
                         placeholder="e.g. Rahul Sharma">
                 </div>
 
-                <!-- Phone -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
-                    <input type="tel" name="phone" required 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
-                        placeholder="10-digit mobile number">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">WhatsApp No.</label>
+                        <div class="flex">
+                            <span class="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl">+91</span>
+                            <input type="tel" name="phone" required 
+                                class="w-full px-4 py-3 border border-gray-200 rounded-r-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
+                                placeholder="10-digit number">
+                        </div>
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Select Test</label>
+                        <input type="text" name="tests_requested" required 
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
+                            placeholder="e.g. CBC, Full Body">
+                    </div>
                 </div>
 
-                <!-- Address -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Home Address</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Complete Address</label>
                     <textarea name="address" rows="2" required 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
-                        placeholder="House No, Sector/Colony, Yamunanagar"></textarea>
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
+                        placeholder="House/Flat No, Area, Yamunanagar"></textarea>
                 </div>
 
-                <!-- Tests Required -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tests Required</label>
-                    <input type="text" name="tests_requested" required 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" 
-                        placeholder="e.g. CBC, LFT, or Type 'Call Me'">
-                    <p class="text-xs text-gray-400 mt-1">Not sure? Just write "Call Me" and we will guide you.</p>
-                </div>
-
-                <!-- Submit Button -->
                 <button type="submit" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-lg shadow-md transition-transform transform active:scale-95 flex justify-center items-center mt-2">
-                    Book Collection <i class="fa-solid fa-arrow-right ml-2"></i>
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg shadow-blue-500/30 transition-transform transform active:scale-95 flex justify-center items-center text-lg mt-2">
+                    Confirm Booking <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
+                <p class="text-center text-xs text-gray-400 mt-2"><i class="fa-solid fa-lock mr-1"></i> Your medical data is strictly confidential.</p>
             </form>
         </div>
-
     </main>
+
+    <!-- Popular Packages Section -->
+    <section class="bg-white py-12 border-t border-gray-100">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-900">Frequently Booked Tests</h3>
+                    <p class="text-gray-500 text-sm mt-1">Transparent pricing. No hidden charges.</p>
+                </div>
+            </div>
+            
+            <!-- Horizontal scroll container for mobile -->
+            <div class="flex overflow-x-auto hide-scrollbar gap-4 pb-4">
+                
+                <!-- Package 1 -->
+                <div class="min-w-[280px] border border-gray-200 rounded-2xl p-5 hover:border-blue-500 transition-colors bg-white">
+                    <h4 class="font-bold text-lg text-gray-900">Complete Blood Count</h4>
+                    <p class="text-xs text-gray-500 mb-4">Includes Absolute Counts, RBC, WBC, Hb</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-1 rounded">No Fasting</span>
+                        <span class="text-xs text-gray-400">Reports in 6h</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <span class="text-2xl font-extrabold text-blue-600">₹300</span>
+                        </div>
+                        <button onclick="document.querySelector('input[name=\'tests_requested\']').value='CBC'; document.getElementById('book').scrollIntoView();" class="text-blue-600 font-semibold text-sm hover:underline">Add Test</button>
+                    </div>
+                </div>
+
+                <!-- Package 2 -->
+                <div class="min-w-[280px] border border-blue-200 rounded-2xl p-5 relative bg-blue-50 shadow-sm">
+                    <div class="absolute -top-3 right-4 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">MOST POPULAR</div>
+                    <h4 class="font-bold text-lg text-gray-900">Basic Health Checkup</h4>
+                    <p class="text-xs text-gray-500 mb-4">CBC, Liver (LFT), Kidney (KFT), Sugar</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-1 rounded">10-12h Fasting</span>
+                        <span class="text-xs text-gray-400">Reports in 12h</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <span class="text-2xl font-extrabold text-blue-600">₹999</span>
+                        </div>
+                        <button onclick="document.querySelector('input[name=\'tests_requested\']').value='Basic Health Checkup'; document.getElementById('book').scrollIntoView();" class="bg-blue-600 text-white font-semibold text-sm px-4 py-1.5 rounded-lg">Select</button>
+                    </div>
+                </div>
+
+                <!-- Package 3 -->
+                <div class="min-w-[280px] border border-gray-200 rounded-2xl p-5 hover:border-blue-500 transition-colors bg-white">
+                    <h4 class="font-bold text-lg text-gray-900">Thyroid Profile (T3,T4,TSH)</h4>
+                    <p class="text-xs text-gray-500 mb-4">Checks for hyper/hypothyroidism</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-1 rounded">No Fasting</span>
+                        <span class="text-xs text-gray-400">Reports in 6h</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <span class="text-2xl font-extrabold text-blue-600">₹450</span>
+                        </div>
+                        <button onclick="document.querySelector('input[name=\'tests_requested\']').value='Thyroid Profile'; document.getElementById('book').scrollIntoView();" class="text-blue-600 font-semibold text-sm hover:underline">Add Test</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-8 text-center text-sm">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-center items-center gap-2 mb-4">
+                <i class="fa-solid fa-droplet text-red-400"></i>
+                <span class="text-xl font-bold text-white tracking-tight">CareDrop</span>
+            </div>
+            <p>Bringing premium clinical diagnostics to Yamunanagar.</p>
+            <p class="mt-4 opacity-50">&copy; 2026 CareDrop Diagnostics. All rights reserved.</p>
+        </div>
+    </footer>
 
 </body>
 </html>
