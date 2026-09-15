@@ -1,111 +1,88 @@
+import sqlite3
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from flask import session
 
-def get_db():
-    db_url = os.environ.get("DATABASE_URL")
-    if not db_url:
-        raise ValueError("DATABASE_URL is missing. Please check your Render environment variables.")
-    # Fix Render's legacy postgres:// prefix
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-    return psycopg2.connect(db_url)
+DB_FILE = os.path.join(os.path.dirname(__file__), 'caredrop.db')
 
-def safe_execute(query, params=None):
-    conn = get_db()
-    try: 
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        conn.commit()
-    except Exception as e: 
-        conn.rollback()
-        raise e
-    finally: 
-        conn.close()
-
-def log_audit(entity_type, entity_id, action, old_state, new_state, notes=""):
-    actor = session.get('role', 'system') if session else 'system'
-    safe_execute("""
-        INSERT INTO audit_logs (entity_type, entity_id, actor, action, old_state, new_state, notes) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, (entity_type, entity_id, actor, action, old_state, new_state, notes))
+def get_db_connection():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
-    conn = get_db()
-    try:
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY, phone VARCHAR(20) UNIQUE, email VARCHAR(255), 
-                password_hash VARCHAR(255), role VARCHAR(50) DEFAULT 'patient', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS patients (
-                id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), patient_uid VARCHAR(50) UNIQUE,
-                full_name VARCHAR(255), dob DATE, age INT, sex VARCHAR(10), mobile VARCHAR(20),
-                status VARCHAR(50) DEFAULT 'ACTIVE', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        cursor.execute("CREATE TABLE IF NOT EXISTS tests (id SERIAL PRIMARY KEY, code VARCHAR(50), name VARCHAR(255), is_active BOOLEAN DEFAULT TRUE)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS lab_pricing (id SERIAL PRIMARY KEY, test_id INT, partner_id INT, price DECIMAL(10,2))")
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS orders (
-                id SERIAL PRIMARY KEY, order_ref VARCHAR(50) UNIQUE, patient_id INT REFERENCES patients(id),
-                source VARCHAR(50), clinical_status VARCHAR(50) DEFAULT 'PENDING_COLLECTION',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS test_components (
-                id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), test_id INT,
-                result_value VARCHAR(255), status VARCHAR(50) DEFAULT 'LOGGED',
-                verified_by VARCHAR(255), verified_at TIMESTAMP
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS invoices (
-                id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), invoice_ref VARCHAR(50) UNIQUE, 
-                subtotal DECIMAL(10,2), discount DECIMAL(10,2) DEFAULT 0, total_amount DECIMAL(10,2), 
-                status VARCHAR(50) DEFAULT 'DRAFT', issued_at TIMESTAMP
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS payments (
-                id SERIAL PRIMARY KEY, invoice_id INT REFERENCES invoices(id), amount DECIMAL(10,2), 
-                method VARCHAR(50), idempotency_key UUID UNIQUE, transaction_ref VARCHAR(100), 
-                status VARCHAR(50) DEFAULT 'PENDING', recorded_by VARCHAR(50), timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-                notes TEXT
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS audit_logs (
-                id SERIAL PRIMARY KEY, entity_type VARCHAR(50), entity_id INT, actor VARCHAR(100), 
-                action VARCHAR(255), old_state VARCHAR(50), new_state VARCHAR(50), 
-                notes TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # 1. Diagnostic Tests Table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            sample_type TEXT,
+            b2b_cost REAL DEFAULT 0,
+            price REAL NOT NULL,
+            description TEXT,
+            turnaround_time TEXT DEFAULT '6 hrs',
+            partner_lab TEXT DEFAULT 'Accu Probe Diagnostics',
+            fasting_required BOOLEAN DEFAULT 0,
+            is_active BOOLEAN DEFAULT 1
+        );
+    ''')
 
-        cursor.execute("SELECT COUNT(*) FROM tests")
-        if cursor.fetchone()[0] == 0:
-            catalog = [
-                ('CBC', 'Complete Blood Count', 350.00),
-                ('LFT', 'Liver Function Test', 600.00),
-                ('KFT', 'Kidney Function Test', 550.00),
-                ('TSH', 'Thyroid Stimulating Hormone', 300.00),
-                ('HBA1C', 'HbA1c (Glycosylated Hemoglobin)', 450.00),
-                ('LIPID', 'Lipid Profile', 700.00)
-            ]
-            for code, name, price in catalog:
-                cursor.execute("INSERT INTO tests (code, name, is_active) VALUES (%s, %s, TRUE) RETURNING id", (code, name))
-                t_id = cursor.fetchone()[0]
-                cursor.execute("INSERT INTO lab_pricing (test_id, partner_id, price) VALUES (%s, NULL, %s)", (t_id, price))
+    # 2. Bookings / Orders Table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_code TEXT UNIQUE,
+            full_name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            address TEXT NOT NULL,
+            tests_requested TEXT NOT NULL,
+            total_bill REAL NOT NULL,
+            b2b_total_cost REAL DEFAULT 0,
+            assigned_rider TEXT DEFAULT 'Partner (Primary Day Rider)',
+            assigned_lab TEXT DEFAULT 'Accu Probe Diagnostics',
+            status TEXT DEFAULT 'Pending',
+            barcode TEXT,
+            temp_log TEXT,
+            payment_mode TEXT DEFAULT 'Cash',
+            is_paid BOOLEAN DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    ''')
 
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        print(f"Database Init Error: {e}")
-    finally:
-        conn.close()
+    # 3. Clinical LIMS Parameters Table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS test_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER,
+            parameter_name TEXT NOT NULL,
+            observed_value TEXT,
+            flag TEXT DEFAULT 'NORMAL',
+            units TEXT,
+            ref_interval TEXT,
+            FOREIGN KEY (order_id) REFERENCES orders(id)
+        );
+    ''')
+
+    # Seed default routine tests if table is empty
+    cur.execute('SELECT COUNT(*) FROM tests')
+    if cur.fetchone()[0] == 0:
+        default_catalog = [
+            ('Complete Blood Count (CBC)', 'Hematology', 'EDTA Whole Blood', 100.0, 250.0, 'Checks overall health, detects anemia and infections.', '6 hrs', 'Accu Probe', 0),
+            ('Thyroid Profile (T3, T4, TSH)', 'Endocrinology', 'Serum', 300.0, 800.0, 'Evaluates thyroid hormone production and metabolism.', '6 hrs', 'Accu Probe', 0),
+            ('Lipid Profile', 'Biochemistry', 'Serum', 220.0, 600.0, 'Measures cholesterol and triglyceride levels.', '8 hrs', 'Kanika Lab', 1),
+            ('Liver Function Test (LFT)', 'Biochemistry', 'Serum', 260.0, 700.0, 'Assesses hepatic enzymes, bilirubin, and proteins.', '8 hrs', 'Accu Probe', 0),
+            ('Vitamin D (25 OH)', 'Immunology', 'Serum', 450.0, 1200.0, 'Assesses vitamin D levels for bone and immunity.', '24 hrs', 'Unique Wellness', 0)
+        ]
+        cur.executemany('''
+            INSERT INTO tests (name, category, sample_type, b2b_cost, price, description, turnaround_time, partner_lab, fasting_required)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        ''', default_catalog)
+
+    conn.commit()
+    conn.close()
+
+if __name__ == '__main__':
+    init_db()
+    print("Database schema successfully generated and seeded.")
