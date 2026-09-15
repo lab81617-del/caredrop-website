@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop Admin | Operational Control</title>
+    <title>CareDrop Operations Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -32,176 +32,382 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased pb-16">
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Navigation -->
     <header class="bg-navy-900 border-b border-navy-950 sticky top-0 z-40 text-white">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
                     <i class="fa-solid fa-plus text-sm"></i>
                 </div>
-                <span class="text-xl font-black tracking-tight">CareDrop Operations</span>
-                <span class="text-[10px] bg-brand-800 text-brand-100 font-bold px-2 py-0.5 rounded ml-2">ADMIN</span>
+                <div>
+                    <span class="text-lg font-black tracking-tight block leading-none">CareDrop Command</span>
+                    <span class="text-[10px] text-gray-400 font-medium">Yamunanagar - Jagadhri Ops</span>
+                </div>
             </div>
-            <div class="flex items-center gap-4 text-xs font-semibold text-gray-300">
-                <a href="/tests" target="_blank" class="hover:text-white flex items-center gap-1.5"><i class="fa-solid fa-arrow-up-right-from-square"></i> Live Site</a>
-                <a href="/logout" class="bg-navy-950 border border-gray-700 px-3 py-1.5 rounded-lg hover:text-white">Logout</a>
+            
+            <!-- Quick Metrics -->
+            <div class="hidden md:flex items-center gap-6 text-xs">
+                <div>
+                    <span class="text-gray-400 block text-[10px] uppercase">Today's Collections</span>
+                    <span class="font-bold text-white">₹3,450</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 block text-[10px] uppercase">Lab Payables</span>
+                    <span class="font-bold text-amber-400">₹1,200</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 block text-[10px] uppercase">Net Margin</span>
+                    <span class="font-bold text-emerald-400">+₹2,250</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a href="/tests" target="_blank" class="text-xs bg-navy-950 border border-gray-700 px-3 py-1.5 rounded-lg hover:text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Live Site
+                </a>
+                <a href="/logout" class="text-xs text-gray-400 hover:text-white">Logout</a>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        
-        <!-- Section 1: Add New Test to Catalog -->
-        <section class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
-            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+    <!-- Main Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 flex gap-6 text-xs font-bold">
+            <button onclick="switchTab('orders')" id="tab-btn-orders" class="py-4 border-b-2 border-brand-600 text-brand-700 flex items-center gap-2">
+                <i class="fa-solid fa-truck-ramp-box"></i> Active Dispatch Board
+            </button>
+            <button onclick="switchTab('quick-add')" id="tab-btn-quick-add" class="py-4 border-b-2 border-transparent text-gray-500 hover:text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle"></i> Quick Walk-in / Doctor Ref
+            </button>
+            <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="py-4 border-b-2 border-transparent text-gray-500 hover:text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-dna"></i> Test Catalog & Margins
+            </button>
+            <button onclick="switchTab('settlements')" id="tab-btn-settlements" class="py-4 border-b-2 border-transparent text-gray-500 hover:text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-invoice-dollar"></i> Cash & Lab Settlements
+            </button>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- TAB 1: ACTIVE DISPATCH BOARD -->
+        <section id="tab-orders" class="space-y-6">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-lg font-black text-navy-900">Add Test to Catalog</h2>
-                    <p class="text-xs text-gray-500">Define test parameters, B2B wholesale costs, and retail price.</p>
+                    <h2 class="text-base font-black text-navy-900 uppercase tracking-wider">Live Sample Collections</h2>
+                    <p class="text-xs text-gray-500">Monitor phlebotomist assignments and processing lab status.</p>
                 </div>
-                <span class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-100">
-                    <i class="fa-solid fa-calculator mr-1"></i> Arbitrage Engine
-                </span>
+                <button onclick="switchTab('quick-add')" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-plus"></i> New Collection Request
+                </button>
             </div>
 
-            <form action="/admin/add_test" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Test Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Complete Blood Count (CBC)" 
-                        class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Category</label>
-                    <select name="category" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
-                        <option>Hematology</option>
-                        <option>Biochemistry</option>
-                        <option>Endocrinology</option>
-                        <option>Immunology</option>
-                        <option>Microbiology</option>
-                        <option>Health Package</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Sample Type / Vacutainer</label>
-                    <input type="text" name="sample_type" placeholder="e.g. EDTA Whole Blood, Serum" 
-                        class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Partner Lab B2B Cost (₹)</label>
-                    <input type="number" id="b2b_cost" name="b2b_cost" required placeholder="What the lab charges you (e.g. 100)" 
-                        class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none" oninput="calculateMargin()">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">CareDrop Retail Price (₹)</label>
-                    <input type="number" id="retail_price" name="retail_price" required placeholder="What the patient pays (e.g. 300)" 
-                        class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none" oninput="calculateMargin()">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Calculated Margin</label>
-                    <div class="px-3.5 py-2.5 bg-green-50 border border-green-200 rounded-xl text-xs font-black text-green-700 flex items-center justify-between">
-                        <span>Net Profit:</span>
-                        <span id="margin_display">₹0</span>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Turnaround Time</label>
-                    <input type="text" name="turnaround_time" placeholder="e.g. 6 hrs, Same Day" 
-                        class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Preferred Partner Lab</label>
-                    <input type="text" name="partner_lab" placeholder="e.g. Accu Probe / Kanika / IHC" 
-                        class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
-                </div>
-
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm uppercase tracking-wider">
-                        <i class="fa-solid fa-plus mr-1"></i> Save Test to Catalog
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Section 2: Active Test Catalog & Profitability Table -->
-        <section class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
-            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                    <h2 class="text-lg font-black text-navy-900">Configured Diagnostic Catalog</h2>
-                    <p class="text-xs text-gray-500">Live prices and active processing routes.</p>
-                </div>
-                <span class="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                    {{ tests|length if tests else '5' }} Tests Configured
-                </span>
-            </div>
-
-            <div class="overflow-x-auto">
+            <!-- Orders Table -->
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
                 <table class="w-full text-left text-xs">
                     <thead class="bg-gray-50 text-gray-500 uppercase font-bold border-b border-gray-200">
                         <tr>
-                            <th class="py-3.5 px-4">Test Name</th>
-                            <th class="py-3.5 px-4">Category</th>
-                            <th class="py-3.5 px-4">Sample / Specimen</th>
-                            <th class="py-3.5 px-4">B2B Wholesale</th>
-                            <th class="py-3.5 px-4">Retail Price</th>
-                            <th class="py-3.5 px-4 text-green-700">Margin</th>
-                            <th class="py-3.5 px-4 text-right">Action</th>
+                            <th class="py-3 px-4">Order / Barcode</th>
+                            <th class="py-3 px-4">Patient Particulars</th>
+                            <th class="py-3 px-4">Tests Booked</th>
+                            <th class="py-3 px-4">Routed Lab</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Payment</th>
+                            <th class="py-3 px-4 text-right">Dispatch Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 font-medium">
-                        {% if tests %}
-                            {% for t in tests %}
-                            <tr class="hover:bg-gray-50/80">
-                                <td class="py-3 px-4 font-bold text-navy-900">{{ t.name }}</td>
-                                <td class="py-3 px-4"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px]">{{ t.category }}</span></td>
-                                <td class="py-3 px-4 text-gray-500">{{ t.sample_type or 'Blood' }}</td>
-                                <td class="py-3 px-4 text-gray-500">₹{{ t.b2b_cost if t.b2b_cost else '100' }}</td>
-                                <td class="py-3 px-4 font-bold text-navy-900">₹{{ t.price }}</td>
-                                <td class="py-3 px-4 font-black text-green-600">₹{{ (t.price - (t.b2b_cost if t.b2b_cost else 100)) }}</td>
-                                <td class="py-3 px-4 text-right">
-                                    <button class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr class="hover:bg-gray-50/80">
-                                <td class="py-3 px-4 font-bold text-navy-900">Complete Blood Count (CBC)</td>
-                                <td class="py-3 px-4"><span class="bg-brand-50 text-brand-700 px-2 py-0.5 rounded text-[10px]">Hematology</span></td>
-                                <td class="py-3 px-4 text-gray-500">EDTA Whole Blood</td>
-                                <td class="py-3 px-4 text-gray-500">₹100</td>
-                                <td class="py-3 px-4 font-bold text-navy-900">₹250</td>
-                                <td class="py-3 px-4 font-black text-green-600">+₹150 (60%)</td>
-                                <td class="py-3 px-4 text-right"><span class="text-gray-400">Default</span></td>
-                            </tr>
-                            <tr class="hover:bg-gray-50/80">
-                                <td class="py-3 px-4 font-bold text-navy-900">Thyroid Profile (T3, T4, TSH)</td>
-                                <td class="py-3 px-4"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px]">Endocrinology</span></td>
-                                <td class="py-3 px-4 text-gray-500">Serum</td>
-                                <td class="py-3 px-4 text-gray-500">₹300</td>
-                                <td class="py-3 px-4 font-bold text-navy-900">₹800</td>
-                                <td class="py-3 px-4 font-black text-green-600">+₹500 (62%)</td>
-                                <td class="py-3 px-4 text-right"><span class="text-gray-400">Default</span></td>
-                            </tr>
-                        {% endif %}
+                        
+                        <!-- Row 1: Active Sample -->
+                        <tr class="hover:bg-gray-50/80">
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-navy-900 block">#CD-9041</span>
+                                <span class="text-[10px] text-gray-400 font-mono">BC: 89012344</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-navy-900 block">Suresh Mehta</span>
+                                <span class="text-gray-500 text-[11px]"><i class="fa-solid fa-location-dot text-gray-400 mr-1"></i>Model Town, YNR</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="text-navy-900 font-semibold block">CBC + Lipid Profile</span>
+                                <span class="text-[10px] text-gray-400">Slot: 07:00 - 08:30 AM</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <select class="text-xs bg-gray-50 border border-gray-200 rounded-lg p-1 font-semibold text-gray-700">
+                                    <option selected>Accu Probe (₹400 B2B)</option>
+                                    <option>Kanika (₹450 B2B)</option>
+                                    <option>Unique Wellness (₹420 B2B)</option>
+                                </select>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                    <i class="fa-solid fa-motorcycle mr-1"></i> Rider Assigned
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-navy-900 block">₹850</span>
+                                <span class="text-[10px] text-amber-600 font-semibold">Cash on Pickup</span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right">
+                                <a href="https://wa.me/919876543210?text=Hello%20Suresh,%20your%20CareDrop%20phlebotomist%20has%20been%20dispatched." target="_blank" 
+                                    class="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition inline-flex items-center gap-1">
+                                    <i class="fa-brands fa-whatsapp"></i> Update
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- Row 2: Completed / Ready for Delivery -->
+                        <tr class="hover:bg-gray-50/80">
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-navy-900 block">#CD-9040</span>
+                                <span class="text-[10px] text-gray-400 font-mono">BC: 89012311</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-navy-900 block">Pooja Rani</span>
+                                <span class="text-gray-500 text-[11px]"><i class="fa-solid fa-location-dot text-gray-400 mr-1"></i>Sector 17, Jagadhri</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="text-navy-900 font-semibold block">Thyroid Profile (TSH)</span>
+                                <span class="text-[10px] text-gray-400">Collected: 08:15 AM</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="text-xs font-semibold text-gray-700">Accu Probe</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                    <i class="fa-solid fa-circle-check mr-1"></i> Report Ready
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-navy-900 block">₹450</span>
+                                <span class="text-[10px] text-emerald-600 font-semibold"><i class="fa-solid fa-check"></i> Paid (UPI)</span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right">
+                                <a href="/lims_report/9040" target="_blank" 
+                                    class="bg-brand-50 text-brand-700 border border-brand-200 hover:bg-brand-600 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-file-pdf"></i> PDF
+                                </a>
+                            </td>
+                        </tr>
+
                     </tbody>
                 </table>
             </div>
         </section>
 
+        <!-- TAB 2: QUICK ADD / DOCTOR REFERRAL -->
+        <section id="tab-quick-add" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs max-w-3xl mx-auto">
+                <div class="mb-6 pb-4 border-b border-gray-100">
+                    <h2 class="text-base font-black text-navy-900 uppercase tracking-wider">Fast Manual Booking</h2>
+                    <p class="text-xs text-gray-500">Record a phone call, clinic walk-in, or doctor referral in seconds.</p>
+                </div>
+
+                <form action="/book_test" method="POST" class="space-y-4 text-xs">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-bold text-gray-700 uppercase mb-1">Patient Full Name</label>
+                            <input type="text" name="full_name" required placeholder="e.g. Ramesh Kumar" 
+                                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 uppercase mb-1">WhatsApp Mobile</label>
+                            <input type="tel" name="phone" required placeholder="10-digit mobile number" 
+                                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-bold text-gray-700 uppercase mb-1">Tests Required</label>
+                            <input type="text" name="tests_requested" required placeholder="e.g. CBC, KFT, HbA1c" 
+                                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 uppercase mb-1">Referring Doctor / Clinic (Optional)</label>
+                            <input type="text" name="doctor_ref" placeholder="e.g. Dr. Verma (City Clinic)" 
+                                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 uppercase mb-1">Home Collection Address</label>
+                        <textarea name="address" rows="2" required placeholder="House number, colony, landmark in Yamunanagar / Jagadhri" 
+                            class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block font-bold text-gray-700 uppercase mb-1">Assign Phlebotomist</label>
+                            <select name="rider" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
+                                <option>Partner (Primary Day Rider)</option>
+                                <option>Rider 2 (On-call)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 uppercase mb-1">Process At Partner Lab</label>
+                            <select name="assigned_lab" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
+                                <option>Accu Probe Diagnostics</option>
+                                <option>Kanika Diagnostics</option>
+                                <option>Unique Wellness Lab</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 uppercase mb-1">Total Bill to Collect (₹)</label>
+                            <input type="number" name="total_bill" placeholder="e.g. 500" 
+                                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-600 focus:bg-white outline-none">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition text-xs uppercase tracking-wider mt-4">
+                        Dispatch Order & Notify Rider
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 3: TEST CATALOG & MARGINS -->
+        <section id="tab-catalog" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                    <div>
+                        <h2 class="text-base font-black text-navy-900 uppercase tracking-wider">Configure Tests & Margins</h2>
+                        <p class="text-xs text-gray-500">Live prices shown on caredrop.in/tests.</p>
+                    </div>
+                </div>
+
+                <form action="/admin/add_test" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs mb-8">
+                    <div>
+                        <label class="block font-bold text-gray-700 uppercase mb-1">Test Name</label>
+                        <input type="text" name="name" required placeholder="e.g. Glycated Hemoglobin (HbA1c)" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 uppercase mb-1">Category</label>
+                        <select name="category" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+                            <option>Hematology</option>
+                            <option>Biochemistry</option>
+                            <option>Endocrinology</option>
+                            <option>Health Package</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 uppercase mb-1">Sample Vacutainer</label>
+                        <input type="text" name="sample_type" placeholder="e.g. EDTA / Plain / Fluoride" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 uppercase mb-1">Partner Lab B2B Cost (₹)</label>
+                        <input type="number" id="b2b_in" oninput="runMargin()" placeholder="Wholesale cost (e.g. 120)" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 uppercase mb-1">CareDrop Retail Price (₹)</label>
+                        <input type="number" id="retail_in" oninput="runMargin()" placeholder="Patient price (e.g. 400)" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 uppercase mb-1">Calculated Margin</label>
+                        <div class="px-3.5 py-2 bg-emerald-50 border border-emerald-200 rounded-xl font-bold text-emerald-700" id="margin_out">₹0 (0%)</div>
+                    </div>
+                    <div class="md:col-span-3 flex justify-end">
+                        <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2 rounded-xl">Save to Live Site</button>
+                    </div>
+                </form>
+
+                <!-- Current Table -->
+                <table class="w-full text-left text-xs border-t border-gray-100">
+                    <thead class="bg-gray-50 text-gray-500 uppercase font-bold">
+                        <tr>
+                            <th class="py-3 px-4">Test Profile</th>
+                            <th class="py-3 px-4">Category</th>
+                            <th class="py-3 px-4">B2B Wholesale</th>
+                            <th class="py-3 px-4">CareDrop Retail</th>
+                            <th class="py-3 px-4 text-emerald-700">Net Arbitrage</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 font-medium">
+                        <tr>
+                            <td class="py-3 px-4 font-bold text-navy-900">Complete Blood Count (CBC)</td>
+                            <td class="py-3 px-4 text-gray-500">Hematology</td>
+                            <td class="py-3 px-4 text-gray-500">₹100</td>
+                            <td class="py-3 px-4 font-bold text-navy-900">₹250</td>
+                            <td class="py-3 px-4 font-black text-emerald-600">+₹150 (60%)</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 font-bold text-navy-900">Thyroid Profile (T3, T4, TSH)</td>
+                            <td class="py-3 px-4 text-gray-500">Endocrinology</td>
+                            <td class="py-3 px-4 text-gray-500">₹300</td>
+                            <td class="py-3 px-4 font-bold text-navy-900">₹800</td>
+                            <td class="py-3 px-4 font-black text-emerald-600">+₹500 (62%)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TAB 4: SETTLEMENTS & CASH -->
+        <section id="tab-settlements" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Rider Cash Balances -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                    <h3 class="text-sm font-black text-navy-900 uppercase tracking-wider mb-4">Rider Cash Ledger</h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                            <div>
+                                <span class="font-bold text-navy-900 block">Partner (Day Phlebotomist)</span>
+                                <span class="text-gray-400 text-[10px]">3 Collections Completed Today</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold text-navy-900 block">₹1,850 Cash</span>
+                                <button class="text-[10px] text-brand-600 font-bold hover:underline">Mark Handed Over</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- B2B Lab Debt Tabs -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                    <h3 class="text-sm font-black text-navy-900 uppercase tracking-wider mb-4">Partner Lab Payables</h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                            <div>
+                                <span class="font-bold text-navy-900 block">Accu Probe Diagnostics</span>
+                                <span class="text-gray-400 text-[10px]">Weekly billing balance</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold text-amber-600 block">₹850 Due</span>
+                                <button class="text-[10px] text-brand-600 font-bold hover:underline">Log Payment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
+    <!-- UI State Script -->
     <script>
-        function calculateMargin() {
-            const b2b = parseFloat(document.getElementById('b2b_cost').value) || 0;
-            const retail = parseFloat(document.getElementById('retail_price').value) || 0;
-            const margin = retail - b2b;
-            const display = document.getElementById('margin_display');
-            display.innerText = `₹${margin} (${retail > 0 ? Math.round((margin/retail)*100) : 0}%)`;
+        function switchTab(tabId) {
+            const tabs = ['orders', 'quick-add', 'catalog', 'settlements'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tabId) {
+                    el.classList.remove('hidden');
+                    btn.classList.add('border-brand-600', 'text-brand-700');
+                    btn.classList.remove('border-transparent', 'text-gray-500');
+                } else {
+                    el.classList.add('hidden');
+                    btn.classList.remove('border-brand-600', 'text-brand-700');
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                }
+            });
+        }
+
+        function runMargin() {
+            const b2b = parseFloat(document.getElementById('b2b_in').value) || 0;
+            const retail = parseFloat(document.getElementById('retail_in').value) || 0;
+            const net = retail - b2b;
+            const pct = retail > 0 ? Math.round((net / retail) * 100) : 0;
+            document.getElementById('margin_out').innerText = `+₹${net} (${pct}%)`;
         }
     </script>
 </body>
