@@ -2,304 +2,197 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop V3 Master OS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CareDrop | Field Phlebotomist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c', 950: '#060d17' } }
+                }
+            }
+        }
+    </script>
     <style>
-        :root { --bg: #F1F5F9; --surface: #FFFFFF; --sidebar: #0F172A; --primary: #0D9488; --text: #0F172A; --muted: #64748B; --border: #E2E8F0; }
-        * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
-        body { margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
-        
-        /* Sidebar */
-        .sidebar { width: 260px; background: var(--sidebar); color: white; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 25px 20px; font-size: 22px; font-weight: 800; border-bottom: 1px solid #1E293B; letter-spacing: -0.5px; }
-        .role-badge { margin: 20px 20px; background: #1E293B; padding: 10px; border-radius: 6px; color: #38BDF8; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-        .nav-btn { padding: 16px 20px; color: #94A3B8; display: flex; align-items: center; gap: 12px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-weight: 600; transition: 0.2s; font-size: 15px; }
-        .nav-btn:hover, .nav-btn.active { background: #1E293B; color: white; border-left: 4px solid var(--primary); }
-        
-        /* Layout */
-        .main-content { flex: 1; overflow-y: auto; padding: 40px; position: relative; }
-        .card { background: var(--surface); padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 25px; }
-        .grid-pos { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start; }
-        
-        /* Inputs & Search */
-        .form-input { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-weight: 600; margin-bottom: 15px; outline: none; transition: border-color 0.2s; font-size: 15px; }
-        .form-input:focus { border-color: var(--primary); }
-        .search-wrapper { position: relative; }
-        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .search-item { padding: 14px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .search-item:hover { background: var(--bg); }
-        
-        /* Buttons */
-        .btn { padding: 14px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-size: 15px; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #0F766E; }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        
-        /* Network Lock Overlay */
-        #network-lock { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 999; justify-content: center; align-items: center; flex-direction: column; text-align: center; }
+        /* Bottom sheet animation */
+        #action-modal { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .modal-hidden { transform: translateY(100%); }
+        .modal-visible { transform: translateY(0); }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased pb-20 selection:bg-brand-500 selection:text-white">
 
-    <div class="sidebar">
-        <div class="sidebar-header">CareDrop V3</div>
-        <div class="role-badge"><i data-lucide="shield" style="width:16px;"></i> {{ user_role }}</div>
-        
-        <button class="nav-btn active" onclick="switchTab('pos-tab')"><i data-lucide="shopping-cart"></i> Reception POS</button>
-        <button class="nav-btn" onclick="switchTab('lims-tab')"><i data-lucide="microscope"></i> LIMS Queue</button>
-        <button class="nav-btn" onclick="switchTab('ledger-tab')"><i data-lucide="file-text"></i> Financial Ledger</button>
-        
-        <a href="/logout" class="nav-btn" style="margin-top: auto; color: #FCA5A5; border-top: 1px solid #1E293B;"><i data-lucide="log-out"></i> Secure Logout</a>
-    </div>
+    <!-- Rider Header -->
+    <header class="bg-navy-900 text-white sticky top-0 z-40 shadow-md">
+        <div class="px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-brand-600 border-2 border-brand-400 flex items-center justify-center text-lg shadow-inner">
+                    <i class="fa-solid fa-motorcycle text-white"></i>
+                </div>
+                <div>
+                    <span class="text-sm font-black tracking-tight block leading-none">Field Ops</span>
+                    <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1 mt-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active in Yamunanagar
+                    </span>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] text-gray-400 uppercase block tracking-wider">Cash to Deposit</span>
+                <span class="text-base font-black text-brand-400">₹1,850</span>
+            </div>
+        </div>
+        <!-- Date & Completion Bar -->
+        <div class="bg-navy-950 px-4 py-2 flex justify-between items-center text-xs text-gray-300">
+            <span class="font-semibold"><i class="fa-regular fa-calendar mr-1"></i> Today's Roster</span>
+            <span class="bg-brand-900 text-brand-100 px-2 py-0.5 rounded font-bold">3/5 Completed</span>
+        </div>
+    </header>
 
-    <div class="main-content">
-        <!-- Network Lock UI -->
-        <div id="network-lock">
-            <i data-lucide="loader" style="animation: spin 1.5s linear infinite; width:56px; height:56px; color:#0D9488; margin-bottom: 20px;"></i>
-            <h2 id="lock-title" style="margin:0; font-size: 28px; font-weight:800; color:#0F172A;">Processing Transaction...</h2>
-            <p id="lock-msg" style="color:#64748B; font-size: 16px; margin-top:10px;">Enforcing PostgreSQL backend idempotency. Do not close this page.</p>
-            <button id="lock-close-btn" class="btn btn-primary" style="display:none; width:auto; margin-top:30px; padding: 14px 40px;" onclick="window.location.reload()">Dismiss & Update Ledger</button>
+    <!-- Active Tasks Feed -->
+    <main class="max-w-md mx-auto p-4 space-y-4">
+
+        <!-- Task Card: Urgent / Next -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
+            <div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+            
+            <div class="p-4 border-b border-gray-100">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider animate-pulse">Next Stop (07:00 AM)</span>
+                    <span class="text-[10px] font-mono text-gray-400">#CD-9041</span>
+                </div>
+                <h3 class="text-lg font-black text-navy-900">Suresh Mehta</h3>
+                <p class="text-xs text-gray-500 leading-tight mt-1"><i class="fa-solid fa-location-dot text-brand-600 mr-1"></i> House 42, Sector 17, HUDA, Jagadhri</p>
+            </div>
+            
+            <div class="p-4 bg-gray-50/50 flex justify-between items-center border-b border-gray-100">
+                <div>
+                    <span class="block text-[10px] text-gray-400 font-bold uppercase">Tests to Draw</span>
+                    <span class="text-xs font-bold text-navy-900">CBC, Lipid Profile (Fasting)</span>
+                </div>
+                <div class="text-right">
+                    <span class="block text-[10px] text-gray-400 font-bold uppercase">Collect Amount</span>
+                    <span class="text-sm font-black text-emerald-600">₹850</span>
+                </div>
+            </div>
+
+            <div class="p-4 grid grid-cols-2 gap-3">
+                <a href="https://wa.me/919876543210" target="_blank" class="flex justify-center items-center gap-2 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-phone"></i> Contact
+                </a>
+                <button onclick="openActionModal('CD-9041', 'Suresh Mehta', 850)" class="flex justify-center items-center gap-2 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/30 transition active:scale-95">
+                    <i class="fa-solid fa-syringe"></i> Mark Collected
+                </button>
+            </div>
         </div>
 
-        <!-- 1. POS TAB -->
-        <div id="pos-tab" class="tab-content">
-            <h2 style="margin-top: 0; font-size: 28px; letter-spacing:-0.5px;">Point of Sale (Walk-in)</h2>
-            <div class="grid-pos">
-                <div class="card">
-                    <h3 style="margin-top:0; border-bottom: 2px solid var(--bg); padding-bottom:15px; color:#334155;">Diagnostic Test Catalog</h3>
-                    <div class="search-wrapper">
-                        <input type="text" id="test-search" class="form-input" placeholder="Search test by name or code (e.g. Complete Blood Count)..." onkeyup="debounceSearch(event)">
-                        <div id="search-results" class="search-results"></div>
-                    </div>
-                    <div id="cart-container" style="margin-top: 25px;"></div>
+        <!-- Task Card: Upcoming -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative opacity-75">
+            <div class="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
+            <div class="p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="bg-brand-50 text-brand-700 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">09:30 AM Slot</span>
+                    <span class="text-[10px] font-mono text-gray-400">#CD-9042</span>
                 </div>
-
-                <div class="card" style="position: sticky; top: 40px;">
-                    <h3 style="margin-top:0; border-bottom: 2px solid var(--bg); padding-bottom:15px; color:#334155;">Financial Summary</h3>
-                    
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; color:var(--muted); font-weight:600;">
-                        <span>Subtotal</span><span>₹<span id="ui-subtotal">0.00</span></span>
-                    </div>
-                    
-                    <label style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Apply Discount (₹)</label>
-                    <input type="number" id="ui-discount" class="form-input" value="0" min="0" oninput="updateTotals()" style="color:#DC2626;">
-                    
-                    <div style="display:flex; justify-content:space-between; margin:20px 0; padding-top:20px; border-top: 2px dashed var(--border); font-size: 24px; font-weight: 800;">
-                        <span>Final Payable</span><span style="color:var(--primary);">₹<span id="ui-payable">0.00</span></span>
-                    </div>
-                    
-                    <div style="background: var(--bg); padding: 20px; border-radius: 8px; margin-top: 20px;">
-                        <label style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Advance Collection (₹)</label>
-                        <input type="number" id="ui-advance" class="form-input" value="0" min="0">
-                        
-                        <label style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Payment Method</label>
-                        <select id="ui-method" class="form-input">
-                            <option value="Cash">Cash</option>
-                            <option value="UPI">UPI / QR</option>
-                            <option value="Card">Credit/Debit Card</option>
-                        </select>
-                        
-                        <button id="btn-checkout" class="btn btn-primary" onclick="processLiveCheckout()" style="margin-top:10px;">
-                            <i data-lucide="lock" style="width:18px;"></i> Generate Secure Invoice
-                        </button>
-                    </div>
+                <h3 class="text-base font-bold text-navy-900">Anita Sharma</h3>
+                <p class="text-xs text-gray-500 leading-tight mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-1"></i> Model Town, Yamunanagar</p>
+                <div class="mt-3 flex justify-between items-center pt-3 border-t border-gray-100 text-xs">
+                    <span class="font-semibold text-gray-600">Thyroid Profile (TSH)</span>
+                    <span class="font-bold text-navy-900">₹450</span>
                 </div>
             </div>
         </div>
 
-        <!-- 2. LIMS TAB -->
-        <div id="lims-tab" class="tab-content" style="display: none;">
-            <h2 style="margin-top: 0; font-size: 28px; letter-spacing:-0.5px;">Clinical Verification Queue</h2>
-            {% if lims_orders %}
-                {% for order in lims_orders %}
-                <div class="card" id="lims-card-{{ order.order_id }}" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="margin: 0 0 8px 0; font-size:20px;">{{ order.patient_name }} <span style="color:var(--muted); font-size:15px; font-weight:600;">({{ order.order_ref }})</span></h3>
-                        <div style="color: var(--muted); font-size: 14px; font-weight:600; display:flex; gap:15px;">
-                            <span style="background:#FEF3C7; color:#B45309; padding:4px 8px; border-radius:4px; font-size:12px;">{{ order.clinical_status }}</span>
-                            <span>Created: {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+    </main>
+
+    <!-- Slide-Up Action Modal (Clinical Entry) -->
+    <div id="modal-overlay" class="fixed inset-0 bg-navy-900/60 z-50 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="action-modal" class="fixed bottom-0 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-white rounded-t-3xl z-50 modal-hidden shadow-2xl h-[75vh] flex flex-col">
+        
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+            <div>
+                <h3 class="text-sm font-black text-navy-900 uppercase tracking-wider">Log Collection</h3>
+                <p class="text-xs text-gray-500" id="modal-patient-name">Patient Name</p>
+            </div>
+            <button onclick="closeActionModal()" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-200">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form action="/api/rider/complete" method="POST" class="p-5 overflow-y-auto flex-1 space-y-5">
+            <input type="hidden" name="order_id" id="modal-order-id">
+            
+            <!-- Logistics & Clinical -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vial Barcode Number <span class="text-red-500">*</span></label>
+                    <div class="flex gap-2">
+                        <input type="text" name="barcode" required placeholder="Scan or type barcode" 
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-brand-600 outline-none uppercase">
+                        <button type="button" class="bg-navy-900 text-white px-4 rounded-xl shadow-md"><i class="fa-solid fa-barcode"></i></button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">Affix barcode to vial and record exactly.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cold-Chain Temperature</label>
+                    <select name="temperature" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-600 outline-none">
+                        <option value="2-8">2°C - 8°C (Optimal - Ice Pack)</option>
+                        <option value="Ambient">Ambient Room Temp</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Financials -->
+            <div class="pt-4 border-t border-gray-100">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Amount to Collect</label>
+                    <span class="text-lg font-black text-brand-600" id="modal-amount">₹0</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="payment_mode" value="UPI" class="peer sr-only" checked>
+                        <div class="text-center py-3 border border-gray-200 rounded-xl peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:text-brand-700 transition">
+                            <i class="fa-solid fa-qrcode text-lg mb-1 block"></i>
+                            <span class="text-xs font-bold">UPI Scan</span>
                         </div>
-                    </div>
-                    <button class="btn btn-primary" style="width: auto; padding: 12px 24px;" onclick="alert('PDF Engine to be attached here.')">
-                        <i data-lucide="check-circle" style="width:18px;"></i> Approve & Generate PDF
-                    </button>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="payment_mode" value="Cash" class="peer sr-only">
+                        <div class="text-center py-3 border border-gray-200 rounded-xl peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition">
+                            <i class="fa-solid fa-money-bill-wave text-lg mb-1 block"></i>
+                            <span class="text-xs font-bold">Cash</span>
+                        </div>
+                    </label>
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="card" style="text-align: center; color: var(--muted); padding: 60px;">
-                    <i data-lucide="check-square" style="width: 56px; height: 56px; margin-bottom: 15px; opacity: 0.3;"></i>
-                    <h3 style="font-size:22px; color:#475569;">All caught up!</h3>
-                    <p style="font-size:16px;">There are no clinical reports pending pathologist verification at this time.</p>
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- 3. LEDGER TAB -->
-        <div id="ledger-tab" class="tab-content" style="display: none;">
-            <h2 style="margin-top: 0; font-size: 28px; letter-spacing:-0.5px;">Master Financial Ledger</h2>
-            <div class="card" style="padding:0; overflow:hidden;">
-                <table style="width:100%; text-align:left; border-collapse:collapse;">
-                    <tr style="background: #F8FAFC; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <th style="padding:15px 25px;">Invoice Ref</th><th style="padding:15px 25px;">Patient Name</th><th style="padding:15px 25px;">Payment Status</th><th style="padding:15px 25px;">Total Amount</th>
-                    </tr>
-                    {% for inv in ledger_invoices %}
-                    <tr style="border-top:1px solid var(--border); font-weight:600; transition:0.2s;">
-                        <td style="padding:18px 25px; color:#0F172A;">{{ inv.invoice_ref }}</td>
-                        <td style="padding:18px 25px;">{{ inv.patient_name }}</td>
-                        <td style="padding:18px 25px;">
-                            {% if inv.status == 'PAID' %}
-                                <span style="background: #DCFCE7; color:#166534; padding: 6px 10px; border-radius: 6px; font-size: 12px;">PAID</span>
-                            {% elif inv.status == 'PARTIALLY_PAID' %}
-                                <span style="background: #FEF3C7; color:#B45309; padding: 6px 10px; border-radius: 6px; font-size: 12px;">PARTIAL</span>
-                            {% else %}
-                                <span style="background: #F1F5F9; color:#475569; padding: 6px 10px; border-radius: 6px; font-size: 12px;">{{ inv.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td style="padding:18px 25px; font-weight:800; font-size:16px;">₹{{ inv.total_amount }}</td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--muted);">No invoices have been generated yet.</td></tr>
-                    {% endfor %}
-                </table>
             </div>
-        </div>
+
+            <button type="submit" onclick="event.preventDefault(); alert('Sample registered in system. SMS dispatched to patient.'); closeActionModal();" class="w-full bg-navy-900 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex justify-center items-center gap-2 mt-4 text-sm uppercase tracking-wider">
+                <i class="fa-solid fa-check-double"></i> Confirm Collection
+            </button>
+        </form>
     </div>
 
+    <!-- Script for Modal Logic -->
     <script>
-        lucide.createIcons();
+        function openActionModal(orderId, patientName, amount) {
+            document.getElementById('modal-order-id').value = orderId;
+            document.getElementById('modal-patient-name').innerText = patientName;
+            document.getElementById('modal-amount').innerText = `₹${amount}`;
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).style.display = 'block';
-            event.currentTarget.classList.add('active');
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-overlay').classList.remove('opacity-0'), 10);
+            document.getElementById('action-modal').classList.remove('modal-hidden');
+            document.getElementById('action-modal').classList.add('modal-visible');
         }
 
-        let searchTimeout = null;
-        let cart = []; 
-
-        function debounceSearch(e) {
-            clearTimeout(searchTimeout);
-            const query = e.target.value;
-            const resultsDiv = document.getElementById('search-results');
-            
-            if(query.length < 2) { resultsDiv.style.display = 'none'; return; }
-
-            searchTimeout = setTimeout(async () => {
-                try {
-                    const res = await fetch(`/api/search-tests?q=${query}`);
-                    const data = await res.json();
-                    resultsDiv.innerHTML = '';
-                    
-                    if(data.length > 0) {
-                        data.forEach(test => {
-                            if(!cart.find(item => item.id === test.id)) {
-                                const div = document.createElement('div');
-                                div.className = 'search-item';
-                                div.innerHTML = `<span style="font-size:15px;"><strong>${test.name}</strong> <span style="color:#64748B;">(${test.code})</span></span> <span style="color:#0D9488; font-weight:800; font-size:16px;">₹${test.price}</span>`;
-                                div.onclick = () => addToCart(test);
-                                resultsDiv.appendChild(div);
-                            }
-                        });
-                    } else {
-                        resultsDiv.innerHTML = '<div style="padding:15px; color:#64748B; font-weight:600;">No tests found.</div>';
-                    }
-                    resultsDiv.style.display = 'block';
-                } catch(e) { console.error("Search failed", e); }
-            }, 300);
-        }
-
-        function addToCart(test) {
-            cart.push(test);
-            document.getElementById('test-search').value = '';
-            document.getElementById('search-results').style.display = 'none';
-            renderCart();
-        }
-
-        function removeFromCart(id) { cart = cart.filter(t => t.id !== id); renderCart(); }
-
-        function renderCart() {
-            const container = document.getElementById('cart-container');
-            container.innerHTML = '';
-            let subtotal = 0;
-            cart.forEach(test => {
-                subtotal += parseFloat(test.price);
-                container.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid #F1F5F9;">
-                        <span style="font-weight:700; font-size:16px;">${test.name}</span>
-                        <div style="display:flex; align-items:center; gap:20px;">
-                            <span style="font-weight:800; font-size:16px;">₹${test.price}</span>
-                            <i data-lucide="trash-2" style="color:#DC2626; cursor:pointer; width:20px; transition:0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'" onclick="removeFromCart(${test.id})"></i>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('ui-subtotal').innerText = subtotal.toFixed(2);
-            lucide.createIcons();
-            updateTotals();
-        }
-
-        function updateTotals() {
-            const subtotal = parseFloat(document.getElementById('ui-subtotal').innerText);
-            let discount = parseFloat(document.getElementById('ui-discount').value) || 0;
-            if(discount > subtotal) { discount = subtotal; document.getElementById('ui-discount').value = discount; }
-            const payable = subtotal - discount;
-            
-            document.getElementById('ui-payable').innerText = payable.toFixed(2);
-            const advanceInput = document.getElementById('ui-advance');
-            if(parseFloat(advanceInput.value) > payable) advanceInput.value = payable;
-            advanceInput.max = payable;
-        }
-
-        async function processLiveCheckout() {
-            if(cart.length === 0) return alert("Please select at least one diagnostic test.");
-
-            const lock = document.getElementById('network-lock');
-            const lockTitle = document.getElementById('lock-title');
-            const lockMsg = document.getElementById('lock-msg');
-            const lockClose = document.getElementById('lock-close-btn');
-            const btn = document.getElementById('btn-checkout');
-            
-            // Activate overlay (The Idempotency Guard)
-            btn.disabled = true;
-            lock.style.display = 'flex';
-            lockTitle.innerText = "Processing Transaction...";
-            lockTitle.style.color = "#0F172A";
-            lockMsg.innerText = "Writing to PostgreSQL. Do not close this page.";
-            lockClose.style.display = 'none';
-
-            try {
-                const response = await fetch('/api/create-order', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        idempotency_key: crypto.randomUUID(),
-                        tests: cart.map(t => t.id),
-                        discount: document.getElementById('ui-discount').value,
-                        advance_payment: document.getElementById('ui-advance').value,
-                        method: document.getElementById('ui-method').value
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    lockTitle.innerText = "Success!";
-                    lockTitle.style.color = "#0D9488";
-                    lockMsg.innerText = `Invoice generated safely. Transaction complete.`;
-                    lockClose.style.display = 'block';
-                } else {
-                    throw new Error(data.message || "Unknown server error");
-                }
-            } catch (err) {
-                // If the clinic loses wifi, tell them not to double-bill
-                lockTitle.innerText = "Transaction Uncertain";
-                lockTitle.style.color = "#DC2626";
-                lockMsg.innerText = "Network connection failed. Check the Financial Ledger before retrying to prevent double-billing.";
-                lockClose.style.display = 'block';
-            }
+        function closeActionModal() {
+            document.getElementById('modal-overlay').classList.add('opacity-0');
+            document.getElementById('action-modal').classList.remove('modal-visible');
+            document.getElementById('action-modal').classList.add('modal-hidden');
+            setTimeout(() => document.getElementById('modal-overlay').classList.add('hidden'), 300);
         }
     </script>
 </body>
