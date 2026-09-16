@@ -3,88 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fleet App | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>CareDrop | Field Ops</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c', 950: '#060d17' } }
+                }
+            }
+        }
+    </script>
     <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
-        body { background: #F1F5F9; margin: 0; padding: 0; color: #0F172A; }
-        
-        .header { background: #0F172A; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; border-bottom: 3px solid #F59E0B; }
-        .header h1 { margin: 0; font-size: 18px; font-weight: 800; }
-        
-        .container { padding: 15px; }
-        
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; }
-        .patient-name { font-size: 18px; font-weight: 800; margin-bottom: 5px; color: #0F172A; }
-        
-        .address-box { background: #F8FAFC; padding: 10px; border-radius: 8px; font-size: 13px; color: #475569; font-weight: 600; margin-bottom: 15px; border: 1px solid #E2E8F0; line-height: 1.5; }
-        
-        .action-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 6px; border: none; cursor: pointer; }
-        
-        .btn-call { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
-        .btn-map { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
-        .btn-collect { background: #F59E0B; color: white; width: 100%; font-size: 15px; transition: 0.2s; }
-        .btn-collect:active { background: #D97706; }
-        
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
-        .due-amount { font-size: 16px; font-weight: 800; color: #DC2626; margin-bottom: 15px; background: #FEF2F2; display: inline-block; padding: 6px 12px; border-radius: 6px; border: 1px solid #FCA5A5;}
+        #action-modal { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .modal-hidden { transform: translateY(100%); }
+        .modal-visible { transform: translateY(0); }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased pb-20 selection:bg-brand-500 selection:text-white">
 
-<div class="header">
-    <div>
-        <h1>CareDrop Fleet</h1>
-        <div style="font-size: 12px; color: #94A3B8; margin-top: 4px;">Rider: {{ rider_name }}</div>
-    </div>
-    <a href="/rider/logout" style="color: #F87171; font-size: 12px; font-weight: 800; text-decoration: none;">LOGOUT</a>
-</div>
-
-<div class="container">
-    <h3 style="font-size: 14px; color: #64748B; margin-top: 5px; margin-bottom: 15px; text-transform: uppercase;">Today's Assignments</h3>
-    
-    {% for a in assignments %}
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div class="badge" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">{{ a.order_ref }}</div>
-            <div class="badge" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A;">{{ a.time_slot }}</div>
+    <!-- Rider Header -->
+    <header class="bg-navy-900 text-white sticky top-0 z-40 shadow-md">
+        <div class="px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-brand-600 border-2 border-brand-400 flex items-center justify-center text-lg shadow-inner">
+                    <i class="fa-solid fa-motorcycle text-white"></i>
+                </div>
+                <div>
+                    <span class="text-sm font-black tracking-tight block leading-none">Field Ops</span>
+                    <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1 mt-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active in Yamunanagar
+                    </span>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] text-gray-400 uppercase block tracking-wider">Cash Collected</span>
+                <span class="text-base font-black text-brand-400">₹{{ cash_collected|int if cash_collected else 0 }}</span>
+            </div>
         </div>
-        
-        <div class="patient-name">{{ a.patient_name.title() }}</div>
-        
-        {% if a.balance_amount > 0 %}
-            <div class="due-amount">Collect Cash: ₹{{ a.balance_amount }}</div>
+        <!-- Stats Bar -->
+        <div class="bg-navy-950 px-4 py-2 flex justify-between items-center text-xs text-gray-300">
+            <span class="font-semibold"><i class="fa-solid fa-list-check mr-1"></i> Active Roster</span>
+            <span class="bg-brand-900 text-brand-100 px-2 py-0.5 rounded font-bold">{{ orders|length }} Pending</span>
+        </div>
+    </header>
+
+    <!-- Active Tasks Feed -->
+    <main class="max-w-md mx-auto p-4 space-y-4">
+        {% for o in orders %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative {% if o.status == 'Sample Collected' %}opacity-75{% endif %}">
+            
+            <!-- Side Color Indicator -->
+            <div class="absolute top-0 left-0 w-1.5 h-full {% if o.status == 'Pending' %}bg-red-500{% else %}bg-brand-500{% endif %}"></div>
+            
+            <div class="p-4 border-b border-gray-100 pl-5">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="{% if o.status == 'Pending' %}bg-red-50 text-red-600{% else %}bg-brand-50 text-brand-700{% endif %} px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
+                        {{ 'Awaiting Pickup' if o.status == 'Pending' else o.status }}
+                    </span>
+                    <span class="text-[10px] font-mono font-bold text-gray-400">{{ o.order_code }}</span>
+                </div>
+                <h3 class="text-lg font-black text-navy-900">{{ o.full_name }}</h3>
+                <p class="text-xs text-gray-500 leading-tight mt-1">
+                    <i class="fa-solid fa-location-dot text-brand-600 mr-1"></i> {{ o.address }}
+                </p>
+                <p class="text-xs text-gray-500 font-semibold mt-1">
+                    <i class="fa-solid fa-phone text-brand-600 mr-1"></i> {{ o.phone }}
+                </p>
+            </div>
+            
+            <div class="p-4 bg-gray-50/50 flex justify-between items-center border-b border-gray-100 pl-5">
+                <div class="max-w-[60%]">
+                    <span class="block text-[10px] text-gray-400 font-bold uppercase">Tests to Draw</span>
+                    <span class="text-xs font-bold text-navy-900 block truncate">{{ o.tests_requested }}</span>
+                </div>
+                <div class="text-right">
+                    <span class="block text-[10px] text-gray-400 font-bold uppercase">Collect Bill</span>
+                    <span class="text-sm font-black text-emerald-600">₹{{ o.total_bill|int }}</span>
+                </div>
+            </div>
+
+            <div class="p-4 grid grid-cols-2 gap-3 pl-5">
+                <a href="https://wa.me/91{{ o.phone }}" target="_blank" class="flex justify-center items-center gap-2 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition">
+                    <i class="fa-brands fa-whatsapp text-emerald-500 text-lg"></i> Message
+                </a>
+                
+                {% if o.status == 'Pending' %}
+                <button onclick="openActionModal('{{ o.id }}', '{{ o.order_code }}', '{{ o.full_name|escape }}', '{{ o.total_bill|int }}')" class="flex justify-center items-center gap-2 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/30 transition active:scale-95">
+                    <i class="fa-solid fa-syringe"></i> Mark Collected
+                </button>
+                {% else %}
+                <div class="flex justify-center items-center gap-2 py-2.5 bg-gray-50 text-brand-600 rounded-xl text-xs font-bold border border-brand-200">
+                    <i class="fa-solid fa-check-circle"></i> Completed
+                </div>
+                {% endif %}
+            </div>
+        </div>
         {% else %}
-            <div class="due-amount" style="color: #16A34A; background: #DCFCE7; border-color: #BBF7D0;">Payment: Fully Paid</div>
-        {% endif %}
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-mug-hot"></i>
+            </div>
+            <h3 class="text-sm font-bold text-gray-600">No Active Collections</h3>
+            <p class="text-xs text-gray-400 mt-1">Sit tight. New orders will appear here automatically.</p>
+        </div>
+        {% endfor %}
+    </main>
 
-        <div class="address-box">
-            <i data-lucide="map-pin" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px; color: #0F172A;"></i> 
-            {{ a.address or 'No Address Provided. Ask Reception.' }}
-        </div>
+    <!-- Slide-Up Action Modal (Clinical Entry) -->
+    <div id="modal-overlay" class="fixed inset-0 bg-navy-900/60 z-50 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="action-modal" class="fixed bottom-0 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-white rounded-t-3xl z-50 modal-hidden shadow-2xl flex flex-col max-h-[85vh]">
         
-        <div class="action-row">
-            <a href="tel:{{ a.phone }}" class="btn btn-call"><i data-lucide="phone" style="width: 16px;"></i> Call</a>
-            <a href="https://maps.google.com/?q={{ a.address }}" target="_blank" class="btn btn-map"><i data-lucide="navigation" style="width: 16px;"></i> Navigate</a>
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-3xl">
+            <div>
+                <h3 class="text-sm font-black text-navy-900 uppercase tracking-wider">Log Collection</h3>
+                <p class="text-xs text-gray-500"><span id="modal-order-code" class="font-mono text-[10px] text-gray-400 mr-1"></span> <span id="modal-patient-name" class="font-bold"></span></p>
+            </div>
+            <button onclick="closeActionModal()" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-200">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        
-        <form action="/rider/collect/{{ a.id }}" method="POST">
-            <button type="submit" class="btn btn-collect">
-                <i data-lucide="droplet" style="width: 18px;"></i> Mark Sample Collected
+
+        <form action="/api/rider/complete" method="POST" class="p-5 overflow-y-auto flex-1 space-y-5">
+            <input type="hidden" name="order_id" id="modal-order-id">
+            
+            <!-- Logistics & Clinical -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vial Barcode Number <span class="text-red-500">*</span></label>
+                    <div class="flex gap-2">
+                        <input type="text" name="barcode" required placeholder="e.g. CD-8910" 
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono font-bold focus:ring-2 focus:ring-brand-600 outline-none uppercase">
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">Affix sticker to vial and type the exact ID.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cold-Chain Temperature</label>
+                    <select name="temperature" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-brand-600 outline-none">
+                        <option value="2-8°C (Optimal)">2°C - 8°C (Optimal Ice Pack)</option>
+                        <option value="Ambient">Ambient Room Temp</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Financials -->
+            <div class="pt-4 border-t border-gray-100">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Amount to Collect</label>
+                    <span class="text-xl font-black text-brand-600" id="modal-amount">₹0</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="payment_mode" value="UPI" class="peer sr-only" checked>
+                        <div class="text-center py-3 border border-gray-200 rounded-xl peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:text-brand-700 transition shadow-sm">
+                            <i class="fa-solid fa-qrcode text-lg mb-1 block"></i>
+                            <span class="text-xs font-bold">UPI Scan</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="payment_mode" value="Cash" class="peer sr-only">
+                        <div class="text-center py-3 border border-gray-200 rounded-xl peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition shadow-sm">
+                            <i class="fa-solid fa-money-bill-wave text-lg mb-1 block"></i>
+                            <span class="text-xs font-bold">Cash</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-navy-900 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex justify-center items-center gap-2 mt-4 text-sm uppercase tracking-wider">
+                <i class="fa-solid fa-check-double"></i> Confirm & Save
             </button>
         </form>
     </div>
-    {% else %}
-    <div style="text-align: center; padding: 60px 20px; color: #64748B; font-weight: 600;">
-        <i data-lucide="check-circle" style="width: 54px; height: 54px; color: #16A34A; margin-bottom: 15px;"></i>
-        <p style="font-size: 16px; color: #0F172A;">No active assignments!</p>
-        <p style="font-size: 13px;">Wait for the lab to assign you a new home collection.</p>
-    </div>
-    {% endfor %}
-</div>
 
-<script>lucide.createIcons();</script>
+    <!-- Script for Modal Logic -->
+    <script>
+        function openActionModal(orderId, orderCode, patientName, amount) {
+            document.getElementById('modal-order-id').value = orderId;
+            document.getElementById('modal-order-code').innerText = orderCode;
+            document.getElementById('modal-patient-name').innerText = patientName;
+            document.getElementById('modal-amount').innerText = `₹${amount}`;
+
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-overlay').classList.remove('opacity-0'), 10);
+            document.getElementById('action-modal').classList.remove('modal-hidden');
+            document.getElementById('action-modal').classList.add('modal-visible');
+        }
+
+        function closeActionModal() {
+            document.getElementById('modal-overlay').classList.add('opacity-0');
+            document.getElementById('action-modal').classList.remove('modal-visible');
+            document.getElementById('action-modal').classList.add('modal-hidden');
+            setTimeout(() => document.getElementById('modal-overlay').classList.add('hidden'), 300);
+        }
+    </script>
 </body>
 </html>
