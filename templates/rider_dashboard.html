@@ -3,218 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CareDrop | Field Ops</title>
+    <title>CareDrop | Rider App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c', 950: '#060d17' } }
+                    colors: {
+                        brand: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' },
+                        navy: { 900: '#0b192c' }
+                    }
                 }
             }
         }
     </script>
     <style>
-        #action-modal { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .modal-hidden { transform: translateY(100%); }
-        .modal-visible { transform: translateY(0); }
+        /* Hide scrollbar for horizontal scrolling containers */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased pb-24 selection:bg-brand-500 selection:text-white">
+<body class="bg-[#f8fafc] text-slate-800 font-sans antialiased pb-24 selection:bg-brand-500 selection:text-white">
 
-    <!-- Rider Header -->
-    <header class="bg-navy-900 text-white sticky top-0 z-40 shadow-md">
-        <div class="px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-brand-600 border-2 border-brand-400 flex items-center justify-center text-lg shadow-inner">
-                    <i class="fa-solid fa-motorcycle text-white"></i>
+    <!-- Pre-calculate stats from Jinja -->
+    {% set pending_orders = [] %}
+    {% set completed_orders = [] %}
+    {% for o in orders %}
+        {% if o.status == 'Pending' %}
+            {% set _ = pending_orders.append(o) %}
+        {% elif o.status == 'Sample Collected' or o.status == 'Completed' %}
+            {% set _ = completed_orders.append(o) %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="max-w-md mx-auto bg-[#f8fafc] min-h-screen relative shadow-2xl overflow-hidden">
+        
+        <!-- App Header -->
+        <header class="bg-white px-5 py-4 flex items-center justify-between sticky top-0 z-30">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center text-white shadow-sm">
+                    <i class="fa-solid fa-plus text-sm"></i>
                 </div>
                 <div>
-                    <span class="text-sm font-black tracking-tight block leading-none">Field Ops</span>
-                    <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1 mt-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active in YNR
-                    </span>
+                    <span class="text-lg font-black tracking-tight text-navy-900 block leading-none">CareDrop</span>
+                    <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">Tests. Reports. Care.</span>
                 </div>
             </div>
-            <div class="text-right">
-                <span class="text-[10px] text-slate-400 uppercase block tracking-wider font-bold">Cash to Deposit</span>
-                <span class="text-base font-black text-brand-400">₹{{ cash_collected|int if cash_collected else 0 }}</span>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <i class="fa-regular fa-bell text-xl text-slate-600"></i>
+                    {% if pending_orders|length > 0 %}
+                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white">{{ pending_orders|length }}</span>
+                    {% endif %}
+                </div>
+                <div class="relative">
+                    <div class="w-9 h-9 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+                        <img src="https://ui-avatars.com/api/?name=Partner+Rider&background=0d9488&color=fff" alt="Profile" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                </div>
             </div>
-        </div>
-        <div class="bg-navy-950 px-4 py-2 flex justify-between items-center text-xs text-slate-300">
-            <span class="font-semibold"><i class="fa-solid fa-list-check mr-1 text-slate-400"></i> Active Roster</span>
-            <span class="bg-brand-900 text-brand-100 border border-brand-700 px-2.5 py-0.5 rounded font-bold">{{ orders|length }} Pending</span>
-        </div>
-    </header>
+        </header>
 
-    <!-- Active Tasks Feed -->
-    <main class="max-w-md mx-auto p-4 space-y-4">
-        {% for o in orders %}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative {% if o.status == 'Sample Collected' %}opacity-75{% endif %}">
-            
-            <div class="absolute top-0 left-0 w-1.5 h-full {% if o.status == 'Pending' %}bg-amber-500{% else %}bg-brand-500{% endif %}"></div>
-            
-            <div class="p-4 border-b border-slate-100 pl-5">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="{% if o.status == 'Pending' %}bg-amber-100 text-amber-800 border border-amber-200{% else %}bg-brand-50 text-brand-700 border border-brand-200{% endif %} px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
-                        {{ 'Awaiting Pickup' if o.status == 'Pending' else o.status }}
-                    </span>
-                    <span class="text-[11px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{{ o.order_code }}</span>
+        <main class="px-4 py-4 space-y-6">
+
+            <!-- Welcome Hero & Duty Toggle -->
+            <div class="bg-gradient-to-r from-[#e0f2fe] to-[#ccfbf1] rounded-3xl p-5 relative overflow-hidden shadow-sm border border-teal-100">
+                <div class="relative z-10">
+                    <p class="text-xs font-semibold text-slate-600">Good Morning,</p>
+                    <h2 class="text-2xl font-black text-navy-900 leading-tight">Partner Rider</h2>
+                    <p class="text-[11px] font-bold text-brand-700 flex items-center gap-1.5 mt-1">
+                        <i class="fa-solid fa-motorcycle"></i> Sample Collection Rider
+                    </p>
                 </div>
-                <h3 class="text-lg font-black text-navy-900">{{ o.full_name }}</h3>
-                <p class="text-xs text-slate-500 leading-tight mt-1 font-medium">
-                    <i class="fa-solid fa-location-dot text-brand-600 mr-1.5"></i>{{ o.address }}
-                </p>
-                <p class="text-xs text-slate-500 font-bold mt-1.5">
-                    <i class="fa-solid fa-phone text-slate-400 mr-1.5"></i>{{ o.phone }}
-                </p>
-            </div>
-            
-            <div class="p-4 bg-slate-50 flex justify-between items-center border-b border-slate-200 pl-5">
-                <div class="max-w-[65%]">
-                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tests to Draw</span>
-                    <span class="text-xs font-bold text-navy-900 block truncate">{{ o.tests_requested }}</span>
+                
+                <!-- On Duty Pill -->
+                <div class="absolute top-4 right-4 z-10 bg-brand-600 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
+                    <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                    <span class="text-[10px] font-bold">On Duty</span>
                 </div>
-                <div class="text-right">
-                    <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Collect Bill</span>
-                    <span class="text-base font-black text-emerald-600">₹{{ o.total_bill|int }}</span>
-                </div>
+                
+                <!-- Background Graphic Illusion -->
+                <i class="fa-solid fa-city absolute -bottom-4 -right-4 text-6xl text-teal-500/10 z-0"></i>
             </div>
 
-            <div class="p-4 grid grid-cols-2 gap-3 pl-5 bg-white">
-                <a href="https://wa.me/91{{ o.phone }}" target="_blank" class="flex justify-center items-center gap-2 py-3 bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition shadow-sm">
-                    <i class="fa-brands fa-whatsapp text-emerald-500 text-lg"></i> Message
+            <!-- Stats Grid (Scrollable) -->
+            <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4">
+                <!-- Total -->
+                <div class="bg-white min-w-[100px] p-3.5 rounded-2xl shadow-sm border border-slate-100 flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <span class="text-xl font-black text-slate-800">{{ orders|length }}</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 mb-1.5"></i>
+                    </div>
+                    <span class="text-[10px] font-semibold text-slate-500 block mt-1">Total Assignments</span>
+                </div>
+                <!-- Completed -->
+                <div class="bg-white min-w-[100px] p-3.5 rounded-2xl shadow-sm border border-slate-100 flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-2">
+                        <i class="fa-solid fa-check-circle"></i>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <span class="text-xl font-black text-slate-800">{{ completed_orders|length }}</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 mb-1.5"></i>
+                    </div>
+                    <span class="text-[10px] font-semibold text-slate-500 block mt-1">Completed</span>
+                </div>
+                <!-- Pending -->
+                <div class="bg-white min-w-[100px] p-3.5 rounded-2xl shadow-sm border border-slate-100 flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-2">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <span class="text-xl font-black text-slate-800">{{ pending_orders|length }}</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 mb-1.5"></i>
+                    </div>
+                    <span class="text-[10px] font-semibold text-slate-500 block mt-1">Pending</span>
+                </div>
+            </div>
+
+            <!-- Next Pickup Card (Only shows if there is a pending order) -->
+            {% if pending_orders|length > 0 %}
+            {% set next_order = pending_orders[0] %}
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 relative overflow-hidden">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-location-dot text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Next Pickup</span>
+                        <h3 class="text-base font-black text-navy-900">{{ next_order.full_name }}</h3>
+                        <p class="text-[11px] text-slate-500 leading-snug mt-1 line-clamp-2 pr-4">{{ next_order.address }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                            <i class="fa-solid fa-location-arrow"></i>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-bold text-slate-800">2.5 km</span>
+                            <span class="block text-[10px] text-slate-500">ETA 8 min</span>
+                        </div>
+                    </div>
+                    <a href="https://maps.google.com/?q={{ next_order.address|urlencode }}" target="_blank" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-md">
+                        View Route <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions Grid -->
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-black text-navy-900">Quick Actions</h3>
+                    <a href="#" class="text-[10px] font-bold text-brand-600 flex items-center gap-1">View All <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Navigates to a separate list page -->
+                    <a href="/rider/assignments" class="bg-blue-50/50 border border-blue-100 p-4 rounded-2xl flex flex-col justify-between h-28 hover:bg-blue-50 transition">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-xs font-bold text-slate-700 leading-tight">View<br>Assignments</span>
+                            <i class="fa-solid fa-arrow-right text-blue-500 text-[10px]"></i>
+                        </div>
+                    </a>
+                    
+                    <!-- Navigates to a separate scanning page -->
+                    <a href="/rider/scan" class="bg-indigo-50/50 border border-indigo-100 p-4 rounded-2xl flex flex-col justify-between h-28 hover:bg-indigo-50 transition">
+                        <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-barcode"></i>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-xs font-bold text-slate-700 leading-tight">Scan Sample<br>Barcode</span>
+                            <i class="fa-solid fa-arrow-right text-indigo-500 text-[10px]"></i>
+                        </div>
+                    </a>
+
+                    <!-- Navigates to collection start -->
+                    <a href="/rider/assignments" class="bg-amber-50/50 border border-amber-100 p-4 rounded-2xl flex flex-col justify-between h-28 hover:bg-amber-50 transition">
+                        <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-vial"></i>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-xs font-bold text-slate-700 leading-tight">Start<br>Collection</span>
+                            <i class="fa-solid fa-arrow-right text-amber-500 text-[10px]"></i>
+                        </div>
+                    </a>
+
+                    <!-- Handover -->
+                    <a href="#" class="bg-purple-50/50 border border-purple-100 p-4 rounded-2xl flex flex-col justify-between h-28 hover:bg-purple-50 transition">
+                        <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-xs font-bold text-slate-700 leading-tight">Handover to<br>Lab</span>
+                            <i class="fa-solid fa-arrow-right text-purple-500 text-[10px]"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Upcoming Assignments List -->
+            <div class="pb-8">
+                <div class="flex items-center justify-between mb-4 mt-2">
+                    <h3 class="text-sm font-black text-navy-900 flex items-center gap-2">
+                        <i class="fa-regular fa-calendar text-slate-400"></i> Upcoming Assignments
+                    </h3>
+                    <a href="/rider/assignments" class="text-[10px] font-bold text-brand-600 flex items-center gap-1">View All <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <div class="space-y-4">
+                    {% for o in pending_orders %}
+                    <div class="flex gap-4">
+                        <!-- Number / Timeline indicator -->
+                        <div class="flex flex-col items-center">
+                            <div class="w-8 h-8 rounded-full bg-[#f1f5f9] border-2 border-white shadow-sm flex items-center justify-center text-xs font-black text-slate-600 shrink-0 relative z-10">
+                                {{ loop.index }}
+                            </div>
+                            {% if not loop.last %}
+                            <div class="w-0.5 h-full bg-slate-200 mt-2"></div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Card Data -->
+                        <div class="flex-1 pb-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[11px] font-black text-slate-700">{{ '07:00 AM' if loop.index == 1 else '09:30 AM' }}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold {% if loop.index == 1 %}bg-brand-50 text-brand-700{% else %}bg-blue-50 text-blue-700{% endif %}">
+                                        {{ 'On Route' if loop.index == 1 else 'Scheduled' }}
+                                    </span>
+                                </div>
+                                <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-location-dot"></i> {{ loop.index * 2.3 }} km</span>
+                            </div>
+                            
+                            <h4 class="text-sm font-black text-navy-900">{{ o.full_name }}</h4>
+                            <div class="text-[11px] text-slate-500 space-y-1 mt-1.5 font-medium">
+                                <p><i class="fa-solid fa-phone text-slate-400 w-3 text-center mr-1"></i> {{ o.phone }}</p>
+                                <p class="line-clamp-1"><i class="fa-solid fa-location-dot text-slate-400 w-3 text-center mr-1"></i> {{ o.address }}</p>
+                                <p class="text-slate-700 font-semibold"><i class="fa-solid fa-vial text-brand-500 w-3 text-center mr-1"></i> {{ o.tests_requested }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 bg-white rounded-2xl border border-slate-200">
+                        <span class="text-slate-400 text-xs">No upcoming assignments.</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 rounded-t-3xl px-6 py-2 pb-6 z-40 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+            <div class="flex justify-between items-center relative">
+                
+                <!-- Dashboard -->
+                <a href="/rider" class="flex flex-col items-center gap-1 pt-2">
+                    <i class="fa-solid fa-house text-lg text-brand-600"></i>
+                    <span class="text-[9px] font-bold text-brand-600">Dashboard</span>
                 </a>
                 
-                {% if o.status == 'Pending' %}
-                <!-- Data attributes completely prevent JS crashes from weird characters -->
-                <button type="button" 
-                        data-id="{{ o.id }}" 
-                        data-code="{{ o.order_code }}" 
-                        data-name="{{ o.full_name|replace('"', '')|replace("'", "") }}" 
-                        data-amount="{{ o.total_bill|int }}"
-                        onclick="openActionModal(this)" 
-                        class="flex justify-center items-center gap-2 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/30 transition active:scale-95">
-                    <i class="fa-solid fa-syringe text-sm"></i> Mark Collected
-                </button>
-                {% else %}
-                <div class="flex justify-center items-center gap-2 py-3 bg-slate-50 text-brand-600 rounded-xl text-xs font-bold border border-brand-200">
-                    <i class="fa-solid fa-check-circle"></i> Completed
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% else %}
-        <div class="text-center py-16">
-            <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-                <i class="fa-solid fa-motorcycle"></i>
-            </div>
-            <h3 class="text-base font-black text-slate-700">No Active Collections</h3>
-            <p class="text-xs text-slate-500 mt-1">Sit tight. New orders will appear here.</p>
-        </div>
-        {% endfor %}
-    </main>
+                <!-- Assignments -->
+                <a href="/rider/assignments" class="flex flex-col items-center gap-1 pt-2">
+                    <i class="fa-solid fa-list-check text-lg text-slate-400"></i>
+                    <span class="text-[9px] font-bold text-slate-400">Assignments</span>
+                </a>
 
-    <!-- Slide-Up Action Modal (Clinical Entry) -->
-    <div id="modal-overlay" class="fixed inset-0 bg-navy-900/70 z-50 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
-    
-    <div id="action-modal" class="fixed bottom-0 w-full max-w-md left-1/2 transform -translate-x-1/2 bg-slate-50 rounded-t-3xl z-50 modal-hidden shadow-2xl flex flex-col border-t border-slate-200">
+                <!-- Floating Center SCAN Button -->
+                <div class="relative w-16 flex justify-center">
+                    <a href="/rider/scan" class="absolute -top-8 w-14 h-14 bg-brand-600 hover:bg-brand-700 text-white rounded-full flex flex-col items-center justify-center border-4 border-[#f8fafc] shadow-lg shadow-brand-600/40 transition-transform active:scale-95">
+                        <i class="fa-solid fa-qrcode text-xl"></i>
+                    </a>
+                    <span class="text-[9px] font-bold text-slate-600 mt-7">Scan</span>
+                </div>
+
+                <!-- History -->
+                <a href="#" class="flex flex-col items-center gap-1 pt-2">
+                    <i class="fa-regular fa-clock text-lg text-slate-400"></i>
+                    <span class="text-[9px] font-bold text-slate-400">History</span>
+                </a>
+
+                <!-- Profile -->
+                <a href="#" class="flex flex-col items-center gap-1 pt-2">
+                    <i class="fa-regular fa-user text-lg text-slate-400"></i>
+                    <span class="text-[9px] font-bold text-slate-400">Profile</span>
+                </a>
+            </div>
+        </nav>
         
-        <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-3xl">
-            <div>
-                <h3 class="text-sm font-black text-navy-900 uppercase tracking-wider">Log Specimen</h3>
-                <p class="text-xs text-slate-500 mt-0.5">
-                    <span id="modal-order-code" class="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 mr-1"></span> 
-                    <span id="modal-patient-name" class="font-bold text-slate-700"></span>
-                </p>
-            </div>
-            <button type="button" onclick="closeActionModal()" class="w-8 h-8 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center hover:bg-slate-200 border border-slate-200 transition">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-
-        <form action="/api/rider/complete" method="POST" class="p-5 overflow-y-auto max-h-[70vh] flex-1 space-y-5">
-            <input type="hidden" name="order_id" id="modal-order-id">
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1 tracking-wider">Vial Barcode Number <span class="text-red-500">*</span></label>
-                    <div class="flex gap-2">
-                        <!-- High Contrast Input -->
-                        <input type="text" name="barcode" required placeholder="e.g. CD-8910" 
-                            class="w-full px-4 py-3.5 bg-white border-2 border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-900 focus:border-brand-600 focus:ring-0 outline-none uppercase shadow-sm">
-                    </div>
-                    <p class="text-[10px] text-slate-500 mt-1.5 font-medium">Affix sticker to vial and type exact ID.</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1 tracking-wider">Cold-Chain Temp</label>
-                    <!-- High Contrast Select -->
-                    <select name="temperature" class="w-full px-4 py-3.5 bg-white border-2 border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:border-brand-600 outline-none shadow-sm">
-                        <option value="2-8°C (Optimal)">2°C - 8°C (Optimal Ice Pack)</option>
-                        <option value="Ambient">Ambient Room Temp</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Financials -->
-            <div class="pt-5 border-t border-slate-200">
-                <div class="flex justify-between items-center mb-4">
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Amount to Collect</label>
-                    <span class="text-2xl font-black text-emerald-600" id="modal-amount">₹0</span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <label class="cursor-pointer">
-                        <input type="radio" name="payment_mode" value="UPI" class="peer sr-only" checked>
-                        <div class="text-center py-3.5 bg-white border-2 border-slate-200 rounded-xl peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:text-brand-700 transition shadow-sm">
-                            <!-- Bulletproof Icons -->
-                            <i class="fa-solid fa-mobile-screen text-xl mb-1 block"></i>
-                            <span class="text-xs font-bold uppercase tracking-wider">UPI Scan</span>
-                        </div>
-                    </label>
-                    <label class="cursor-pointer">
-                        <input type="radio" name="payment_mode" value="Cash" class="peer sr-only">
-                        <div class="text-center py-3.5 bg-white border-2 border-slate-200 rounded-xl peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition shadow-sm">
-                            <i class="fa-solid fa-money-bill text-xl mb-1 block"></i>
-                            <span class="text-xs font-bold uppercase tracking-wider">Cash</span>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all flex justify-center items-center gap-2 mt-2 text-sm uppercase tracking-widest border border-navy-950">
-                <i class="fa-solid fa-check-double text-teal-400"></i> Confirm & Save
-            </button>
-        </form>
     </div>
 
-    <!-- Script uses robust data-* attributes, preventing parsing crashes -->
-    <script>
-        function openActionModal(btn) {
-            const orderId = btn.getAttribute('data-id');
-            const orderCode = btn.getAttribute('data-code');
-            const patientName = btn.getAttribute('data-name');
-            const amount = btn.getAttribute('data-amount');
-
-            document.getElementById('modal-order-id').value = orderId;
-            document.getElementById('modal-order-code').innerText = orderCode;
-            document.getElementById('modal-patient-name').innerText = patientName;
-            document.getElementById('modal-amount').innerText = `₹${amount}`;
-
-            document.getElementById('modal-overlay').classList.remove('hidden');
-            setTimeout(() => document.getElementById('modal-overlay').classList.remove('opacity-0'), 10);
-            document.getElementById('action-modal').classList.remove('modal-hidden');
-            document.getElementById('action-modal').classList.add('modal-visible');
-        }
-
-        function closeActionModal() {
-            document.getElementById('modal-overlay').classList.add('opacity-0');
-            document.getElementById('action-modal').classList.remove('modal-visible');
-            document.getElementById('action-modal').classList.add('modal-hidden');
-            setTimeout(() => document.getElementById('modal-overlay').classList.add('hidden'), 300);
-        }
-    </script>
 </body>
 </html>
