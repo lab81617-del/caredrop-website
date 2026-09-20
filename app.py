@@ -263,9 +263,35 @@ def admin():
     conn = get_db_connection()
     orders = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
     tests = conn.execute('SELECT * FROM tests WHERE is_active = 1 ORDER BY id DESC').fetchall()
+    partners = conn.execute('SELECT * FROM partners ORDER BY id DESC').fetchall()
     metrics = conn.execute('SELECT COALESCE(SUM(total_bill), 0) as total_rev, COALESCE(SUM(b2b_total_cost), 0) as total_b2b FROM orders;').fetchone()
     conn.close()
-    return render_template('admin.html', orders=orders, tests=tests, metrics=metrics)
+    return render_template('admin.html', orders=orders, tests=tests, partners=partners, metrics=metrics)
+
+@app.route('/admin/add_partner', methods=['POST'])
+@hq_required
+def admin_add_partner():
+    name = request.form.get('name')
+    clinic_name = request.form.get('clinic_name')
+    referral_code = request.form.get('referral_code', '').upper().replace(" ", "")
+    phone = request.form.get('phone')
+    password = request.form.get('password')
+    # Convert percentage (e.g. 30) to decimal (0.30)
+    margin = float(request.form.get('margin_pool_pct', 30)) / 100.0
+    
+    conn = get_db_connection()
+    try:
+        conn.execute('''
+            INSERT INTO partners (name, clinic_name, referral_code, phone, password, margin_pool_pct)
+            VALUES (?, ?, ?, ?, ?, ?);
+        ''', (name, clinic_name, referral_code, phone, password, margin))
+        conn.commit()
+    except Exception as e:
+        print(f"Error adding partner: {e}") # Usually hits if referral code isn't unique
+    finally:
+        conn.close()
+        
+    return redirect(url_for('admin'))
 
 @app.route('/admin/add_test', methods=['POST'])
 @hq_required
