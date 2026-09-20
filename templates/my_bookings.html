@@ -2,175 +2,93 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Reports | CareDrop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; box-sizing: border-box; }
-        body { background: #F1F5F9; margin: 0; padding: 0; color: #0F172A; }
-        
-        .nav { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 800; color: #0D9488; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        
-        .container { max-width: 700px; margin: 40px auto; padding: 0 15px; }
-        
-        /* OTP Verification Box */
-        .auth-card { background: white; border-radius: 16px; padding: 40px 30px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; }
-        .auth-icon { background: #F0FDF4; color: #0D9488; width: 64px; height: 64px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto; }
-        .auth-card h2 { margin: 0 0 10px 0; font-size: 24px; font-weight: 800; }
-        .auth-card p { color: #64748B; font-size: 14px; font-weight: 600; margin-bottom: 25px; }
-        .input-box { width: 100%; max-width: 300px; margin: 0 auto 15px auto; display: block; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 15px; font-weight: 700; text-align: center; outline: none; }
-        .input-box:focus { border-color: #0D9488; }
-        .btn-auth { background: #0F172A; color: white; border: none; padding: 14px 30px; border-radius: 8px; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s; }
-        .btn-auth:hover { background: #1E293B; }
-
-        /* Order Cards */
-        .order-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #E2E8F0; }
-        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #CBD5E1; padding-bottom: 15px; margin-bottom: 15px; }
-        .order-ref { font-size: 16px; font-weight: 800; color: #0D9488; }
-        .order-date { font-size: 12px; font-weight: 700; color: #64748B; }
-        
-        .status-badge { padding: 6px 12px; border-radius: 50px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .status-pending { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
-        .status-completed { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
-        
-        .patient-name { font-size: 15px; font-weight: 800; color: #0F172A; text-transform: capitalize; margin-bottom: 10px; }
-        
-        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn-download { background: #0D9488; color: white; padding: 12px; border-radius: 6px; font-weight: 800; font-size: 13px; text-decoration: none; text-align: center; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-download:hover { background: #0F766E; }
-        .btn-invoice { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; padding: 12px; border-radius: 6px; font-weight: 800; font-size: 13px; text-decoration: none; text-align: center; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-invoice:hover { background: #E2E8F0; }
-        .btn-disabled { background: #F1F5F9; color: #94A3B8; border: 1px dashed #CBD5E1; cursor: not-allowed; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Records | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c' } } } }
+        }
+    </script>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased pb-20 selection:bg-brand-500 selection:text-white">
 
-    <nav class="nav">
-        <a href="/" class="logo"><i data-lucide="activity" style="width: 20px; height: 20px;"></i> CareDrop</a>
-        <a href="/tests" style="text-decoration: none; color: #475569; font-weight: 800; font-size: 14px;">Book New Test</a>
-    </nav>
-
-    <div class="container">
-        
-        {% if error == "Verify email." or not searched_email %}
-        <div class="auth-card" id="authBox">
-            <div class="auth-icon"><i data-lucide="shield-check" style="width: 32px; height: 32px;"></i></div>
-            <h2>Secure Health Portal</h2>
-            <p>Enter your email to securely access your medical reports and invoices.</p>
-            
-            <div id="step1">
-                <input type="email" id="emailInput" class="input-box" placeholder="Patient Email Address" value="{{ searched_email }}" required>
-                <button class="btn-auth" onclick="sendOTP()">Send Secure OTP</button>
-            </div>
-            
-            <div id="step2" style="display: none;">
-                <input type="text" id="otpInput" class="input-box" placeholder="Enter 4-Digit OTP" maxlength="4" required>
-                <button class="btn-auth" onclick="verifyOTP()">Verify & View Reports</button>
-                <div style="margin-top: 15px; font-size: 12px; font-weight: 700; color: #0D9488; cursor: pointer;" onclick="location.reload()">&larr; Change Email</div>
-            </div>
-        </div>
-        
-        {% else %}
-        <h2 style="margin-top: 0; color: #0F172A; font-weight: 800;">My Diagnostic Records</h2>
-        <p style="color: #64748B; font-weight: 600; margin-bottom: 30px;">Records for: {{ searched_email }}</p>
-        
-            {% for order in orders %}
-            <div class="order-card">
-                <div class="order-header">
-                    <div>
-                        <div class="order-ref">{{ order.order_ref }}</div>
-                    </div>
-                    <div class="status-badge {% if order.has_report %}status-completed{% else %}status-pending{% endif %}">
-                        {% if order.has_report %}Report Ready{% else %}Processing{% endif %}
-                    </div>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200">
+                    <i class="fa-regular fa-user"></i>
                 </div>
+                <div>
+                    <span class="text-sm font-black text-navy-900 block leading-none">Patient Portal</span>
+                    <span class="text-[10px] font-bold text-slate-400 mt-0.5 block">{{ session.get('patient_contact', 'Verified User') }}</span>
+                </div>
+            </div>
+            <a href="/logout" class="text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200 transition">
+                Logout
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+        
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-black text-navy-900">My Diagnostic Records</h2>
+            <a href="/tests" class="text-[11px] font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-200">Book New Test</a>
+        </div>
+
+        <div class="space-y-4">
+            {% for o in bookings %}
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
                 
-                <div class="patient-name"><i data-lucide="user" style="width: 14px; height: 14px; color: #94A3B8; vertical-align: middle;"></i> {{ order.patient_name }}</div>
-                
-                <div class="action-row">
-                    {% if order.has_report %}
-                        <a href="/download-report/{{ order.id }}" target="_blank" class="btn-download">
-                            <i data-lucide="file-text" style="width: 16px; height: 16px;"></i> Clinical Report
-                        </a>
-                        <a href="/download-invoice/{{ order.id }}" target="_blank" class="btn-invoice">
-                            <i data-lucide="receipt" style="width: 16px; height: 16px;"></i> Tax Invoice
-                        </a>
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{{ o.created_at[:10] }}</span>
+                        <span class="text-sm font-black text-navy-900 block">{{ o.tests_requested }}</span>
+                        <span class="text-[11px] font-mono text-slate-500 mt-1 block">ID: {{ o.order_code }}</span>
+                    </div>
+                    
+                    <!-- Dynamic Status Badge -->
+                    <span class="px-2.5 py-1 rounded-md text-[10px] font-black tracking-wide uppercase inline-block
+                        {% if o.status == 'Pending' %} bg-amber-100 text-amber-800 border border-amber-300
+                        {% elif o.status == 'Sample Collected' %} bg-blue-100 text-blue-800 border border-blue-300
+                        {% elif o.status == 'Completed' %} bg-emerald-100 text-emerald-800 border border-emerald-300
+                        {% else %} bg-slate-100 text-slate-800 border border-slate-300 {% endif %}">
+                        {{ o.status }}
+                    </span>
+                </div>
+
+                <!-- Action Area -->
+                <div class="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Amount Paid</span>
+                        <span class="text-sm font-black text-slate-700">₹{{ o.total_bill|int }}</span>
+                    </div>
+                    
+                    {% if o.status == 'Completed' %}
+                    <!-- PDF Download Button (Active only when completed) -->
+                    <a href="/lims_report/{{ o.id }}" target="_blank" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md shadow-brand-600/30 flex items-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i> View Report
+                    </a>
                     {% else %}
-                        <div class="btn-download btn-disabled" style="grid-column: 1 / -1;">
-                            <i data-lucide="clock" style="width: 16px; height: 16px;"></i> Report in Progress
-                        </div>
+                    <!-- Processing state -->
+                    <div class="text-[10px] font-bold text-slate-400 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-spinner fa-spin text-brand-600"></i> Processing Lab
+                    </div>
                     {% endif %}
                 </div>
             </div>
             {% else %}
-            <div style="text-align: center; padding: 50px 20px; background: white; border-radius: 12px; border: 1px dashed #CBD5E1;">
-                <i data-lucide="folder-search" style="width: 48px; height: 48px; color: #94A3B8; margin-bottom: 15px;"></i>
-                <h3 style="margin: 0 0 10px 0; font-weight: 800; color: #0F172A;">No Records Found</h3>
-                <p style="color: #64748B; font-weight: 600; font-size: 14px;">We couldn't find any bookings associated with this email.</p>
-                <a href="/tests" style="display: inline-block; background: #0D9488; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 800; margin-top: 15px;">Book a Test</a>
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 text-center">
+                <i class="fa-solid fa-file-medical text-4xl text-slate-300 mb-3"></i>
+                <h3 class="text-sm font-black text-slate-700">No Records Found</h3>
+                <p class="text-xs text-slate-500 mt-1">You haven't booked any tests with us yet.</p>
+                <a href="/tests" class="mt-4 inline-block bg-navy-900 text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider">Explore Catalog</a>
             </div>
             {% endfor %}
-        {% endif %}
-    </div>
+        </div>
+    </main>
 
-    <script>
-        lucide.createIcons();
-
-        async function sendOTP() {
-            const email = document.getElementById('emailInput').value;
-            if (!email) return alert('Enter email');
-            
-            const btn = document.querySelector('#step1 .btn-auth');
-            btn.innerText = "Sending..."; btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/send-otp', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email: email})
-                });
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('step1').style.display = 'none';
-                    document.getElementById('step2').style.display = 'block';
-                } else {
-                    alert('Failed to send OTP. Check server logs.');
-                    btn.innerText = "Send Secure OTP"; btn.disabled = false;
-                }
-            } catch (err) {
-                alert('Connection error');
-                btn.innerText = "Send Secure OTP"; btn.disabled = false;
-            }
-        }
-
-        async function verifyOTP() {
-            const email = document.getElementById('emailInput').value;
-            const otp = document.getElementById('otpInput').value;
-            if (!otp) return alert('Enter OTP');
-
-            const btn = document.querySelector('#step2 .btn-auth');
-            btn.innerText = "Verifying..."; btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/verify-otp', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email: email, otp: otp})
-                });
-                const data = await res.json();
-                if (data.success) {
-                    window.location.href = `/my-bookings?email=${email}`;
-                } else {
-                    alert('Invalid OTP');
-                    btn.innerText = "Verify & View Reports"; btn.disabled = false;
-                }
-            } catch (err) {
-                alert('Connection error');
-                btn.innerText = "Verify & View Reports"; btn.disabled = false;
-            }
-        }
-    </script>
 </body>
 </html>
