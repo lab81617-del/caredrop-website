@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Catalog & LIMS | CareDrop HQ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: { 600: '#0d9488' }, navy: { 900: '#0b192c' } } } } }
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-900 font-sans antialiased pb-20">
+
+    <header class="bg-navy-900 border-b border-slate-800 sticky top-0 z-40 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/admin" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <span class="text-base font-black tracking-tight">LIMS Test Catalog</span>
+            </div>
+            
+            <!-- Bulk Upload Form inside header to save space -->
+            <form action="/admin/bulk_upload_tests" method="POST" enctype="multipart/form-data" class="hidden md:flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
+                <input type="file" name="file" accept=".csv" class="text-[10px] text-slate-300 w-44">
+                <button type="submit" class="bg-brand-600 text-white text-[10px] font-bold px-3 py-1.5 rounded hover:bg-brand-500 transition">Upload CSV</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Add Master Test -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2"><i class="fa-solid fa-vial text-brand-600 mr-2"></i>1. Create Master Test</h2>
+                <form action="/admin/add_test" method="POST" class="flex flex-col gap-3 text-xs">
+                    <input type="text" name="name" required placeholder="Test Name (e.g. Lipid Profile)" class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                    <div class="flex gap-3">
+                        <input type="number" name="b2b_cost" required placeholder="Wholesale Cost (₹)" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                        <input type="number" name="retail_price" required placeholder="Retail Price (₹)" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                    </div>
+                    <button type="submit" class="bg-navy-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg uppercase tracking-wider mt-1 transition shadow-sm">Save Profile</button>
+                </form>
+            </div>
+
+            <!-- Add Parameter to Test -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2"><i class="fa-solid fa-list-check text-brand-600 mr-2"></i>2. Link LIMS Parameters</h2>
+                <form action="/admin/add_parameter" method="POST" class="flex flex-col gap-3 text-xs">
+                    <select name="test_id" required class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600 font-bold text-slate-800">
+                        <option value="" disabled selected>Select Master Test...</option>
+                        {% for t in tests %}
+                        <option value="{{ t.id }}">{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="param_name" required placeholder="Parameter Name (e.g. Total Cholesterol)" class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                    <div class="flex gap-3">
+                        <input type="text" name="unit" placeholder="Unit (e.g. mg/dL)" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                        <input type="text" name="ref_range" placeholder="Range (e.g. < 200)" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                    </div>
+                    <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-lg uppercase tracking-wider mt-1 transition shadow-sm">Add to PDF Report Engine</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Catalog List -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50 uppercase text-[10px] font-black border-b border-slate-200 tracking-wider">
+                        <tr><th class="py-3 px-6 w-1/3">Master Test</th><th class="py-3 px-6 w-1/2">Linked PDF Parameters</th><th class="py-3 px-6 text-right">Action</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium">
+                        {% for t in tests %}
+                        <tr class="align-top hover:bg-slate-50 transition">
+                            <td class="py-4 px-6">
+                                <span class="font-bold text-slate-900 block text-sm">{{ t.name }}</span>
+                                <span class="text-[9px] text-slate-500 font-mono mt-1 block">B2B: ₹{{ t.b2b_cost|int }} | Retail: ₹{{ t.price|int }}</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <ul class="list-disc pl-3 text-slate-600 text-[10px] space-y-1">
+                                    {% for p in test_params %}
+                                        {% if p.test_id == t.id %}
+                                        <li><span class="font-bold text-slate-800">{{ p.param_name }}</span> ({{ p.ref_range }} {{ p.unit }})</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <a href="/admin/delete_test/{{ t.id }}" class="text-red-500 hover:text-white hover:bg-red-500 border border-red-200 bg-red-50 px-3 py-1.5 rounded text-[10px] font-bold transition" onclick="return confirm('Delete this test and all its parameters?')">Remove</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="py-8 text-center text-slate-400">No tests added to the catalog yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
