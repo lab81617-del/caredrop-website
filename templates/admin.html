@@ -3,360 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop Operations | Central Command</title>
+    <title>HQ Dashboard | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
-        tailwind.config = {
-            theme: { extend: { colors: { brand: { 600: '#0d9488', 700: '#0f766e' }, navy: { 900: '#0b192c', 950: '#060d17' } } } }
-        }
+        tailwind.config = { theme: { extend: { colors: { brand: { 600: '#0d9488' }, navy: { 900: '#0b192c' } } } } }
     </script>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased pb-20">
 
-    <header class="bg-navy-900 border-b border-navy-950 sticky top-0 z-40 text-white shadow-md">
+    <header class="bg-navy-900 border-b border-slate-800 sticky top-0 z-40 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm">
-                    <i class="fa-solid fa-plus text-base"></i>
+                    <i class="fa-solid fa-plus"></i>
                 </div>
-                <div>
-                    <span class="text-base font-black tracking-tight block leading-none">CareDrop HQ</span>
-                    <span class="text-[11px] text-teal-300 font-medium">Yamunanagar - Jagadhri</span>
-                </div>
+                <span class="text-base font-black tracking-tight">CareDrop HQ</span>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="/tests" target="_blank" class="text-xs bg-navy-950 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-lg hover:text-white flex items-center gap-1.5 transition">
-                    Patient Site
-                </a>
-                <a href="/rider" target="_blank" class="text-xs bg-brand-600 px-3.5 py-1.5 rounded-lg text-white font-bold hover:bg-brand-700 transition flex items-center gap-1.5">
-                    Rider App
-                </a>
-            </div>
+            <a href="/logout" class="text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">Logout</a>
         </div>
     </header>
 
-    <div class="bg-white border-b border-slate-200 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 flex gap-6 text-xs font-bold overflow-x-auto hide-scrollbar">
-            <button onclick="switchTab('orders')" id="tab-btn-orders" class="py-4 border-b-2 border-brand-600 text-brand-700 flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-truck-ramp-box"></i> Live Dispatch</button>
-            <button onclick="switchTab('pos')" id="tab-btn-pos" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-900 flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-desktop"></i> POS Booking</button>
-            <button onclick="switchTab('partners')" id="tab-btn-partners" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-900 flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-handshake"></i> Partners</button>
-            <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-900 flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-dna"></i> Test Catalog</button>
-        </div>
-    </div>
-
     <main class="max-w-7xl mx-auto px-4 py-6">
+        
+        <!-- Navigation Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <a href="/admin/pos" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-brand-600 transition group">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-lg group-hover:bg-blue-600 group-hover:text-white transition"><i class="fa-solid fa-desktop"></i></div>
+                <div><span class="block font-black text-sm text-navy-900">POS Booking</span><span class="text-[10px] text-slate-500">Book tests & generate bills</span></div>
+            </a>
+            <a href="/admin/partners" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-brand-600 transition group">
+                <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-lg group-hover:bg-purple-600 group-hover:text-white transition"><i class="fa-solid fa-handshake"></i></div>
+                <div><span class="block font-black text-sm text-navy-900">Partner Network</span><span class="text-[10px] text-slate-500">Manage clinics & commissions</span></div>
+            </a>
+            <a href="/admin/catalog" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-brand-600 transition group">
+                <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg group-hover:bg-amber-600 group-hover:text-white transition"><i class="fa-solid fa-dna"></i></div>
+                <div><span class="block font-black text-sm text-navy-900">Test Catalog</span><span class="text-[10px] text-slate-500">Add tests & LIMS parameters</span></div>
+            </a>
+        </div>
 
-        <!-- TAB 1: LIVE DISPATCH WITH RIDER ASSIGNMENT -->
-        <section id="tab-orders" class="space-y-4">
-            <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4">Live Sample Collection Roster</h2>
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+        <!-- Live Dispatch Board -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h2 class="text-sm font-black text-navy-900 uppercase tracking-wider"><i class="fa-solid fa-truck-ramp-box mr-2 text-brand-600"></i> Live Dispatch Roster</h2>
+            </div>
+            <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs border-collapse">
-                    <thead class="bg-slate-50 text-slate-700 uppercase font-black text-[10px] border-b border-slate-200 tracking-wider">
-                        <tr>
-                            <th class="py-3 px-4 w-32">Order ID</th>
-                            <th class="py-3 px-4 w-48">Patient</th>
-                            <th class="py-3 px-4">Tests Booked</th>
-                            <th class="py-3 px-4 w-40">Status & Rider</th>
-                            <th class="py-3 px-4 w-24">Bill</th>
-                            <th class="py-3 px-4 w-28 text-center">Actions</th>
-                        </tr>
+                    <thead class="bg-white text-slate-500 uppercase font-bold text-[10px] border-b border-slate-200 tracking-wider">
+                        <tr><th class="py-3 px-6 w-32">Order ID</th><th class="py-3 px-6 w-48">Patient</th><th class="py-3 px-6">Tests</th><th class="py-3 px-6 w-40">Status & Rider</th><th class="py-3 px-6 w-24">Bill</th><th class="py-3 px-6 text-right">Actions</th></tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-medium">
                         {% for o in orders %}
                         <tr class="hover:bg-slate-50 transition align-top">
-                            <td class="py-3 px-4">
-                                <span class="font-black text-navy-900 block text-sm">{{ o.order_code }}</span>
-                                <span class="inline-block mt-1 bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[9px]">{{ o.barcode or 'No Barcode' }}</span>
-                            </td>
-                            <td class="py-3 px-4">
-                                <span class="font-bold text-slate-900 block text-sm">{{ o.full_name }}</span>
-                                <span class="text-[10px] text-slate-500 block"><i class="fa-brands fa-whatsapp text-emerald-500 mr-1"></i>{{ o.phone }}</span>
-                                <span class="text-[9px] text-slate-400 block mt-1 line-clamp-1">{{ o.address }}</span>
-                            </td>
-                            <td class="py-3 px-4 text-slate-800">
-                                {{ o.tests_requested }}
-                                {% if o.referral_code %}<span class="block mt-1 text-[9px] font-bold text-purple-600">Ref: {{ o.referral_code }}</span>{% endif %}
-                            </td>
-                            <td class="py-3 px-4">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-black tracking-wide inline-block mb-2
-                                    {% if o.status == 'Pending' %} bg-amber-100 text-amber-800
-                                    {% elif o.status == 'Sample Collected' %} bg-blue-100 text-blue-800
-                                    {% else %} bg-emerald-100 text-emerald-800 {% endif %}">
-                                    {{ o.status }}
-                                </span>
-                                <!-- Rider Assignment Dropdown -->
-                                <form action="/admin/assign_rider/{{ o.id }}" method="POST" class="flex flex-col gap-1">
-                                    <div class="flex gap-1">
-                                        <select name="rider_name" class="w-full text-[9px] p-1 border border-slate-200 rounded outline-none focus:border-brand-600 bg-white text-slate-700 font-bold">
-                                            <option value="Unassigned" {% if o.assigned_rider == 'Unassigned' %}selected{% endif %}>Unassigned</option>
-                                            <option value="Aman" {% if o.assigned_rider == 'Aman' %}selected{% endif %}>Aman (Rider)</option>
-                                            <option value="Partner Dispatch" {% if o.assigned_rider == 'Partner Dispatch' %}selected{% endif %}>Partner Dispatch</option>
-                                        </select>
-                                        <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-white px-2 py-1 rounded text-[9px] font-bold">Set</button>
-                                    </div>
+                            <td class="py-4 px-6"><span class="font-black text-navy-900 block text-sm">{{ o.order_code }}</span><span class="inline-block mt-1 bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[9px]">{{ o.barcode or 'No Barcode' }}</span></td>
+                            <td class="py-4 px-6"><span class="font-bold text-slate-900 block text-sm">{{ o.full_name }}</span><span class="text-[10px] text-slate-500 block"><i class="fa-solid fa-envelope text-slate-400 mr-1"></i>{{ o.email }}</span></td>
+                            <td class="py-4 px-6 text-slate-800">{{ o.tests_requested }}</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black tracking-wide inline-block mb-2 {% if o.status == 'Pending' %} bg-amber-100 text-amber-800 {% elif o.status == 'Sample Collected' %} bg-blue-100 text-blue-800 {% else %} bg-emerald-100 text-emerald-800 {% endif %}">{{ o.status }}</span>
+                                <form action="/admin/assign_rider/{{ o.id }}" method="POST" class="flex gap-1">
+                                    <select name="rider_name" class="w-full text-[9px] p-1 border rounded outline-none bg-white font-bold"><option value="Unassigned" {% if o.assigned_rider == 'Unassigned' %}selected{% endif %}>Unassigned</option><option value="Aman" {% if o.assigned_rider == 'Aman' %}selected{% endif %}>Aman (Rider)</option></select>
+                                    <button type="submit" class="bg-slate-800 text-white px-2 py-1 rounded text-[9px] font-bold">Set</button>
                                 </form>
                             </td>
-                            <td class="py-3 px-4">
-                                <span class="font-black text-slate-900 text-sm block">₹{{ o.total_bill|int }}</span>
-                                <span class="text-[9px] {% if o.is_paid %}text-emerald-600 font-bold{% else %}text-slate-400{% endif %}">{{ 'Paid' if o.is_paid else 'Unpaid' }}</span>
-                            </td>
-                            <td class="py-3 px-4 text-center">
-                                <a href="/lims_report/{{ o.id }}" target="_blank" class="inline-block bg-brand-50 border border-brand-200 text-brand-700 hover:bg-brand-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition">
-                                    {% if o.status != 'Completed' %}Enter Results{% else %}View PDF{% endif %}
-                                </a>
+                            <td class="py-4 px-6"><span class="font-black text-slate-900 text-sm block">₹{{ o.total_bill|int }}</span><span class="text-[9px] {% if o.is_paid %}text-emerald-600 font-bold{% else %}text-slate-400{% endif %}">{{ 'Paid' if o.is_paid else 'Unpaid' }}</span></td>
+                            <td class="py-4 px-6 text-right">
+                                <a href="/lims_report/{{ o.id }}" target="_blank" class="inline-block bg-brand-50 border border-brand-200 text-brand-700 hover:bg-brand-600 hover:text-white px-4 py-2 rounded-lg text-[10px] font-bold transition">{% if o.status != 'Completed' %}Enter Results{% else %}View PDF{% endif %}</a>
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="6" class="py-8 text-center text-slate-400">No active dispatch orders.</td></tr>
+                        <tr><td colspan="6" class="py-12 text-center text-slate-400">No active dispatch orders.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </section>
-
-        <!-- TAB 2: DYNAMIC POS BOOKING SYSTEM -->
-        <section id="tab-pos" class="hidden space-y-6">
-             <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                <div class="md:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4">Search & Add Tests</h2>
-                    <input type="text" id="pos-search" onkeyup="filterPosTests()" placeholder="Search catalog..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-4 outline-none focus:border-brand-600">
-                    
-                    <div class="max-h-[400px] overflow-y-auto divide-y divide-slate-100 pr-2" id="pos-catalog">
-                        {% for t in tests %}
-                        <div class="py-3 flex justify-between items-center pos-item" data-name="{{ t.name }}" data-price="{{ t.price }}">
-                            <div>
-                                <span class="block font-bold text-slate-800 text-sm">{{ t.name }}</span>
-                                <span class="text-[10px] text-slate-500">₹{{ t.price|int }}</span>
-                            </div>
-                            <button onclick="addToPos('{{ t.name }}', {{ t.price }}, {{ t.id }})" class="bg-slate-100 hover:bg-brand-50 text-brand-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">Add</button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="md:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Current Bill</h2>
-                    
-                    <div id="pos-cart" class="flex-1 overflow-y-auto space-y-2 mb-4 text-xs font-bold text-slate-700">
-                        <div class="text-slate-400 text-center py-4 font-normal" id="empty-cart-msg">No tests added yet.</div>
-                    </div>
-                    
-                    <div class="border-t border-slate-200 pt-4 mb-4 flex justify-between items-center">
-                        <span class="text-sm font-black text-slate-900">Total Payable</span>
-                        <span class="text-xl font-black text-brand-700" id="pos-total-display">₹0</span>
-                    </div>
-
-                    <form action="/book_test" method="POST" class="space-y-3 text-xs" onsubmit="preparePosForm(event)">
-                        <input type="hidden" name="tests_requested" id="pos-tests-input">
-                        <input type="hidden" name="total_bill" id="pos-bill-input">
-                        
-                        <input type="text" name="full_name" required placeholder="Patient Name" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
-                        <div class="flex gap-2">
-                            <input type="tel" name="phone" required placeholder="Mobile Number" class="w-1/2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
-                            <input type="email" name="email" placeholder="Email (For PDF Receipt)" class="w-1/2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
-                        </div>
-                        <textarea name="address" rows="2" required placeholder="Collection Address" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600"></textarea>
-                        
-                        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-3 rounded-xl uppercase tracking-wider transition">Generate Order</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 3: NETWORK PARTNERS -->
-        <section id="tab-partners" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <form action="/admin/add_partner" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs mb-8 pb-8 border-b border-slate-100">
-                    <input type="text" name="name" required placeholder="Owner Name" class="px-3 py-2 border rounded-lg outline-none focus:border-brand-600 bg-slate-50">
-                    <input type="text" name="clinic_name" required placeholder="Clinic Name" class="px-3 py-2 border rounded-lg outline-none focus:border-brand-600 bg-slate-50">
-                    <input type="text" name="phone" required placeholder="Phone" class="px-3 py-2 border rounded-lg outline-none focus:border-brand-600 bg-slate-50">
-                    <input type="text" name="referral_code" required placeholder="Code (CITY20)" class="px-3 py-2 border rounded-lg uppercase font-bold outline-none focus:border-brand-600 bg-slate-50">
-                    <input type="text" name="password" required placeholder="Password" class="px-3 py-2 border rounded-lg outline-none focus:border-brand-600 bg-slate-50">
-                    <select name="margin_pool_pct" class="px-3 py-2 border rounded-lg outline-none focus:border-brand-600 bg-slate-50"><option value="20">20% Margin</option><option value="30" selected>30% Margin</option></select>
-                    <button type="submit" class="col-span-2 bg-navy-900 text-white font-bold rounded-lg py-2 uppercase tracking-wider">Register Partner</button>
-                </form>
-
-                <table class="w-full text-left text-xs border-collapse">
-                    <thead class="bg-slate-50 uppercase text-[10px] font-black border-b border-slate-200">
-                        <tr><th class="py-2 px-3">Clinic</th><th class="py-2 px-3">Code</th><th class="py-2 px-3">Wallet</th><th class="py-2 px-3 text-right">Action</th></tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for p in partners %}
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-2 px-3 font-bold">{{ p.clinic_name }}</td><td class="py-2 px-3 text-brand-600 font-mono">{{ p.referral_code }}</td><td class="py-2 px-3 font-bold text-emerald-600">₹{{ p.wallet_balance|int }}</td>
-                            <td class="py-2 px-3 text-right"><a href="/admin/delete_partner/{{ p.id }}" class="text-red-500 hover:text-red-700 font-bold text-[10px]" onclick="return confirm('Delete this partner?')"><i class="fa-solid fa-trash"></i></a></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- TAB 4: CATALOG & PARAMETER BUILDER -->
-        <section id="tab-catalog" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Add Test -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Add Master Test</h2>
-                    <form action="/admin/add_test" method="POST" class="flex flex-col gap-3 text-xs mb-4">
-                        <input type="text" name="name" required placeholder="Test Name (e.g. Lipid Profile)" class="px-3 py-2 border rounded-lg bg-slate-50 outline-none focus:border-brand-600">
-                        <div class="flex gap-2">
-                            <input type="number" name="b2b_cost" required placeholder="B2B Cost" class="w-1/2 px-3 py-2 border rounded-lg bg-slate-50 outline-none focus:border-brand-600">
-                            <input type="number" name="retail_price" required placeholder="Retail" class="w-1/2 px-3 py-2 border rounded-lg bg-slate-50 outline-none focus:border-brand-600">
-                        </div>
-                        <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-lg uppercase tracking-wider">Create Test Profile</button>
-                    </form>
-                    
-                    <form action="/admin/bulk_upload_tests" method="POST" enctype="multipart/form-data" class="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                        <span class="text-[10px] text-slate-500 font-bold uppercase">Bulk Upload CSV</span>
-                        <div class="flex gap-2">
-                            <input type="file" name="file" accept=".csv" class="text-[10px] w-full border border-slate-200 bg-white rounded p-1">
-                            <button type="submit" class="bg-navy-900 text-white text-[10px] font-bold px-3 py-1 rounded">Upload</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Add Parameter -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Link LIMS Parameters</h2>
-                    <form action="/admin/add_parameter" method="POST" class="flex flex-col gap-3 text-xs">
-                        <select name="test_id" required class="px-3 py-2 border rounded-lg bg-slate-50 outline-none focus:border-brand-600 font-bold text-slate-700">
-                            <option value="" disabled selected>Select Master Test...</option>
-                            {% for t in tests %}
-                            <option value="{{ t.id }}">{{ t.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <input type="text" name="param_name" required placeholder="Parameter Name (e.g. Total Cholesterol)" class="px-3 py-2 border rounded-lg bg-slate-50 outline-none focus:border-brand-600">
-                        <div class="flex gap-2">
-                            <input type="text" name="unit" placeholder="Unit (e.g. mg/dL)" class="w-1/2 px-3 py-2 border rounded-lg bg-slate-50 outline-none focus:border-brand-600">
-                            <input type="text" name="ref_range" placeholder="Range (e.g. < 200)" class="w-1/2 px-3 py-2 border rounded-lg bg-slate-50 outline-none focus:border-brand-600">
-                        </div>
-                        <button type="submit" class="bg-navy-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg uppercase tracking-wider">Add Parameter to Test</button>
-                    </form>
-                </div>
-            </div>
-
-          <!-- Full Catalog List -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left text-xs border-collapse">
-                    <thead class="bg-slate-50 uppercase text-[10px] font-black border-b border-slate-200">
-                        <tr><th class="py-3 px-4 w-1/3">Master Test</th><th class="py-3 px-4 w-1/2">Linked Parameters</th><th class="py-3 px-4 text-right">Action</th></tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for t in tests %}
-                        <tr class="align-top hover:bg-slate-50">
-                            <td class="py-3 px-4">
-                                <span class="font-bold text-slate-900 block">{{ t.name }}</span>
-                                <span class="text-[9px] text-slate-500 font-mono">B2B: ₹{{ t.b2b_cost|int }} | Retail: ₹{{ t.price|int }}</span>
-                            </td>
-                            <td class="py-3 px-4 text-[10px]">
-                                <ul class="list-disc pl-3 text-slate-600 space-y-0.5">
-                                    {% for p in test_params %}
-                                        {% if p.test_id == t.id %}
-                                        <li><span class="font-bold text-slate-800">{{ p.param_name }}</span> ({{ p.ref_range }} {{ p.unit }})</li>
-                                        {% endif %}
-                                    {% endfor %}
-                                </ul>
-                            </td>
-                            <td class="py-3 px-4 text-right">
-                                <a href="/admin/delete_test/{{ t.id }}" class="text-red-500 hover:text-red-700 text-[10px] font-bold" onclick="return confirm('Delete test and its parameters?')"><i class="fa-solid fa-trash"></i></a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
+        </div>
     </main>
-
-    <script>
-        // Tab Switcher
-        function switchTab(tabId) {
-            const tabs = ['orders', 'pos', 'partners', 'catalog'];
-            tabs.forEach(t => {
-                const el = document.getElementById(`tab-${t}`);
-                const btn = document.getElementById(`tab-btn-${t}`);
-                if (t === tabId) {
-                    el.classList.remove('hidden');
-                    btn.classList.add('border-brand-600', 'text-brand-700');
-                    btn.classList.remove('border-transparent', 'text-slate-500');
-                } else {
-                    el.classList.add('hidden');
-                    btn.classList.remove('border-brand-600', 'text-brand-700');
-                    btn.classList.add('border-transparent', 'text-slate-500');
-                }
-            });
-        }
-
-        // POS System Logic
-        let posCart = [];
-
-        function filterPosTests() {
-            const q = document.getElementById('pos-search').value.toLowerCase();
-            document.querySelectorAll('.pos-item').forEach(item => {
-                const name = item.getAttribute('data-name').toLowerCase();
-                item.style.display = name.includes(q) ? 'flex' : 'none';
-            });
-        }
-
-        function addToPos(name, price, id) {
-            posCart.push({name, price, id});
-            renderPosCart();
-        }
-
-        function removeFromPos(index) {
-            posCart.splice(index, 1);
-            renderPosCart();
-        }
-
-        function renderPosCart() {
-            const cartDiv = document.getElementById('pos-cart');
-            const totalDisplay = document.getElementById('pos-total-display');
-            const msg = document.getElementById('empty-cart-msg');
-            
-            if(posCart.length === 0) {
-                cartDiv.innerHTML = '';
-                cartDiv.appendChild(msg);
-                msg.style.display = 'block';
-                totalDisplay.innerText = '₹0';
-                return;
-            }
-            
-            msg.style.display = 'none';
-            cartDiv.innerHTML = '';
-            let total = 0;
-            
-            posCart.forEach((item, index) => {
-                total += parseFloat(item.price);
-                cartDiv.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
-                        <span>${item.name}</span>
-                        <div class="flex items-center gap-3">
-                            <span>₹${item.price}</span>
-                            <button type="button" onclick="removeFromPos(${index})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-xmark"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
-            totalDisplay.innerText = `₹${total}`;
-        }
-
-        function preparePosForm(e) {
-            if(posCart.length === 0) {
-                e.preventDefault();
-                alert("Please add tests to the bill.");
-                return false;
-            }
-            const testNames = posCart.map(t => t.name).join(', ');
-            const totalBill = posCart.reduce((sum, t) => sum + parseFloat(t.price), 0);
-            
-            // To ensure parameters generate, we must send a fake 'cart' array structure via hidden inputs if we wanted to fully automate the POS. 
-            // For now, the backend parses 'tests_requested'. (In a full React app we'd pass IDs).
-            document.getElementById('pos-tests-input').value = testNames;
-            document.getElementById('pos-bill-input').value = totalBill;
-        }
-    </script>
 </body>
 </html>
