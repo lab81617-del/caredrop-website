@@ -12,7 +12,7 @@ def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # 1. Diagnostic Tests Table
+    # 1. Diagnostic Tests Catalog
     cur.execute('''
         CREATE TABLE IF NOT EXISTS tests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,7 +29,22 @@ def init_db():
         );
     ''')
 
-    # 2. Bookings / Orders Table
+    # 2. Partner Network (Clinics & Pharmacies)
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS partners (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            clinic_name TEXT,
+            referral_code TEXT UNIQUE NOT NULL,
+            phone TEXT,
+            password TEXT NOT NULL,
+            margin_pool_pct REAL DEFAULT 0.30, -- 30% Total Floating Margin
+            wallet_balance REAL DEFAULT 0.0,
+            is_active BOOLEAN DEFAULT 1
+        );
+    ''')
+
+    # 3. Patient Orders (Now tracks commissions & discounts)
     cur.execute('''
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,8 +53,12 @@ def init_db():
             phone TEXT NOT NULL,
             address TEXT NOT NULL,
             tests_requested TEXT NOT NULL,
+            gross_bill REAL NOT NULL,
+            discount_given REAL DEFAULT 0,
             total_bill REAL NOT NULL,
             b2b_total_cost REAL DEFAULT 0,
+            referral_code TEXT,
+            partner_commission REAL DEFAULT 0,
             assigned_rider TEXT DEFAULT 'Partner (Primary Day Rider)',
             assigned_lab TEXT DEFAULT 'Accu Probe Diagnostics',
             status TEXT DEFAULT 'Pending',
@@ -51,7 +70,7 @@ def init_db():
         );
     ''')
 
-    # 3. Clinical LIMS Parameters Table
+    # 4. Clinical LIMS Parameters
     cur.execute('''
         CREATE TABLE IF NOT EXISTS test_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,24 +84,28 @@ def init_db():
         );
     ''')
 
-    # Seed default routine tests if table is empty
+    # Seed Default Data
     cur.execute('SELECT COUNT(*) FROM tests')
     if cur.fetchone()[0] == 0:
         default_catalog = [
-            ('Complete Blood Count (CBC)', 'Hematology', 'EDTA Whole Blood', 100.0, 250.0, 'Checks overall health, detects anemia and infections.', '6 hrs', 'Accu Probe', 0),
-            ('Thyroid Profile (T3, T4, TSH)', 'Endocrinology', 'Serum', 300.0, 800.0, 'Evaluates thyroid hormone production and metabolism.', '6 hrs', 'Accu Probe', 0),
-            ('Lipid Profile', 'Biochemistry', 'Serum', 220.0, 600.0, 'Measures cholesterol and triglyceride levels.', '8 hrs', 'Kanika Lab', 1),
-            ('Liver Function Test (LFT)', 'Biochemistry', 'Serum', 260.0, 700.0, 'Assesses hepatic enzymes, bilirubin, and proteins.', '8 hrs', 'Accu Probe', 0),
-            ('Vitamin D (25 OH)', 'Immunology', 'Serum', 450.0, 1200.0, 'Assesses vitamin D levels for bone and immunity.', '24 hrs', 'Unique Wellness', 0)
+            ('Complete Blood Count (CBC)', 'Hematology', 'EDTA Whole Blood', 100.0, 250.0, '6 hrs'),
+            ('Thyroid Profile (T3, T4, TSH)', 'Endocrinology', 'Serum', 300.0, 800.0, '6 hrs'),
+            ('Lipid Profile', 'Biochemistry', 'Serum', 220.0, 600.0, '8 hrs'),
+            ('Liver Function Test (LFT)', 'Biochemistry', 'Serum', 260.0, 700.0, '8 hrs')
         ]
-        cur.executemany('''
-            INSERT INTO tests (name, category, sample_type, b2b_cost, price, description, turnaround_time, partner_lab, fasting_required)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-        ''', default_catalog)
+        cur.executemany('INSERT INTO tests (name, category, sample_type, b2b_cost, price, turnaround_time) VALUES (?, ?, ?, ?, ?, ?);', default_catalog)
+
+    cur.execute('SELECT COUNT(*) FROM partners')
+    if cur.fetchone()[0] == 0:
+        # Create a demo partner (e.g., Dr. Verma)
+        cur.execute('''
+            INSERT INTO partners (name, clinic_name, referral_code, phone, password, margin_pool_pct)
+            VALUES ('Dr. Verma', 'Verma Clinic', 'VERMA30', '9999999999', 'partner123', 0.30);
+        ''')
 
     conn.commit()
     conn.close()
 
 if __name__ == '__main__':
     init_db()
-    print("Database schema successfully generated and seeded.")
+    print("Database schema upgraded with B2B2C Partner Engine.")
