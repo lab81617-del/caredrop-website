@@ -311,7 +311,20 @@ def admin_add_test():
     conn.close()
     return redirect(url_for('admin'))
 
-@app.route('/rider')
+@app.route('/rider/scan')
+@hq_required
+def rider_scan():
+    conn = get_db_connection()
+    # Fetch orders that still need a barcode
+    pending_orders = conn.execute("SELECT * FROM orders WHERE status = 'Pending' ORDER BY id ASC").fetchall()
+    conn.close()
+    return render_template('rider_scan.html', orders=pending_orders)
+
+@app.route('/rider/assignments')
+@hq_required
+def rider_assignments():
+    # For now, just route back to the dashboard to keep it a Single-Page App feel
+    return redirect(url_for('rider_dashboard'))
 @app.route('/rider_dashboard')
 @hq_required
 def rider_dashboard():
