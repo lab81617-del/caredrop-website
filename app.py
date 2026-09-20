@@ -8,10 +8,12 @@ from database import get_db_connection, init_db
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
 
-# Initialize DB
+# Initialize DB on startup
 init_db()
 
-# --- ACCESS CONTROL DECORATORS ---
+# -------------------------------------------------------------
+# ACCESS CONTROL DECORATORS
+# -------------------------------------------------------------
 def hq_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -28,48 +30,85 @@ def partner_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- SECURE LOGIN ROUTING ---
+# -------------------------------------------------------------
+# AUTHENTICATION ROUTING
+# -------------------------------------------------------------
 @app.route('/login', methods=['GET', 'POST'])
 def patient_login():
-    # Email/Phone OTP flow for Patients
-    return render_template('auth_patient.html') if os.path.exists('templates/auth_patient.html') else "Patient OTP Portal"
+    """Public patient login using Email/Phone OTP"""
+    return render_template('auth_patient.html')
+
+@app.route('/api/patient_login', methods=['POST'])
+def api_patient_login():
+    """Handles the OTP verification form submission"""
+    contact = request.form.get('contact')
+    # Mocking successful OTP verification for now
+    session['role'] = 'patient'
+    session['patient_contact'] = contact
+    return redirect(url_for('my_bookings'))
 
 @app.route('/hq/login', methods=['GET', 'POST'])
 def hq_login():
-    # Staff/Admin Login (Hidden from main site)
+    """Hidden login for Admin and Riders"""
     if request.method == 'POST':
-        # Hardcoded for setup; move to DB later
-        if request.form.get('password') == 'admin123':
+        password = request.form.get('password')
+        if password == 'admin123':
             session['role'] = 'admin'
             return redirect(url_for('admin'))
-        elif request.form.get('password') == 'rider123':
+        elif password == 'rider123':
             session['role'] = 'rider'
             return redirect(url_for('rider_dashboard'))
-    return render_template('auth_hq.html') if os.path.exists('templates/auth_hq.html') else "HQ Password Required"
+        flash("Invalid HQ Credentials")
+        
+    if os.path.exists('templates/auth_hq.html'):
+        return render_template('auth_hq.html')
+    # Fallback if template doesn't exist yet
+    return '''
+        <form method="post" style="padding: 50px; text-align: center; font-family: sans-serif;">
+            <h2>HQ Access</h2>
+            <input type="password" name="password" placeholder="Enter Admin/Rider Password" required style="padding: 10px;">
+            <button type="submit" style="padding: 10px;">Login</button>
+        </form>
+    '''
 
 @app.route('/partner/login', methods=['GET', 'POST'])
 def partner_login():
-    # Clinic/Pharmacy Login (Hidden from main site)
+    """Hidden login for Clinics and Pharmacies"""
     if request.method == 'POST':
-        code = request.form.get('referral_code')
+        code = request.form.get('referral_code', '').upper()
         pwd = request.form.get('password')
+        
         conn = get_db_connection()
         partner = conn.execute('SELECT * FROM partners WHERE referral_code = ? AND password = ?', (code, pwd)).fetchone()
         conn.close()
+        
         if partner:
             session['role'] = 'partner'
             session['partner_id'] = partner['id']
             session['referral_code'] = partner['referral_code']
             return redirect(url_for('partner_dashboard'))
         flash("Invalid Clinic Credentials")
-    return render_template('auth_partner.html') if os.path.exists('templates/auth_partner.html') else "Partner Login Required"
+        
+    if os.path.exists('templates/auth_partner.html'):
+        return render_template('auth_partner.html')
+    # Fallback if template doesn't exist yet
+    return '''
+        <form method="post" style="padding: 50px; text-align: center; font-family: sans-serif;">
+            <h2>Partner Portal Login</h2>
+            <input type="text" name="referral_code" placeholder="Referral Code (e.g. VERMA30)" required style="padding: 10px;"><br><br>
+            <input type="password" name="password" placeholder="Password" required style="padding: 10px;"><br><br>
+            <button type="submit" style="padding: 10px;">Login</button>
+        </form>
+    '''
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# --- PUBLIC SITE ---
+# -------------------------------------------------------------
+# PUBLIC SITE & CART
+# -------------------------------------------------------------
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -81,10 +120,10 @@ def tests_catalogue():
     conn.close()
     return render_template('tests.html', tests=tests)
 
-# --- CART API ---
 @app.route('/api/cart/add/<int:test_id>', methods=['POST'])
 def add_to_cart(test_id):
-    if 'cart' not in session: session['cart'] = []
+    if 'cart' not in session: 
+        session['cart'] = []
     if test_id not in session['cart']:
         session['cart'].append(test_id)
         session.modified = True
@@ -97,16 +136,20 @@ def remove_from_cart(test_id):
         session.modified = True
     return jsonify({'status': 'success', 'total_items': len(session.get('cart', []))})
 
-# --- CHECKOUT & PARTNER REFERRAL ENGINE ---
+# -------------------------------------------------------------
+# CHECKOUT & PARTNER REFERRAL ENGINE
+# -------------------------------------------------------------
 @app.route('/checkout')
 def checkout():
     cart_ids = session.get('cart', [])
     if not cart_ids:
         return redirect(url_for('tests_catalogue'))
+        
     conn = get_db_connection()
     placeholders = ','.join('?' for _ in cart_ids)
     items = conn.execute(f'SELECT * FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
     conn.close()
+    
     total_amount = sum(t['price'] for t in items)
     return render_template('checkout.html', items=items, total=total_amount)
 
@@ -120,7 +163,7 @@ def validate_promo():
     conn.close()
     
     if partner:
-        # Give patient a 10% discount from the partner's pool
+        # Patient gets 10% discount from the partner's pool
         discount = round(total * 0.10)
         new_total = total - discount
         return jsonify({'valid': True, 'discount': discount, 'new_total': new_total, 'partner': partner['clinic_name']})
@@ -135,32 +178,38 @@ def book_test():
     
     conn = get_db_connection()
     
-    # Calculate costs from session cart
-    cart_ids = session.get('cart', [])
-    placeholders = ','.join('?' for _ in cart_ids)
-    items = conn.execute(f'SELECT name, price, b2b_cost FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
+    # 1. Grab items from session cart (for patient checkout)
+    if 'cart' in session and session['cart']:
+        cart_ids = session['cart']
+        placeholders = ','.join('?' for _ in cart_ids)
+        items = conn.execute(f'SELECT name, price, b2b_cost FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
+        tests_requested = ", ".join([i['name'] for i in items])
+        gross_bill = sum(i['price'] for i in items)
+        b2b_cost = sum(i['b2b_cost'] for i in items)
+        session.pop('cart', None)
+    else:
+        # 2. Fallback for manual Admin/Partner fast-entry form
+        tests_requested = request.form.get('tests_requested')
+        gross_bill = float(request.form.get('total_bill', 0))
+        b2b_cost = gross_bill * 0.40 # Fallback 40% wholesale estimate
     
-    tests_requested = ", ".join([i['name'] for i in items])
-    gross_bill = sum(i['price'] for i in items)
-    b2b_cost = sum(i['b2b_cost'] for i in items)
-    
-    # Process Partner Commission & Discount
+    # Process Financials
     discount_given = 0
     partner_commission = 0
     
     if referral_code:
         partner = conn.execute('SELECT * FROM partners WHERE referral_code = ?', (referral_code,)).fetchone()
         if partner:
-            margin_pool = gross_bill * partner['margin_pool_pct'] # Total 30% available
+            margin_pool = gross_bill * partner['margin_pool_pct'] 
             
-            # Scenario A: Patient booked on public site using code (gets 10% discount)
-            if session.get('role') != 'partner':
+            # If patient is booking online, they get the 10% cut
+            if session.get('role') != 'partner' and session.get('role') != 'admin':
                 discount_given = round(gross_bill * 0.10)
                 
-            # Partner gets whatever is left from the pool
+            # Partner keeps the remainder of the pool
             partner_commission = margin_pool - discount_given
             
-            # Credit Partner Wallet
+            # Add to partner's ledger
             conn.execute('UPDATE partners SET wallet_balance = wallet_balance + ? WHERE referral_code = ?', (partner_commission, referral_code))
 
     total_bill = gross_bill - discount_given
@@ -174,14 +223,40 @@ def book_test():
     
     conn.commit()
     conn.close()
-    session.pop('cart', None)
     
-    # Redirect logic based on who booked it
+    # Smart Redirect based on who submitted the order
     if session.get('role') == 'partner':
         return redirect(url_for('partner_dashboard'))
-    return redirect(url_for('index'))
+    elif session.get('role') == 'admin':
+        return redirect(url_for('admin'))
+    
+    # Auto-login the patient to track their new order
+    session['role'] = 'patient'
+    session['patient_contact'] = phone
+    return redirect(url_for('my_bookings'))
 
-# --- PROTECTED ADMIN & RIDER ROUTES ---
+# -------------------------------------------------------------
+# PATIENT PORTAL
+# -------------------------------------------------------------
+@app.route('/my_bookings')
+def my_bookings():
+    if session.get('role') != 'patient':
+        return redirect(url_for('patient_login'))
+        
+    contact = session.get('patient_contact')
+    conn = get_db_connection()
+    bookings = conn.execute('SELECT * FROM orders WHERE phone = ? OR address LIKE ? ORDER BY id DESC', (contact, f'%{contact}%')).fetchall()
+    
+    if not bookings:
+        # Fallback for demo visualization
+        bookings = conn.execute('SELECT * FROM orders ORDER BY id DESC LIMIT 3').fetchall()
+        
+    conn.close()
+    return render_template('my_bookings.html', bookings=bookings)
+
+# -------------------------------------------------------------
+# PROTECTED STAFF PORTALS
+# -------------------------------------------------------------
 @app.route('/admin')
 @hq_required
 def admin():
@@ -192,7 +267,26 @@ def admin():
     conn.close()
     return render_template('admin.html', orders=orders, tests=tests, metrics=metrics)
 
+@app.route('/admin/add_test', methods=['POST'])
+@hq_required
+def admin_add_test():
+    name = request.form.get('name')
+    category = request.form.get('category')
+    sample_type = request.form.get('sample_type')
+    b2b_cost = float(request.form.get('b2b_cost') or 0.0)
+    retail_price = float(request.form.get('retail_price') or 0.0)
+    
+    conn = get_db_connection()
+    conn.execute('''
+        INSERT INTO tests (name, category, sample_type, b2b_cost, price)
+        VALUES (?, ?, ?, ?, ?);
+    ''', (name, category, sample_type, b2b_cost, retail_price))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin'))
+
 @app.route('/rider')
+@app.route('/rider_dashboard')
 @hq_required
 def rider_dashboard():
     conn = get_db_connection()
@@ -201,7 +295,27 @@ def rider_dashboard():
     conn.close()
     return render_template('rider_dashboard.html', orders=orders, cash_collected=cash_collected)
 
-# --- PARTNER PORTAL ---
+@app.route('/api/rider/complete', methods=['POST'])
+@hq_required
+def rider_complete():
+    order_id = request.form.get('order_id')
+    barcode = request.form.get('barcode')
+    temp_log = request.form.get('temperature')
+    payment_mode = request.form.get('payment_mode')
+
+    conn = get_db_connection()
+    conn.execute('''
+        UPDATE orders 
+        SET barcode = ?, temp_log = ?, payment_mode = ?, status = 'Sample Collected', is_paid = 1
+        WHERE id = ?;
+    ''', (barcode, temp_log, payment_mode, order_id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('rider_dashboard'))
+
+# -------------------------------------------------------------
+# PARTNER PORTAL (Clinics & Pharmacies)
+# -------------------------------------------------------------
 @app.route('/partner/dashboard')
 @partner_required
 def partner_dashboard():
@@ -212,6 +326,9 @@ def partner_dashboard():
     conn.close()
     return render_template('partner_dashboard.html', partner=partner, orders=orders)
 
+# -------------------------------------------------------------
+# DYNAMIC PDF LIMS REPORT
+# -------------------------------------------------------------
 @app.route('/lims_report/<int:order_id>')
 def lims_report(order_id):
     conn = get_db_connection()
