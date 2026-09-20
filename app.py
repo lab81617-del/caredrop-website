@@ -215,19 +215,39 @@ def book_test():
     return redirect(url_for('my_bookings'))
 
 # --- ADMIN DISPATCH & MANAGEMENT ---
+# --- ADMIN ROUTING (Multi-Page Structure) ---
 @app.route('/admin')
 @hq_required
 def admin():
     conn = get_db_connection()
     orders = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
-    tests = conn.execute('SELECT * FROM tests WHERE is_active = 1 ORDER BY id DESC').fetchall()
-    # Fetch parameters to display in catalog
-    test_params = conn.execute('SELECT * FROM test_parameters').fetchall()
-    partners = conn.execute('SELECT * FROM partners ORDER BY id DESC').fetchall()
-    metrics = conn.execute('SELECT COALESCE(SUM(total_bill), 0) as total_rev, COALESCE(SUM(b2b_total_cost), 0) as total_b2b FROM orders;').fetchone()
     conn.close()
-    return render_template('admin.html', orders=orders, tests=tests, test_params=test_params, partners=partners, metrics=metrics)
+    return render_template('admin.html', orders=orders)
 
+@app.route('/admin/pos')
+@hq_required
+def admin_pos():
+    conn = get_db_connection()
+    tests = conn.execute('SELECT * FROM tests WHERE is_active = 1 ORDER BY name ASC').fetchall()
+    conn.close()
+    return render_template('admin_pos.html', tests=tests)
+
+@app.route('/admin/partners')
+@hq_required
+def admin_partners():
+    conn = get_db_connection()
+    partners = conn.execute('SELECT * FROM partners ORDER BY id DESC').fetchall()
+    conn.close()
+    return render_template('admin_partners.html', partners=partners)
+
+@app.route('/admin/catalog')
+@hq_required
+def admin_catalog():
+    conn = get_db_connection()
+    tests = conn.execute('SELECT * FROM tests WHERE is_active = 1 ORDER BY id DESC').fetchall()
+    test_params = conn.execute('SELECT * FROM test_parameters').fetchall()
+    conn.close()
+    return render_template('admin_catalog.html', tests=tests, test_params=test_params)
 @app.route('/admin/assign_rider/<int:order_id>', methods=['POST'])
 @hq_required
 def admin_assign_rider(order_id):
