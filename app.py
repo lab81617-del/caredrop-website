@@ -12,12 +12,23 @@ from database import get_db_connection, init_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
-init_db()
 
-# --- EMAIL ENGINE ---
+# Initialize DB and ensure email column exists
+init_db()
+try:
+    conn = get_db_connection()
+    conn.execute("ALTER TABLE orders ADD COLUMN email TEXT")
+    conn.commit()
+    conn.close()
+except sqlite3.OperationalError:
+    pass # Column already exists
+
+# -------------------------------------------------------------
+# EMAIL ENGINE
+# -------------------------------------------------------------
 def send_email(to_email, subject, body):
     sender = os.environ.get('MAIL_USERNAME', 'caredrop.ynr@gmail.com')
-    password = os.environ.get('MAIL_PASSWORD', '') # Must be a Google App Password
+    password = os.environ.get('MAIL_PASSWORD', '') 
     
     if not password or not to_email:
         print(f"Skipping email to {to_email} (Credentials or Email missing)")
@@ -38,24 +49,31 @@ def send_email(to_email, subject, body):
     except Exception as e:
         print(f"Email failed to send: {e}")
 
-# --- ACCESS DECORATORS ---
+# -------------------------------------------------------------
+# ACCESS CONTROL DECORATORS
+# -------------------------------------------------------------
 def hq_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') not in ['admin', 'rider']: return redirect(url_for('hq_login'))
+        if session.get('role') not in ['admin', 'rider']:
+            return redirect(url_for('hq_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 def partner_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') != 'partner': return redirect(url_for('partner_login'))
+        if session.get('role') != 'partner':
+            return redirect(url_for('partner_login'))
         return f(*args, **kwargs)
     return decorated_function
 
-# --- AUTH ---
+# -------------------------------------------------------------
+# AUTHENTICATION
+# -------------------------------------------------------------
 @app.route('/login', methods=['GET', 'POST'])
-def patient_login(): return render_template('auth_patient.html')
+def patient_login():
+    return render_template('auth_patient.html')
 
 @app.route('/api/patient_login', methods=['POST'])
 def api_patient_login():
@@ -75,7 +93,9 @@ def hq_login():
             session['role'] = 'rider'
             return redirect(url_for('rider_dashboard'))
         flash("Invalid HQ Credentials")
-    return render_template('auth_hq.html') if os.path.exists('templates/auth_hq.html') else "HQ Login Missing"
+    if os.path.exists('templates/auth_hq.html'):
+        return render_template('auth_hq.html')
+    return "HQ Login Missing"
 
 @app.route('/partner/login', methods=['GET', 'POST'])
 def partner_login():
@@ -91,16 +111,21 @@ def partner_login():
             session['referral_code'] = partner['referral_code']
             return redirect(url_for('partner_dashboard'))
         flash("Invalid Clinic Credentials")
-    return render_template('auth_partner.html') if os.path.exists('templates/auth_partner.html') else "Partner Login Missing"
+    if os.path.exists('templates/auth_partner.html'):
+        return render_template('auth_partner.html')
+    return "Partner Login Missing"
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# --- PUBLIC & CART ---
+# -------------------------------------------------------------
+# PUBLIC SITE & CART
+# -------------------------------------------------------------
 @app.route('/')
-def index(): return render_template('index.html')
+def index():
+    return render_template('index.html')
 
 @app.route('/tests')
 def tests_catalogue():
@@ -124,6 +149,9 @@ def remove_from_cart(test_id):
         session.modified = True
     return jsonify({'status': 'success', 'total_items': len(session.get('cart', []))})
 
+# -------------------------------------------------------------
+# CHECKOUT & BOOKING ENGINE
+# -------------------------------------------------------------
 @app.route('/checkout')
 def checkout():
     cart_ids = session.get('cart', [])
@@ -132,7 +160,8 @@ def checkout():
     placeholders = ','.join('?' for _ in cart_ids)
     items = conn.execute(f'SELECT * FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
     conn.close()
-    return render_template('checkout.html', items=items, total=sum(t['price'] for t in items))
+    total_amount = sum(t['price'] for t in items)
+    return render_template('checkout.html', items=items, total=total_amount)
 
 @app.route('/api/validate_promo', methods=['POST'])
 def validate_promo():
@@ -146,7 +175,6 @@ def validate_promo():
         return jsonify({'valid': True, 'discount': discount, 'new_total': total - discount, 'partner': partner['clinic_name']})
     return jsonify({'valid': False})
 
-# --- BOOKING & LIMS LOGIC ---
 @app.route('/book_test', methods=['POST'])
 def book_test():
     full_name = request.form.get('full_name')
@@ -158,6 +186,7 @@ def book_test():
     conn = get_db_connection()
     test_ids = []
     
+    # Check if this is a web checkout (uses session cart) or POS checkout (uses form data)
     if 'cart' in session and session['cart'] and request.form.get('tests_requested') is None:
         cart_ids = session['cart']
         placeholders = ','.join('?' for _ in cart_ids)
@@ -168,9 +197,16 @@ def book_test():
         b2b_cost = sum(i['b2b_cost'] for i in items)
         session.pop('cart', None)
     else:
+        # Admin POS Booking
         tests_requested = request.form.get('tests_requested')
         gross_bill = float(request.form.get('total_bill', 0))
-        b2b_cost = gross_bill * 0.40
+        b2b_cost = gross_bill * 0.40 # Fallback margin calculation
+        # Retrieve test IDs by matching names from the POS submission
+        test_names = [name.strip() for name in tests_requested.split(',')]
+        if test_names:
+            placeholders = ','.join('?' for _ in test_names)
+            items = conn.execute(f'SELECT id FROM tests WHERE name IN ({placeholders})', test_names).fetchall()
+            test_ids = [i['id'] for i in items]
     
     discount_given = 0
     partner_commission = 0
@@ -178,7 +214,8 @@ def book_test():
         partner = conn.execute('SELECT * FROM partners WHERE referral_code = ?', (referral_code,)).fetchone()
         if partner:
             margin_pool = gross_bill * partner['margin_pool_pct'] 
-            if session.get('role') not in ['partner', 'admin']: discount_given = round(gross_bill * 0.10)
+            if session.get('role') not in ['partner', 'admin']:
+                discount_given = round(gross_bill * 0.10)
             partner_commission = margin_pool - discount_given
             conn.execute('UPDATE partners SET wallet_balance = wallet_balance + ? WHERE referral_code = ?', (partner_commission, referral_code))
 
@@ -194,7 +231,7 @@ def book_test():
     
     order_id = cur.lastrowid
     
-    # 🌟 CORE LIMS UPGRADE: Fetch test parameters and assign to patient order
+    # Generate empty LIMS parameter rows for this specific order
     if test_ids:
         placeholders = ','.join('?' for _ in test_ids)
         params = conn.execute(f'SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id IN ({placeholders})', test_ids).fetchall()
@@ -204,18 +241,20 @@ def book_test():
     conn.commit()
     conn.close()
     
-    # Send Automated Emails
+    # Trigger Emails
     send_email(email, "CareDrop Booking Confirmed", f"<h3>Hello {full_name},</h3><p>Your test booking ({tests_requested}) is confirmed. Our rider will contact you shortly.</p>")
     send_email(os.environ.get('MAIL_USERNAME', ''), f"New Order: {order_code}", f"<p>Order {order_code} received from {full_name}. Value: Rs {total_bill}</p>")
     
     if session.get('role') == 'admin': return redirect(url_for('admin'))
     if session.get('role') == 'partner': return redirect(url_for('partner_dashboard'))
+    
     session['role'] = 'patient'
     session['patient_contact'] = phone
     return redirect(url_for('my_bookings'))
 
-# --- ADMIN DISPATCH & MANAGEMENT ---
-# --- ADMIN ROUTING (Multi-Page Structure) ---
+# -------------------------------------------------------------
+# ADMIN DASHBOARD (MULTI-PAGE ARCHITECTURE)
+# -------------------------------------------------------------
 @app.route('/admin')
 @hq_required
 def admin():
@@ -248,6 +287,8 @@ def admin_catalog():
     test_params = conn.execute('SELECT * FROM test_parameters').fetchall()
     conn.close()
     return render_template('admin_catalog.html', tests=tests, test_params=test_params)
+
+# --- ADMIN ACTIONS ---
 @app.route('/admin/assign_rider/<int:order_id>', methods=['POST'])
 @hq_required
 def admin_assign_rider(order_id):
@@ -273,7 +314,7 @@ def admin_add_partner():
         conn.commit()
     except Exception: pass
     conn.close()
-    return redirect(url_for('admin'))
+    return redirect(url_for('admin_partners'))
 
 @app.route('/admin/delete_partner/<int:p_id>')
 @hq_required
@@ -282,7 +323,7 @@ def admin_delete_partner(p_id):
     conn.execute('DELETE FROM partners WHERE id = ?', (p_id,))
     conn.commit()
     conn.close()
-    return redirect(url_for('admin'))
+    return redirect(url_for('admin_partners'))
 
 @app.route('/admin/add_test', methods=['POST'])
 @hq_required
@@ -294,7 +335,16 @@ def admin_add_test():
     conn.execute('INSERT INTO tests (name, category, b2b_cost, price) VALUES (?, ?, ?, ?)', (name, 'General', b2b_cost, price))
     conn.commit()
     conn.close()
-    return redirect(url_for('admin'))
+    return redirect(url_for('admin_catalog'))
+
+@app.route('/admin/delete_test/<int:t_id>')
+@hq_required
+def admin_delete_test(t_id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM tests WHERE id = ?', (t_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin_catalog'))
 
 @app.route('/admin/add_parameter', methods=['POST'])
 @hq_required
@@ -307,9 +357,31 @@ def admin_add_parameter():
     conn.execute("INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (?, ?, ?, ?)", (test_id, param_name, unit, ref_range))
     conn.commit()
     conn.close()
-    return redirect(url_for('admin'))
+    return redirect(url_for('admin_catalog'))
 
-# --- RIDER LOGISTICS ---
+@app.route('/admin/bulk_upload_tests', methods=['POST'])
+@hq_required
+def admin_bulk_upload():
+    file = request.files.get('file')
+    if file and file.filename.endswith('.csv'):
+        conn = get_db_connection()
+        try:
+            stream = file.stream.read().decode("utf-8").splitlines()
+            reader = csv.reader(stream)
+            next(reader, None) # skip header
+            for row in reader:
+                if len(row) >= 4:
+                    conn.execute('INSERT INTO tests (name, category, b2b_cost, price) VALUES (?, ?, ?, ?)', (row[0], row[1], float(row[2]), float(row[3])))
+            conn.commit()
+        except Exception as e:
+            print(e)
+        finally:
+            conn.close()
+    return redirect(url_for('admin_catalog'))
+
+# -------------------------------------------------------------
+# RIDER APP LOGISTICS
+# -------------------------------------------------------------
 @app.route('/rider')
 @app.route('/rider_dashboard')
 @hq_required
@@ -344,10 +416,11 @@ def rider_complete():
     conn.close()
     
     send_email(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected and secured with barcode {barcode}. It is en route to our NABL partner lab.</p>")
-    
     return redirect(url_for('rider_dashboard'))
 
-# --- LIMS REPORT GENERATION & SUBMISSION ---
+# -------------------------------------------------------------
+# LIMS REPORT ENGINE
+# -------------------------------------------------------------
 @app.route('/lims_report/<int:order_id>')
 def lims_report(order_id):
     conn = get_db_connection()
@@ -370,13 +443,13 @@ def submit_lab_results(order_id):
     conn.commit()
     conn.close()
     
-    # Notify Patient PDF is ready
     report_link = url_for('patient_login', _external=True)
     send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic report is ready. Please log into your portal to download the securely signed PDF: <a href='{report_link}'>Download Report</a></p>")
-    
     return redirect(f'/lims_report/{order_id}')
 
-# --- PATIENT & PARTNER DASHBOARDS ---
+# -------------------------------------------------------------
+# DASHBOARDS
+# -------------------------------------------------------------
 @app.route('/my_bookings')
 def my_bookings():
     if session.get('role') != 'patient': return redirect(url_for('patient_login'))
