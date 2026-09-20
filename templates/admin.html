@@ -16,9 +16,11 @@
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm">
-                    <i class="fa-solid fa-plus"></i>
+                    <i class="fa-solid fa-user-shield" if role == 'admin' else "fa-solid fa-desktop"></i>
                 </div>
-                <span class="text-base font-black tracking-tight">CareDrop HQ</span>
+                <div>
+                    <span class="text-base font-black tracking-tight block leading-none">CareDrop {% if role == 'reception' %}Reception{% else %}HQ{% endif %}</span>
+                </div>
             </div>
             <a href="/logout" class="text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">Logout</a>
         </div>
@@ -26,20 +28,23 @@
 
     <main class="max-w-7xl mx-auto px-4 py-6">
         
-        <!-- Navigation Buttons -->
+        <!-- Navigation Buttons (Restricted by Role) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <a href="/admin/pos" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-brand-600 transition group">
                 <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-lg group-hover:bg-blue-600 group-hover:text-white transition"><i class="fa-solid fa-desktop"></i></div>
-                <div><span class="block font-black text-sm text-navy-900">POS Booking</span><span class="text-[10px] text-slate-500">Book tests & generate bills</span></div>
+                <div><span class="block font-black text-sm text-navy-900">POS Booking</span><span class="text-[10px] text-slate-500">Walk-in reception booking</span></div>
             </a>
+            
+            {% if role == 'admin' %}
             <a href="/admin/partners" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-brand-600 transition group">
                 <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-lg group-hover:bg-purple-600 group-hover:text-white transition"><i class="fa-solid fa-handshake"></i></div>
-                <div><span class="block font-black text-sm text-navy-900">Partner Network</span><span class="text-[10px] text-slate-500">Manage clinics & commissions</span></div>
+                <div><span class="block font-black text-sm text-navy-900">Partner Network</span><span class="text-[10px] text-slate-500">Manage clinics & ledgers</span></div>
             </a>
             <a href="/admin/catalog" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-brand-600 transition group">
                 <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg group-hover:bg-amber-600 group-hover:text-white transition"><i class="fa-solid fa-dna"></i></div>
-                <div><span class="block font-black text-sm text-navy-900">Test Catalog</span><span class="text-[10px] text-slate-500">Add tests & LIMS parameters</span></div>
+                <div><span class="block font-black text-sm text-navy-900">Test Catalog</span><span class="text-[10px] text-slate-500">Configure LIMS parameters</span></div>
             </a>
+            {% endif %}
         </div>
 
         <!-- Live Dispatch Board -->
@@ -56,7 +61,7 @@
                         {% for o in orders %}
                         <tr class="hover:bg-slate-50 transition align-top">
                             <td class="py-4 px-6"><span class="font-black text-navy-900 block text-sm">{{ o.order_code }}</span><span class="inline-block mt-1 bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[9px]">{{ o.barcode or 'No Barcode' }}</span></td>
-                            <td class="py-4 px-6"><span class="font-bold text-slate-900 block text-sm">{{ o.full_name }}</span><span class="text-[10px] text-slate-500 block"><i class="fa-solid fa-envelope text-slate-400 mr-1"></i>{{ o.email }}</span></td>
+                            <td class="py-4 px-6"><span class="font-bold text-slate-900 block text-sm">{{ o.full_name }}</span><span class="text-[10px] font-bold text-slate-400 block">{{ o.age }} Yrs / {{ o.gender }}</span></td>
                             <td class="py-4 px-6 text-slate-800">{{ o.tests_requested }}</td>
                             <td class="py-4 px-6">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-black tracking-wide inline-block mb-2 {% if o.status == 'Pending' %} bg-amber-100 text-amber-800 {% elif o.status == 'Sample Collected' %} bg-blue-100 text-blue-800 {% else %} bg-emerald-100 text-emerald-800 {% endif %}">{{ o.status }}</span>
@@ -68,6 +73,11 @@
                             <td class="py-4 px-6"><span class="font-black text-slate-900 text-sm block">₹{{ o.total_bill|int }}</span><span class="text-[9px] {% if o.is_paid %}text-emerald-600 font-bold{% else %}text-slate-400{% endif %}">{{ 'Paid' if o.is_paid else 'Unpaid' }}</span></td>
                             <td class="py-4 px-6 text-right">
                                 <a href="/lims_report/{{ o.id }}" target="_blank" class="inline-block bg-brand-50 border border-brand-200 text-brand-700 hover:bg-brand-600 hover:text-white px-4 py-2 rounded-lg text-[10px] font-bold transition">{% if o.status != 'Completed' %}Enter Results{% else %}View PDF{% endif %}</a>
+                                
+                                <!-- REOPEN BUTTON -->
+                                {% if o.status == 'Completed' %}
+                                <a href="/admin/reopen_order/{{ o.id }}" onclick="return confirm('Reopen this report? This will un-finalize the PDF.')" class="block mt-2 text-[9px] font-bold text-amber-500 hover:text-amber-700"><i class="fa-solid fa-unlock text-[8px]"></i> Edit Report</a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
