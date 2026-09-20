@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Patient Login | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+        <a href="/" class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white shadow-sm">
+            <i class="fa-solid fa-plus text-sm"></i>
+        </a>
+        <span class="text-lg font-black tracking-tight text-navy-900 block leading-none">CareDrop</span>
+    </header>
+
+    <main class="flex-1 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-8 relative overflow-hidden">
+            <!-- Decorative background -->
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-brand-50 rounded-full blur-2xl z-0"></div>
+            
+            <div class="relative z-10">
+                <h1 class="text-2xl font-black text-navy-900 mb-1">Welcome Back</h1>
+                <p class="text-xs text-slate-500 mb-8">Access your diagnostic reports and booking history.</p>
+
+                <!-- Step 1: Request OTP -->
+                <div id="step-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Email Address or Mobile Number</label>
+                    <input type="text" id="contact_input" placeholder="e.g. 9876543210 or name@email.com" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-brand-600 outline-none transition mb-4">
+                    
+                    <button type="button" onclick="sendOTP()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-sm tracking-wide">
+                        Send Secure OTP <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <!-- Step 2: Verify OTP (Hidden initially) -->
+                <form id="step-2" action="/api/patient_login" method="POST" class="hidden">
+                    <input type="hidden" name="contact" id="hidden_contact">
+                    
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Enter 4-Digit OTP</label>
+                        <button type="button" onclick="editContact()" class="text-[10px] font-bold text-brand-600 hover:underline">Edit Number</button>
+                    </div>
+                    
+                    <div class="flex gap-3 mb-6">
+                        <input type="text" maxlength="1" class="w-1/4 h-14 text-center text-xl font-black bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-600 outline-none">
+                        <input type="text" maxlength="1" class="w-1/4 h-14 text-center text-xl font-black bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-600 outline-none">
+                        <input type="text" maxlength="1" class="w-1/4 h-14 text-center text-xl font-black bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-600 outline-none">
+                        <input type="text" maxlength="1" class="w-1/4 h-14 text-center text-xl font-black bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-600 outline-none">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-sm tracking-wide">
+                        Verify & Access Records <i class="fa-solid fa-shield-halved ml-1"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function sendOTP() {
+            const input = document.getElementById('contact_input').value;
+            if(!input) return alert('Please enter your email or phone.');
+            
+            document.getElementById('hidden_contact').value = input;
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            
+            // Auto-focus first OTP box
+            document.querySelector('#step-2 input[type="text"]').focus();
+        }
+
+        function editContact() {
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-1').classList.remove('hidden');
+        }
+
+        // Auto-advance OTP inputs
+        const otpInputs = document.querySelectorAll('#step-2 input[type="text"]');
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                if(input.value.length === 1 && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if(e.key === 'Backspace' && !input.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
