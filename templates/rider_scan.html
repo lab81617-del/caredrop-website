@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scan Vial | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Live Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: { 600: '#0d9488', 700: '#0f766e' }, navy: { 900: '#0b192c', 950: '#060d17' } } } }
+        }
+    </script>
+</head>
+<body class="bg-navy-950 text-white font-sans antialiased h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="px-4 py-4 flex items-center justify-between z-10 relative bg-navy-950">
+        <a href="/rider" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <span class="text-sm font-black tracking-widest uppercase">Link Specimen</span>
+        <div class="w-10 h-10"></div> <!-- Spacer for centering -->
+    </header>
+
+    <main class="flex-1 flex flex-col relative">
+        
+        <!-- Camera Viewfinder -->
+        <div class="flex-1 relative overflow-hidden bg-black flex items-center justify-center">
+            <div id="reader" class="w-full h-full object-cover"></div>
+            
+            <!-- Target Overlay Graphic -->
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div class="w-64 h-32 border-2 border-brand-500 rounded-xl relative shadow-[0_0_0_9999px_rgba(6,13,23,0.8)]">
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-brand-400 rounded-tl-lg -mt-1 -ml-1"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-brand-400 rounded-tr-lg -mt-1 -mr-1"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-brand-400 rounded-bl-lg -mb-1 -ml-1"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-brand-400 rounded-br-lg -mb-1 -mr-1"></div>
+                    
+                    <!-- Scanning laser animation -->
+                    <div class="w-full h-0.5 bg-red-500 absolute top-1/2 shadow-[0_0_8px_rgba(239,68,68,1)] animate-[ping_2s_ease-in-out_infinite]"></div>
+                </div>
+            </div>
+            
+            <p class="absolute bottom-10 text-xs font-bold text-slate-400 tracking-wider text-center w-full">Point camera at vial barcode</p>
+        </div>
+
+        <!-- Manual Entry / Link Form (Slides up when barcode is detected) -->
+        <div id="action-panel" class="bg-white rounded-t-3xl text-slate-800 p-6 z-20 shadow-2xl transition-transform duration-300 transform translate-y-0">
+            <h3 class="text-sm font-black text-navy-900 uppercase tracking-wider mb-4">Log Collection</h3>
+            
+            <form action="/api/rider/complete" method="POST" class="space-y-4">
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Scanned Barcode</label>
+                    <input type="text" name="barcode" id="barcode-input" required placeholder="Awaiting Scan..." class="w-full px-4 py-3 bg-slate-50 border-2 border-brand-200 rounded-xl text-lg font-mono font-black text-brand-700 focus:border-brand-600 outline-none uppercase transition">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Select Patient Order</label>
+                    <select name="order_id" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-navy-900 focus:ring-2 focus:ring-brand-600 outline-none">
+                        <option value="" disabled selected>-- Select Pending Order --</option>
+                        {% for o in orders %}
+                        <option value="{{ o.id }}">{{ o.order_code }} - {{ o.full_name }} (₹{{ o.total_bill|int }})</option>
+                        {% else %}
+                        <option value="" disabled>No pending orders available.</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <select name="temperature" class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none">
+                        <option value="2-8°C (Optimal)">2-8°C Temp</option>
+                        <option value="Ambient">Ambient</option>
+                    </select>
+                    <select name="payment_mode" class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none">
+                        <option value="UPI">UPI Payment</option>
+                        <option value="Cash">Cash Collected</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all text-sm uppercase tracking-widest mt-2">
+                    <i class="fa-solid fa-link"></i> Link & Save
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // Initialize HTML5 Camera Barcode Scanner
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop scanning and fill the input box
+            document.getElementById('barcode-input').value = decodedText;
+            
+            // Give auditory/visual feedback (optional)
+            if (navigator.vibrate) navigator.vibrate(200);
+            document.getElementById('barcode-input').classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+            
+            // html5QrcodeScanner.clear(); // Optionally stop camera after scan
+        }
+
+        function onScanFailure(error) {
+            // Keep scanning, ignore frame errors
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: {width: 250, height: 100}, aspectRatio: 1.0 },
+            /* verbose= */ false);
+        
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    </script>
+</body>
+</html>
