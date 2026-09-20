@@ -1,56 +1,57 @@
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-DB_FILE = os.path.join(os.path.dirname(__file__), 'caredrop.db')
+# Uses Supabase URL from Render Environment Variables
+DB_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
+    if not DB_URL:
+        raise ValueError("DATABASE_URL environment variable is missing. Please add your Supabase URL.")
+    conn = psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
     return conn
 
 def init_db():
+    if not DB_URL:
+        return
+        
     conn = get_db_connection()
     cur = conn.cursor()
     
     cur.execute('''CREATE TABLE IF NOT EXISTS tests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, sample_type TEXT, b2b_cost REAL DEFAULT 0, price REAL NOT NULL, is_active BOOLEAN DEFAULT 1
+        id SERIAL PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, sample_type TEXT, b2b_cost REAL DEFAULT 0, price REAL NOT NULL, is_active BOOLEAN DEFAULT TRUE
     );''')
 
-    # NEW: Test Parameters Dictionary
     cur.execute('''CREATE TABLE IF NOT EXISTS test_parameters (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, test_id INTEGER, param_name TEXT NOT NULL, unit TEXT, ref_range TEXT,
-        FOREIGN KEY(test_id) REFERENCES tests(id)
+        id SERIAL PRIMARY KEY, test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE, param_name TEXT NOT NULL, unit TEXT, ref_range TEXT
     );''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS partners (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, clinic_name TEXT, referral_code TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL, margin_pool_pct REAL DEFAULT 0.30, wallet_balance REAL DEFAULT 0.0, is_active BOOLEAN DEFAULT 1
+        id SERIAL PRIMARY KEY, name TEXT NOT NULL, clinic_name TEXT, referral_code TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL, margin_pool_pct REAL DEFAULT 0.30, is_active BOOLEAN DEFAULT TRUE
     );''')
 
+    # Added Age, Gender, completed_at, and is_commission_paid
     cur.execute('''CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, order_code TEXT UNIQUE, full_name TEXT NOT NULL, phone TEXT NOT NULL, email TEXT, address TEXT NOT NULL, tests_requested TEXT NOT NULL, gross_bill REAL NOT NULL, discount_given REAL DEFAULT 0, total_bill REAL NOT NULL, b2b_total_cost REAL DEFAULT 0, referral_code TEXT, partner_commission REAL DEFAULT 0, assigned_rider TEXT DEFAULT 'Unassigned', status TEXT DEFAULT 'Pending', barcode TEXT, temp_log TEXT, payment_mode TEXT DEFAULT 'Cash', is_paid BOOLEAN DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id SERIAL PRIMARY KEY, order_code TEXT UNIQUE, full_name TEXT NOT NULL, age TEXT, gender TEXT, phone TEXT NOT NULL, email TEXT NOT NULL, address TEXT NOT NULL, tests_requested TEXT NOT NULL, gross_bill REAL NOT NULL, discount_given REAL DEFAULT 0, total_bill REAL NOT NULL, b2b_total_cost REAL DEFAULT 0, referral_code TEXT, partner_commission REAL DEFAULT 0, is_commission_paid BOOLEAN DEFAULT FALSE, assigned_rider TEXT DEFAULT 'Unassigned', status TEXT DEFAULT 'Pending', barcode TEXT, temp_log TEXT, payment_mode TEXT DEFAULT 'Cash', is_paid BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, completed_at TIMESTAMP
     );''')
 
-    # UPGRADED: Patient Test Results
     cur.execute('''CREATE TABLE IF NOT EXISTS test_results (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER, parameter_name TEXT NOT NULL, observed_value TEXT DEFAULT '', units TEXT, ref_interval TEXT,
-        FOREIGN KEY (order_id) REFERENCES orders(id)
+        id SERIAL PRIMARY KEY, order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE, parameter_name TEXT NOT NULL, observed_value TEXT DEFAULT '', units TEXT, ref_interval TEXT
     );''')
 
-    # Seed Default Data so it works immediately
+    # Seed Admin/Reception test data if empty
     cur.execute('SELECT COUNT(*) FROM tests')
-    if cur.fetchone()[0] == 0:
-        cur.execute("INSERT INTO tests (name, category, sample_type, b2b_cost, price) VALUES ('Complete Blood Count (CBC)', 'Hematology', 'EDTA', 100, 250);")
-        test_id = cur.lastrowid
-        # Seed the CBC parameters
+    if cur.fetchone()['count'] == 0:
+        cur.execute("INSERT INTO tests (name, category, sample_type, b2b_cost, price) VALUES ('Complete Blood Count (CBC)', 'Hematology', 'EDTA', 100, 250) RETURNING id;")
+        test_id = cur.fetchone()['id']
         params = [
             (test_id, 'Hemoglobin (Hb)', 'g/dL', '13.0 - 17.0'),
-            (test_id, 'Total Leukocyte Count (TLC)', 'cells/cumm', '4,000 - 10,000'),
-            (test_id, 'Packed Cell Volume (PCV)', '%', '40.0 - 50.0'),
-            (test_id, 'Platelet Count', 'Lakhs/cumm', '1.50 - 4.50')
+            (test_id, 'Total Leukocyte Count (TLC)', 'cells/cumm', '4000 - 10000')
         ]
-        cur.executemany("INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (?, ?, ?, ?);", params)
+        cur.executemany("INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s);", params)
 
     conn.commit()
+    cur.close()
     conn.close()
 
 if __name__ == '__main__':
