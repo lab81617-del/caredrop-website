@@ -1,6 +1,9 @@
 import os
 import random
 import csv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
@@ -9,42 +12,50 @@ from database import get_db_connection, init_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
-
-# Initialize DB and ensure 'email' column exists for receipts
 init_db()
-try:
-    conn = get_db_connection()
-    conn.execute("ALTER TABLE orders ADD COLUMN email TEXT")
-    conn.commit()
-    conn.close()
-except sqlite3.OperationalError:
-    pass # Column already exists
 
-# -------------------------------------------------------------
-# ACCESS CONTROL DECORATORS
-# -------------------------------------------------------------
+# --- EMAIL ENGINE ---
+def send_email(to_email, subject, body):
+    sender = os.environ.get('MAIL_USERNAME', 'caredrop.ynr@gmail.com')
+    password = os.environ.get('MAIL_PASSWORD', '') # Must be a Google App Password
+    
+    if not password or not to_email:
+        print(f"Skipping email to {to_email} (Credentials or Email missing)")
+        return
+
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"CareDrop Diagnostics <{sender}>"
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'html'))
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender, password)
+        server.send_message(msg)
+        server.quit()
+    except Exception as e:
+        print(f"Email failed to send: {e}")
+
+# --- ACCESS DECORATORS ---
 def hq_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') not in ['admin', 'rider']:
-            return redirect(url_for('hq_login'))
+        if session.get('role') not in ['admin', 'rider']: return redirect(url_for('hq_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 def partner_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') != 'partner':
-            return redirect(url_for('partner_login'))
+        if session.get('role') != 'partner': return redirect(url_for('partner_login'))
         return f(*args, **kwargs)
     return decorated_function
 
-# -------------------------------------------------------------
-# AUTHENTICATION ROUTING
-# -------------------------------------------------------------
+# --- AUTH ---
 @app.route('/login', methods=['GET', 'POST'])
-def patient_login():
-    return render_template('auth_patient.html')
+def patient_login(): return render_template('auth_patient.html')
 
 @app.route('/api/patient_login', methods=['POST'])
 def api_patient_login():
@@ -64,9 +75,7 @@ def hq_login():
             session['role'] = 'rider'
             return redirect(url_for('rider_dashboard'))
         flash("Invalid HQ Credentials")
-    if os.path.exists('templates/auth_hq.html'):
-        return render_template('auth_hq.html')
-    return "HQ Login Missing"
+    return render_template('auth_hq.html') if os.path.exists('templates/auth_hq.html') else "HQ Login Missing"
 
 @app.route('/partner/login', methods=['GET', 'POST'])
 def partner_login():
@@ -82,21 +91,16 @@ def partner_login():
             session['referral_code'] = partner['referral_code']
             return redirect(url_for('partner_dashboard'))
         flash("Invalid Clinic Credentials")
-    if os.path.exists('templates/auth_partner.html'):
-        return render_template('auth_partner.html')
-    return "Partner Login Missing"
+    return render_template('auth_partner.html') if os.path.exists('templates/auth_partner.html') else "Partner Login Missing"
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# -------------------------------------------------------------
-# PUBLIC SITE & CART
-# -------------------------------------------------------------
+# --- PUBLIC & CART ---
 @app.route('/')
-def index():
-    return render_template('index.html')
+def index(): return render_template('index.html')
 
 @app.route('/tests')
 def tests_catalogue():
@@ -120,9 +124,6 @@ def remove_from_cart(test_id):
         session.modified = True
     return jsonify({'status': 'success', 'total_items': len(session.get('cart', []))})
 
-# -------------------------------------------------------------
-# CHECKOUT & BOOKING ENGINE
-# -------------------------------------------------------------
 @app.route('/checkout')
 def checkout():
     cart_ids = session.get('cart', [])
@@ -131,8 +132,7 @@ def checkout():
     placeholders = ','.join('?' for _ in cart_ids)
     items = conn.execute(f'SELECT * FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
     conn.close()
-    total_amount = sum(t['price'] for t in items)
-    return render_template('checkout.html', items=items, total=total_amount)
+    return render_template('checkout.html', items=items, total=sum(t['price'] for t in items))
 
 @app.route('/api/validate_promo', methods=['POST'])
 def validate_promo():
@@ -146,6 +146,7 @@ def validate_promo():
         return jsonify({'valid': True, 'discount': discount, 'new_total': total - discount, 'partner': partner['clinic_name']})
     return jsonify({'valid': False})
 
+# --- BOOKING & LIMS LOGIC ---
 @app.route('/book_test', methods=['POST'])
 def book_test():
     full_name = request.form.get('full_name')
@@ -155,11 +156,13 @@ def book_test():
     referral_code = request.form.get('referral_code', '').upper()
     
     conn = get_db_connection()
+    test_ids = []
     
     if 'cart' in session and session['cart'] and request.form.get('tests_requested') is None:
         cart_ids = session['cart']
         placeholders = ','.join('?' for _ in cart_ids)
-        items = conn.execute(f'SELECT name, price, b2b_cost FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
+        items = conn.execute(f'SELECT id, name, price, b2b_cost FROM tests WHERE id IN ({placeholders})', cart_ids).fetchall()
+        test_ids = [i['id'] for i in items]
         tests_requested = ", ".join([i['name'] for i in items])
         gross_bill = sum(i['price'] for i in items)
         b2b_cost = sum(i['b2b_cost'] for i in items)
@@ -175,41 +178,65 @@ def book_test():
         partner = conn.execute('SELECT * FROM partners WHERE referral_code = ?', (referral_code,)).fetchone()
         if partner:
             margin_pool = gross_bill * partner['margin_pool_pct'] 
-            if session.get('role') not in ['partner', 'admin']:
-                discount_given = round(gross_bill * 0.10)
+            if session.get('role') not in ['partner', 'admin']: discount_given = round(gross_bill * 0.10)
             partner_commission = margin_pool - discount_given
             conn.execute('UPDATE partners SET wallet_balance = wallet_balance + ? WHERE referral_code = ?', (partner_commission, referral_code))
 
     total_bill = gross_bill - discount_given
     order_code = f"CD-{random.randint(1000, 9999)}"
 
-    conn.execute('''
+    # Save Order
+    cur = conn.cursor()
+    cur.execute('''
         INSERT INTO orders (order_code, full_name, phone, email, address, tests_requested, gross_bill, discount_given, total_bill, b2b_total_cost, referral_code, partner_commission)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     ''', (order_code, full_name, phone, email, address, tests_requested, gross_bill, discount_given, total_bill, b2b_cost, referral_code, partner_commission))
+    
+    order_id = cur.lastrowid
+    
+    # 🌟 CORE LIMS UPGRADE: Fetch test parameters and assign to patient order
+    if test_ids:
+        placeholders = ','.join('?' for _ in test_ids)
+        params = conn.execute(f'SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id IN ({placeholders})', test_ids).fetchall()
+        for p in params:
+            cur.execute("INSERT INTO test_results (order_id, parameter_name, units, ref_interval) VALUES (?, ?, ?, ?)", (order_id, p['param_name'], p['unit'], p['ref_range']))
+    
     conn.commit()
     conn.close()
     
+    # Send Automated Emails
+    send_email(email, "CareDrop Booking Confirmed", f"<h3>Hello {full_name},</h3><p>Your test booking ({tests_requested}) is confirmed. Our rider will contact you shortly.</p>")
+    send_email(os.environ.get('MAIL_USERNAME', ''), f"New Order: {order_code}", f"<p>Order {order_code} received from {full_name}. Value: Rs {total_bill}</p>")
+    
     if session.get('role') == 'admin': return redirect(url_for('admin'))
     if session.get('role') == 'partner': return redirect(url_for('partner_dashboard'))
-    
     session['role'] = 'patient'
     session['patient_contact'] = phone
     return redirect(url_for('my_bookings'))
 
-# -------------------------------------------------------------
-# PROTECTED STAFF PORTALS (ADMIN OVERHAUL)
-# -------------------------------------------------------------
+# --- ADMIN DISPATCH & MANAGEMENT ---
 @app.route('/admin')
 @hq_required
 def admin():
     conn = get_db_connection()
     orders = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
     tests = conn.execute('SELECT * FROM tests WHERE is_active = 1 ORDER BY id DESC').fetchall()
+    # Fetch parameters to display in catalog
+    test_params = conn.execute('SELECT * FROM test_parameters').fetchall()
     partners = conn.execute('SELECT * FROM partners ORDER BY id DESC').fetchall()
     metrics = conn.execute('SELECT COALESCE(SUM(total_bill), 0) as total_rev, COALESCE(SUM(b2b_total_cost), 0) as total_b2b FROM orders;').fetchone()
     conn.close()
-    return render_template('admin.html', orders=orders, tests=tests, partners=partners, metrics=metrics)
+    return render_template('admin.html', orders=orders, tests=tests, test_params=test_params, partners=partners, metrics=metrics)
+
+@app.route('/admin/assign_rider/<int:order_id>', methods=['POST'])
+@hq_required
+def admin_assign_rider(order_id):
+    rider_name = request.form.get('rider_name')
+    conn = get_db_connection()
+    conn.execute("UPDATE orders SET assigned_rider = ? WHERE id = ?", (rider_name, order_id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin'))
 
 @app.route('/admin/add_partner', methods=['POST'])
 @hq_required
@@ -224,8 +251,7 @@ def admin_add_partner():
     try:
         conn.execute('INSERT INTO partners (name, clinic_name, referral_code, phone, password, margin_pool_pct) VALUES (?, ?, ?, ?, ?, ?)', (name, clinic_name, referral_code, phone, password, margin))
         conn.commit()
-    except Exception:
-        pass
+    except Exception: pass
     conn.close()
     return redirect(url_for('admin'))
 
@@ -250,39 +276,20 @@ def admin_add_test():
     conn.close()
     return redirect(url_for('admin'))
 
-@app.route('/admin/delete_test/<int:t_id>')
+@app.route('/admin/add_parameter', methods=['POST'])
 @hq_required
-def admin_delete_test(t_id):
+def admin_add_parameter():
+    test_id = request.form.get('test_id')
+    param_name = request.form.get('param_name')
+    unit = request.form.get('unit')
+    ref_range = request.form.get('ref_range')
     conn = get_db_connection()
-    conn.execute('DELETE FROM tests WHERE id = ?', (t_id,))
+    conn.execute("INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (?, ?, ?, ?)", (test_id, param_name, unit, ref_range))
     conn.commit()
     conn.close()
     return redirect(url_for('admin'))
 
-@app.route('/admin/bulk_upload_tests', methods=['POST'])
-@hq_required
-def admin_bulk_upload():
-    file = request.files.get('file')
-    if file and file.filename.endswith('.csv'):
-        # Process CSV
-        conn = get_db_connection()
-        try:
-            stream = file.stream.read().decode("utf-8").splitlines()
-            reader = csv.reader(stream)
-            next(reader, None) # skip header
-            for row in reader:
-                if len(row) >= 4:
-                    conn.execute('INSERT INTO tests (name, category, b2b_cost, price) VALUES (?, ?, ?, ?)', (row[0], row[1], float(row[2]), float(row[3])))
-            conn.commit()
-        except Exception as e:
-            print(e)
-        finally:
-            conn.close()
-    return redirect(url_for('admin'))
-
-# -------------------------------------------------------------
-# RIDER APP
-# -------------------------------------------------------------
+# --- RIDER LOGISTICS ---
 @app.route('/rider')
 @app.route('/rider_dashboard')
 @hq_required
@@ -312,19 +319,44 @@ def rider_complete():
 
     conn = get_db_connection()
     conn.execute("UPDATE orders SET barcode=?, temp_log=?, payment_mode=?, status='Sample Collected', is_paid=1 WHERE id=?", (barcode, temp_log, payment_mode, order_id))
-    
-    # Retrieve email for sending receipt
-    order = conn.execute("SELECT email, total_bill, full_name FROM orders WHERE id=?", (order_id,)).fetchone()
+    order = conn.execute("SELECT email, full_name, tests_requested FROM orders WHERE id=?", (order_id,)).fetchone()
     conn.commit()
     conn.close()
     
-    # IN THE FUTURE: Send SMTP Email Receipt here using order['email'] and order['total_bill']
+    send_email(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected and secured with barcode {barcode}. It is en route to our NABL partner lab.</p>")
     
     return redirect(url_for('rider_dashboard'))
 
-# -------------------------------------------------------------
-# PATIENT & PARTNER DASHBOARDS
-# -------------------------------------------------------------
+# --- LIMS REPORT GENERATION & SUBMISSION ---
+@app.route('/lims_report/<int:order_id>')
+def lims_report(order_id):
+    conn = get_db_connection()
+    order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
+    results = conn.execute('SELECT * FROM test_results WHERE order_id = ?', (order_id,)).fetchall()
+    conn.close()
+    return render_template('lims_report.html', order=order, results=results)
+
+@app.route('/api/lab/submit_results/<int:order_id>', methods=['POST'])
+@hq_required
+def submit_lab_results(order_id):
+    conn = get_db_connection()
+    for key, value in request.form.items():
+        if key.startswith('param_'):
+            result_id = key.split('_')[1]
+            conn.execute("UPDATE test_results SET observed_value = ? WHERE id = ?", (value, result_id))
+    
+    conn.execute("UPDATE orders SET status = 'Completed' WHERE id = ?", (order_id,))
+    order = conn.execute("SELECT email, full_name FROM orders WHERE id = ?", (order_id,)).fetchone()
+    conn.commit()
+    conn.close()
+    
+    # Notify Patient PDF is ready
+    report_link = url_for('patient_login', _external=True)
+    send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic report is ready. Please log into your portal to download the securely signed PDF: <a href='{report_link}'>Download Report</a></p>")
+    
+    return redirect(f'/lims_report/{order_id}')
+
+# --- PATIENT & PARTNER DASHBOARDS ---
 @app.route('/my_bookings')
 def my_bookings():
     if session.get('role') != 'patient': return redirect(url_for('patient_login'))
@@ -343,13 +375,6 @@ def partner_dashboard():
     orders = conn.execute('SELECT * FROM orders WHERE referral_code = ? ORDER BY id DESC', (code,)).fetchall()
     conn.close()
     return render_template('partner_dashboard.html', partner=partner, orders=orders)
-
-@app.route('/lims_report/<int:order_id>')
-def lims_report(order_id):
-    conn = get_db_connection()
-    order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
-    conn.close()
-    return render_template('lims_report.html', order=order)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
