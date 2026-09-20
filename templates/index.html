@@ -3,168 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop Diagnostics | Home Sample Collection in Yamunanagar</title>
+    <title>CareDrop Diagnostics | Home Sample Collection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a' },
-                        navy: { 900: '#0b192c', 950: '#060d17' }
-                    }
-                }
-            }
+            theme: { extend: { colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c' } } } }
         }
     </script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white flex flex-col min-h-screen overflow-x-hidden">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
-    <!-- Navigation -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm w-full">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-2 md:gap-3">
-                <div class="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center text-white shadow-sm shrink-0">
-                    <i class="fa-solid fa-plus text-xs md:text-sm"></i>
+            <a href="/" class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white shadow-sm">
+                    <i class="fa-solid fa-plus text-sm"></i>
                 </div>
                 <div>
-                    <span class="text-lg md:text-xl font-black tracking-tight text-navy-900 block leading-none">CareDrop</span>
-                    <span class="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">Diagnostics</span>
+                    <span class="text-xl font-black tracking-tight text-navy-900 block leading-none">CareDrop</span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">Diagnostics</span>
                 </div>
             </a>
             
-            <div class="flex items-center gap-2 md:gap-4">
-                <a href="/login" class="text-[10px] md:text-xs font-bold text-slate-600 hover:text-brand-600 transition flex items-center gap-1.5">
-                    <i class="fa-regular fa-user"></i> <span class="hidden sm:inline">Login / Download Reports</span><span class="sm:hidden">Reports</span>
+            <div class="flex items-center gap-4">
+                <a href="/login" class="text-xs font-bold text-slate-600 hover:text-brand-600 transition flex items-center gap-1.5">
+                    <i class="fa-regular fa-folder-open"></i> Download Reports
                 </a>
-                <a href="/tests" class="bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition">
+                <a href="/tests" class="bg-navy-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm hidden sm:block">
                     Book Test
                 </a>
             </div>
         </div>
     </header>
 
-    <main class="flex-grow">
-        <!-- Hero Section -->
-        <section class="relative bg-white overflow-hidden border-b border-slate-200 w-full">
-            <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-brand-50 opacity-50 blur-3xl pointer-events-none"></div>
+    <main class="flex-grow flex flex-col justify-center">
+        <section class="max-w-4xl mx-auto px-4 py-16 text-center">
+            <span class="inline-block py-1.5 px-4 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest mb-6 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1 animate-pulse"></span>
+                Serving Yamunanagar & Jagadhri
+            </span>
             
-            <div class="max-w-7xl mx-auto px-4 py-12 md:py-20 relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-                <div class="order-2 md:order-1 text-center md:text-left">
-                    <span class="inline-block py-1 px-3 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6">
-                        <span class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 inline-block mr-1 animate-pulse"></span>
-                        Active in Yamunanagar & Jagadhri
-                    </span>
-                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-navy-900 leading-tight tracking-tight mb-3 md:mb-4">
-                        Accurate blood tests, <br><span class="text-brand-600">collected at your door.</span>
-                    </h1>
-                    <p class="text-slate-500 text-xs sm:text-sm md:text-base mb-6 md:mb-8 max-w-md mx-auto md:mx-0 leading-relaxed">
-                        Skip the waiting room. Certified phlebotomists collect your sample at home, with NABL-accredited reports delivered directly to your phone.
-                    </p>
-                    
-                    <div class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                        <a href="/tests" class="bg-navy-900 hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition-all text-xs md:text-sm flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-magnifying-glass"></i> Search Tests
-                        </a>
-                        
-                        <a href="https://wa.me/919485978790?text=Hello%20CareDrop!%20I%20would%20like%20to%20book%20a%20home%20sample%20collection.%20Here%20is%20my%20prescription%20photo:" target="_blank" class="bg-emerald-50 border-2 border-emerald-500 text-emerald-700 hover:bg-emerald-500 hover:text-white font-bold py-3.5 px-6 rounded-xl shadow-sm transition-all text-xs md:text-sm flex items-center justify-center gap-2">
-                            <i class="fa-brands fa-whatsapp text-lg"></i> Send Prescription
-                        </a>
-                    </div>
-                </div>
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-navy-900 leading-tight tracking-tight mb-6">
+                Clinical accuracy, <br><span class="text-brand-600">collected at your door.</span>
+            </h1>
+            
+            <p class="text-slate-500 text-sm md:text-base mb-10 max-w-2xl mx-auto leading-relaxed">
+                Book your diagnostic tests online. Our certified phlebotomists collect your sample at home, and your securely signed PDF reports are emailed directly to you.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/tests" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-vial"></i> Search Test Catalog
+                </a>
                 
-                <div class="order-1 md:order-2 flex justify-center relative px-4 md:px-0">
-                    <div class="absolute -left-2 md:-left-8 top-10 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-xl border border-slate-100 z-20 flex items-center gap-3 animate-bounce" style="animation-duration: 3s;">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-lg md:text-xl">
-                            <i class="fa-solid fa-vial-circle-check"></i>
-                        </div>
-                        <div>
-                            <span class="block font-black text-navy-900 text-xs md:text-sm">100% Authentic</span>
-                            <span class="block text-[8px] md:text-[10px] text-slate-500 uppercase tracking-widest font-bold">NABL Partner Labs</span>
-                        </div>
-                    </div>
-                    <!-- Authentic Lab / Phlebotomist Image -->
-                    <img src="https://images.unsplash.com/photo-1631815124119-915478441460?auto=format&fit=crop&w=800&q=80" alt="Blood Collection Vials" class="rounded-2xl md:rounded-3xl shadow-2xl object-cover h-[250px] sm:h-[300px] md:h-[400px] w-full border-4 md:border-8 border-white">
-                </div>
+                <a href="https://wa.me/919485978790?text=Hello%20CareDrop!%20I%20would%20like%20to%20book%20a%20home%20sample%20collection.%20Here%20is%20my%20prescription%20photo:" target="_blank" class="bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold py-4 px-8 rounded-xl shadow-sm transition-all text-sm flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-lg"></i> Send Prescription
+                </a>
             </div>
         </section>
 
-        <!-- How It Works -->
-        <section class="py-12 md:py-16 bg-slate-50 w-full">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="text-center mb-8 md:mb-12">
-                    <h2 class="text-xl md:text-2xl font-black text-navy-900">Diagnostics made simple.</h2>
-                    <p class="text-xs md:text-sm text-slate-500 mt-2">From booking to reports in three easy steps.</p>
+        <section class="max-w-5xl mx-auto px-4 pb-16 w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
+                    <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-4 font-black">1</div>
+                    <h3 class="text-lg font-black text-navy-900 mb-2">Book easily</h3>
+                    <p class="text-xs text-slate-500">Select tests online or send your doctor's slip via WhatsApp.</p>
                 </div>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
-                    <div class="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-slate-200 text-center relative">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-brand-50 text-brand-600 rounded-xl md:rounded-2xl flex items-center justify-center text-lg md:text-xl mx-auto mb-3 md:mb-4 font-black">1</div>
-                        <h3 class="text-base md:text-lg font-black text-navy-900 mb-2">Book easily</h3>
-                        <p class="text-[11px] md:text-xs text-slate-500 leading-relaxed">Search our catalog or send a photo of your doctor's slip via WhatsApp.</p>
-                    </div>
-                    <div class="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-slate-200 text-center relative">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-brand-50 text-brand-600 rounded-xl md:rounded-2xl flex items-center justify-center text-lg md:text-xl mx-auto mb-3 md:mb-4 font-black">2</div>
-                        <h3 class="text-base md:text-lg font-black text-navy-900 mb-2">Home Collection</h3>
-                        <p class="text-[11px] md:text-xs text-slate-500 leading-relaxed">Our trained phlebotomist arrives at your location and maintains cold-chain transport.</p>
-                    </div>
-                    <div class="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-slate-200 text-center relative">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-brand-50 text-brand-600 rounded-xl md:rounded-2xl flex items-center justify-center text-lg md:text-xl mx-auto mb-3 md:mb-4 font-black">3</div>
-                        <h3 class="text-base md:text-lg font-black text-navy-900 mb-2">Digital Reports</h3>
-                        <p class="text-[11px] md:text-xs text-slate-500 leading-relaxed">Download your securely signed, QR-verified PDF report directly to your phone.</p>
-                    </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
+                    <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-4 font-black">2</div>
+                    <h3 class="text-lg font-black text-navy-900 mb-2">Home Collection</h3>
+                    <p class="text-xs text-slate-500">Our phlebotomist arrives at your location to collect samples safely.</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
+                    <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-4 font-black">3</div>
+                    <h3 class="text-lg font-black text-navy-900 mb-2">Email Reports</h3>
+                    <p class="text-xs text-slate-500">Your NABL-accredited PDF report is emailed directly to your inbox.</p>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer (Fixed Grid & List Layout) -->
-    <footer class="bg-navy-900 text-slate-300 py-10 md:py-12 border-t-4 border-brand-600 w-full overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-12">
-            <div>
-                <div class="flex items-center gap-2 mb-4">
-                    <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white shrink-0">
-                        <i class="fa-solid fa-plus text-sm"></i>
-                    </div>
-                    <span class="text-xl font-black text-white tracking-tight">CareDrop</span>
-                </div>
-                <p class="text-xs text-slate-400 mb-4 max-w-xs leading-relaxed">A modern diagnostic aggregator bringing world-class clinical pathology directly to your doorstep in Yamunanagar & Jagadhri.</p>
-            </div>
-            
-            <div>
-                <h4 class="text-sm font-black text-white uppercase tracking-wider mb-4">Contact Info</h4>
-                <ul class="space-y-3 text-xs">
-                    <!-- FIXED HTML TAGS -->
-                    <li class="flex items-start gap-3">
-                        <i class="fa-solid fa-location-dot mt-1 text-brand-500 shrink-0"></i>
-                        <span>SHOP NO 434 L, Near Hospital,<br>Sarojini Colony, Model Town,<br>Yamuna Nagar, Haryana 135001</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <i class="fa-solid fa-phone text-brand-500 shrink-0"></i>
-                        <span>+91 9485978790</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <i class="fa-solid fa-envelope text-brand-500 shrink-0"></i>
-                        <span>caredrop.ynr@gmail.com</span>
-                    </li>
-                </ul>
-            </div>
-            
-            <div>
-                <h4 class="text-sm font-black text-white uppercase tracking-wider mb-4">Quick Links</h4>
-                <div class="flex flex-col gap-2 text-xs">
-                    <a href="/tests" class="hover:text-brand-400 transition w-max">Test Catalog</a>
-                    <a href="/login" class="hover:text-brand-400 transition w-max">Download Reports</a>
-                    <a href="https://wa.me/919485978790" target="_blank" class="hover:text-brand-400 transition w-max">WhatsApp Support</a>
-                    <a href="/partner/login" class="hover:text-brand-400 transition w-max">Clinic Partner Login</a>
-                </div>
-            </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 mt-10 md:mt-12 pt-6 border-t border-slate-800 text-[10px] text-center md:text-left text-slate-500 flex flex-col md:flex-row justify-between items-center gap-3">
-            <span>&copy; 2026 CareDrop Diagnostics. All rights reserved.</span>
-            <span>Powered by Industrial Healthcare IHC Diagnostics</span>
-        </div>
+    <footer class="bg-navy-900 text-slate-300 py-8 border-t-4 border-brand-600 w-full text-center">
+        <p class="text-[10px] uppercase tracking-widest font-bold mb-2">CareDrop Diagnostics</p>
+        <p class="text-xs text-slate-500 mb-4">Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001 | +91 9485978790</p>
+        <p class="text-[9px] text-slate-600">&copy; 2026 Industrial Healthcare IHC Diagnostics</p>
     </footer>
 
 </body>
