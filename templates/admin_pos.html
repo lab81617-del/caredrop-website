@@ -24,7 +24,6 @@
     <main class="max-w-7xl mx-auto px-4 py-6">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
             
-            <!-- Search & Add -->
             <div class="md:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4"><i class="fa-solid fa-magnifying-glass text-brand-600 mr-2"></i>Search Catalog</h2>
                 <input type="text" id="pos-search" onkeyup="filterPosTests()" placeholder="Search test name..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-4 outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
@@ -42,7 +41,6 @@
                 </div>
             </div>
 
-            <!-- Cart & Checkout -->
             <div class="md:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-max sticky top-24">
                 <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Current Bill</h2>
                 
@@ -55,16 +53,28 @@
                     <span class="text-2xl font-black text-brand-700" id="pos-total-display">₹0</span>
                 </div>
 
-                <form action="/book_test" method="POST" class="space-y-3 text-xs" onsubmit="preparePosForm(event)">
+                <!-- ADDED AGE AND GENDER FOR POS -->
+                <form action="/pos_book_test" method="POST" class="space-y-3 text-xs" onsubmit="preparePosForm(event)">
                     <input type="hidden" name="tests_requested" id="pos-tests-input">
                     <input type="hidden" name="total_bill" id="pos-bill-input">
                     
-                    <input type="text" name="full_name" required placeholder="Patient Legal Name" class="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
-                    <div class="flex gap-2">
-                        <input type="tel" name="phone" required placeholder="10-Digit Mobile" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
-                        <input type="email" name="email" placeholder="Email (For Receipt)" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                    <input type="text" name="full_name" required placeholder="Patient Legal Name" class="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" name="age" required placeholder="Age (Yrs)" class="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                        <select name="gender" required class="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 text-slate-500">
+                            <option value="" disabled selected>Gender...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
-                    <textarea name="address" rows="2" required placeholder="Collection Address (House, Sector)" class="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"></textarea>
+
+                    <div class="flex gap-2">
+                        <input type="tel" name="phone" required placeholder="10-Digit Mobile" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                        <input type="email" name="email" placeholder="Email (For Receipt)" class="w-1/2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                    </div>
+                    <textarea name="address" rows="2" required placeholder="Collection Address (House, Sector)" class="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600"></textarea>
                     
                     <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-4 rounded-xl uppercase tracking-wider transition shadow-md mt-2">Generate Order & Dispatch</button>
                 </form>
