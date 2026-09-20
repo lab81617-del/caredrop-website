@@ -3,84 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review & Book | CareDrop</title>
+    <title>Secure Checkout | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' },
-                        navy: { 900: '#0b192c', 950: '#060d17' }
-                    }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c' } } } } }
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-16">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased pb-20 relative">
 
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
         <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/tests" class="text-xs font-bold text-gray-500 hover:text-brand-600 flex items-center gap-1">
-                <i class="fa-solid fa-arrow-left"></i> Back to Catalog
+            <a href="/tests" class="text-xs font-bold text-slate-500 hover:text-brand-600 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrow-left"></i> Back
             </a>
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-md bg-brand-600 flex items-center justify-center text-white text-xs">
-                    <i class="fa-solid fa-plus"></i>
-                </div>
-                <span class="text-base font-black text-navy-900">CareDrop</span>
-            </div>
-            <div class="text-xs font-semibold text-gray-400">Secure Checkout</div>
+            <span class="text-base font-black text-navy-900">Secure Checkout</span>
         </div>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 py-8">
-        <h1 class="text-2xl font-black text-navy-900 mb-6">Confirm Doorstep Collection</h1>
-
-        <form action="/book_test" method="POST" class="grid grid-cols-1 md:grid-cols-12 gap-8" id="checkout-form">
+        <form id="checkout-form" onsubmit="initiateBooking(event)" class="grid grid-cols-1 md:grid-cols-12 gap-8">
             
-            <!-- Left: Patient Details -->
             <div class="md:col-span-7 space-y-6">
-                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                    <h2 class="text-sm font-bold text-navy-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-user-pen text-brand-600"></i> Patient Details
-                    </h2>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-sm font-black text-navy-900 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">Patient Details</h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
-                            <input type="text" name="full_name" required placeholder="Patient Legal Name" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-600 outline-none">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Full Name</label>
+                            <input type="text" name="full_name" required placeholder="Patient Name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-brand-600 outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Age</label>
+                                <input type="number" name="age" required placeholder="Years" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-brand-600 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Gender</label>
+                                <select name="gender" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-brand-600 outline-none">
+                                    <option value="" disabled selected>Select...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mobile Number</label>
+                                <input type="tel" name="phone" required placeholder="10-digit mobile" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-brand-600 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-brand-600 uppercase tracking-wider mb-1">Email (Required for OTP)</label>
+                                <input type="email" name="email" required placeholder="name@email.com" class="w-full px-4 py-3 bg-brand-50 border border-brand-200 rounded-xl text-sm font-bold text-brand-900 focus:ring-2 focus:ring-brand-600 outline-none">
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Number</label>
-                            <input type="tel" name="phone" required placeholder="10-digit mobile" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-600 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Yamunanagar - Jagadhri Address</label>
-                            <textarea name="address" rows="3" required placeholder="House No, Landmark, Sector/Colony" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-600 outline-none"></textarea>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Yamunanagar - Jagadhri Address</label>
+                            <textarea name="address" rows="2" required placeholder="House No, Landmark, Sector/Colony" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-brand-600 outline-none"></textarea>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right: Order Summary & Referral -->
             <div class="md:col-span-5 space-y-6">
-                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                    <h2 class="text-sm font-bold text-navy-900 uppercase tracking-wider mb-4">Order Summary</h2>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-sm font-black text-navy-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Order Summary</h2>
                     
-                    <div class="divide-y divide-gray-100 mb-4">
+                    <div class="divide-y divide-slate-100 mb-4">
                         {% for item in items %}
                         <div class="py-3 flex justify-between items-center text-xs">
-                            <span class="font-bold text-navy-900">{{ item.name }}</span>
-                            <span class="font-bold text-navy-900">₹{{ item.price|int }}</span>
+                            <span class="font-bold text-slate-800">{{ item.name }}</span>
+                            <span class="font-black text-navy-900">₹{{ item.price|int }}</span>
                         </div>
                         {% endfor %}
                     </div>
 
-                    <!-- Partner Referral Box -->
                     <div class="bg-brand-50 border border-brand-200 rounded-xl p-4 mb-4">
-                        <label class="block text-[10px] font-bold text-brand-700 uppercase tracking-wider mb-2">Clinic Referral / Promo Code</label>
+                        <label class="block text-[10px] font-bold text-brand-700 uppercase tracking-wider mb-2">Clinic Referral Code</label>
                         <div class="flex gap-2">
                             <input type="text" id="promo_input" name="referral_code" placeholder="e.g. CITYMED" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:ring-brand-600">
                             <button type="button" onclick="applyPromo()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 rounded-lg text-xs font-bold transition shadow-sm">Apply</button>
@@ -88,71 +87,122 @@
                         <p id="promo_msg" class="text-[10px] font-semibold mt-2 hidden"></p>
                     </div>
 
-                    <div class="pt-4 border-t border-gray-200 space-y-2 text-xs">
-                        <div class="flex justify-between text-gray-500">
-                            <span>Subtotal</span>
-                            <span id="ui-subtotal" data-value="{{ total }}">₹{{ total|int }}</span>
+                    <div class="pt-4 border-t border-slate-200 space-y-2 text-xs font-bold text-slate-600">
+                        <div class="flex justify-between">
+                            <span>Subtotal</span><span id="ui-subtotal" data-value="{{ total }}">₹{{ total|int }}</span>
                         </div>
-                        <div class="flex justify-between text-gray-500" id="discount-row" style="display: none;">
-                            <span>Partner Discount</span>
-                            <span class="text-emerald-600 font-bold" id="ui-discount">-₹0</span>
+                        <div class="flex justify-between hidden" id="discount-row">
+                            <span>Partner Discount (10%)</span><span class="text-emerald-600" id="ui-discount">-₹0</span>
                         </div>
-                        <div class="flex justify-between items-center pt-3 border-t border-gray-100">
-                            <span class="text-sm font-bold text-navy-900">Amount to Pay</span>
+                        <div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-2">
+                            <span class="text-sm font-black text-navy-900">Amount to Pay</span>
                             <span class="text-2xl font-black text-brand-700" id="ui-total">₹{{ total|int }}</span>
                         </div>
-                        <p class="text-[9px] text-gray-400 text-right uppercase">Pay via Cash/UPI at Collection</p>
                     </div>
 
-                    <!-- T&C Checkbox -->
-                    <label class="flex items-start gap-2 mt-6 cursor-pointer">
-                        <input type="checkbox" required class="mt-0.5 accent-brand-600">
-                        <span class="text-[10px] text-gray-500 leading-tight">I agree to the sample collection terms. I understand processing is done via NABL accredited partner labs.</span>
-                    </label>
-
-                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-sm uppercase tracking-wider mt-4 active:scale-95">
-                        Confirm Appointment <i class="fa-solid fa-check ml-1"></i>
+                    <button type="submit" id="submit-btn" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl shadow-md transition-all text-sm uppercase tracking-widest mt-6">
+                        Proceed to Verification
                     </button>
                 </div>
             </div>
         </form>
     </main>
 
+    <!-- OTP Modal Overlay -->
+    <div id="otp-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 p-8 w-full max-w-sm relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+            
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center text-xl mx-auto mb-3"><i class="fa-solid fa-envelope-open-text"></i></div>
+                <h3 class="text-xl font-black text-navy-900">Verify Email</h3>
+                <p class="text-xs text-slate-500 mt-1">We sent a 4-digit code to your email.</p>
+            </div>
+            
+            <form onsubmit="confirmBooking(event)" class="space-y-4">
+                <input type="text" id="otp-input" required maxlength="4" placeholder="Enter OTP" class="w-full text-center text-2xl tracking-[1em] font-black px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-600">
+                <button type="submit" id="verify-btn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-3.5 rounded-xl uppercase tracking-wider transition">Verify & Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         async function applyPromo() {
             const code = document.getElementById('promo_input').value;
             const subtotal = parseFloat(document.getElementById('ui-subtotal').getAttribute('data-value'));
             const msgEl = document.getElementById('promo_msg');
-            
             if (!code) return;
-
             try {
                 const res = await fetch('/api/validate_promo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: code, total: subtotal })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code, total: subtotal })
                 });
                 const data = await res.json();
-                
                 msgEl.classList.remove('hidden');
-                
                 if (data.valid) {
                     msgEl.className = 'text-[10px] font-semibold mt-2 text-emerald-600';
                     msgEl.innerHTML = `<i class="fa-solid fa-check-circle"></i> Applied! Discount via ${data.partner}`;
-                    
-                    document.getElementById('discount-row').style.display = 'flex';
+                    document.getElementById('discount-row').classList.remove('hidden');
                     document.getElementById('ui-discount').innerText = `-₹${Math.round(data.discount)}`;
                     document.getElementById('ui-total').innerText = `₹${Math.round(data.new_total)}`;
                 } else {
                     msgEl.className = 'text-[10px] font-semibold mt-2 text-red-500';
-                    msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Invalid or expired code.`;
-                    
-                    document.getElementById('discount-row').style.display = 'none';
+                    msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Invalid code.`;
+                    document.getElementById('discount-row').classList.add('hidden');
                     document.getElementById('ui-total').innerText = `₹${subtotal}`;
                 }
+            } catch (e) { console.error(e); }
+        }
+
+        async function initiateBooking(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Code...';
+            btn.disabled = true;
+
+            const formData = new FormData(document.getElementById('checkout-form'));
+            try {
+                const res = await fetch('/api/initiate_booking', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.status === 'otp_sent') {
+                    document.getElementById('otp-modal').classList.remove('hidden');
+                }
             } catch (e) {
-                console.error(e);
+                alert("Error connecting to server.");
+            } finally {
+                btn.innerHTML = 'Proceed to Verification';
+                btn.disabled = false;
             }
+        }
+
+        async function confirmBooking(e) {
+            e.preventDefault();
+            const btn = document.getElementById('verify-btn');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+
+            const otp = document.getElementById('otp-input').value;
+            const formData = new FormData();
+            formData.append('otp', otp);
+
+            try {
+                const res = await fetch('/api/confirm_booking', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.msg || "Invalid OTP");
+                }
+            } catch (e) {
+                alert("Error verifying OTP.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('otp-modal').classList.add('hidden');
         }
     </script>
 </body>
