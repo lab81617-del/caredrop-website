@@ -25,9 +25,9 @@ try:
     cur.close()
     conn.close()
 except Exception as e:
-    print(f"DB Auto-fix skipped: {e}")
+    pass
 
-# --- SUPERCHARGED EMAIL ENGINE (Using Brevo API to bypass Render blocks) ---
+# --- SUPERCHARGED EMAIL ENGINE (Using Brevo API) ---
 def send_email(to_email, subject, body):
     brevo_key = os.environ.get('BREVO_API_KEY')
     sender_email = os.environ.get('MAIL_USERNAME', 'ihcdiagnostics.ynr@gmail.com')
@@ -45,7 +45,7 @@ def send_email(to_email, subject, body):
             requests.post(url, json=payload, headers=headers, timeout=3)
             return
         except Exception as e:
-            print(f"Brevo API error: {e}")
+            pass
 
     password = os.environ.get('MAIL_PASSWORD')
     if not password or not to_email: return
@@ -61,7 +61,7 @@ def send_email(to_email, subject, body):
         server.send_message(msg)
         server.quit()
     except Exception as e:
-        print(f"SMTP Email failed: {e}")
+        pass
 
 # --- STRICT SEPARATED ROLE DECORATORS ---
 def admin_only(f):
@@ -180,9 +180,17 @@ def tests_catalogue():
     except Exception:
         conn.rollback()
         cur.execute('SELECT * FROM tests ORDER BY category, name ASC')
-    tests = cur.fetchall()
+    
+    # Safely convert Postgres dictionary to standard Python dictionary to prevent 500 Template Errors
+    tests = [dict(row) for row in cur.fetchall()]
     cur.close()
     conn.close()
+
+    # Process the Search Bar query from the Homepage
+    search_query = request.args.get('q', '').lower()
+    if search_query:
+        tests = [t for t in tests if search_query in t['name'].lower() or search_query in t['category'].lower()]
+
     return render_template('tests.html', tests=tests)
 
 @app.route('/api/cart/add/<int:test_id>', methods=['POST'])
@@ -207,7 +215,8 @@ def checkout():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM tests WHERE id = ANY(%s)', (cart_ids,))
-    items = cur.fetchall()
+    # Safely convert to dictionary
+    items = [dict(row) for row in cur.fetchall()]
     cur.close()
     conn.close()
     return render_template('checkout.html', items=items, total=sum(t['price'] for t in items))
