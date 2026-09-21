@@ -2,240 +2,159 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnostic Tests & Packages | CareDrop Yamunanagar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Book a Test | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0fdfa',
-                            100: '#ccfbf1',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            700: '#0f766e',
-                            800: '#115e59',
-                            900: '#134e4a',
-                        },
-                        navy: {
-                            900: '#0b192c',
-                            950: '#060d17',
-                        }
-                    }
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: { brand: { 50: '#E6F8F8', 500: '#00B4B6', 600: '#009092', 900: '#003637' } }
                 }
             }
         }
     </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-28 selection:bg-brand-500 selection:text-white">
+<body class="bg-[#F8FBFB] text-slate-900 font-sans antialiased pb-28 md:pb-12">
 
     <!-- Top Navigation -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center text-white shadow-xs">
-                    <i class="fa-solid fa-plus text-sm"></i>
-                </div>
-                <div>
-                    <span class="text-xl font-black tracking-tight text-navy-900 block leading-none">CareDrop</span>
-                    <span class="text-[9px] font-semibold text-gray-400 uppercase tracking-widest block mt-0.5">Yamunanagar - Jagadhri</span>
-                </div>
+    <header class="bg-white sticky top-0 z-40 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 h-[72px] flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded bg-brand-500 flex items-center justify-center text-white"><i class="fa-solid fa-droplet text-sm"></i></div>
+                <span class="text-2xl font-bold tracking-tight text-slate-900">CareDrop</span>
             </a>
-            
-            <div class="flex items-center gap-3">
-                <a href="/checkout" class="relative bg-brand-50 hover:bg-brand-100 text-brand-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-brand-200 transition">
-                    <i class="fa-solid fa-cart-shopping text-sm"></i>
-                    <span>Cart</span>
-                    <span id="nav-cart-count" class="bg-brand-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black shadow-xs">
-                        {{ session.get('cart', [])|length }}
-                    </span>
-                </a>
+            <div class="hidden md:flex items-center gap-8 font-semibold text-sm text-slate-600">
+                <a href="/tests" class="text-brand-500">Tests</a>
+                <a href="#" class="hover:text-brand-500 transition">Packages</a>
+                <a href="#" class="hover:text-brand-500 transition">About</a>
+                <a href="#" class="hover:text-brand-500 transition">Contact</a>
             </div>
+            <a href="/login" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-2 rounded-full font-semibold transition shadow-sm text-sm">Login</a>
         </div>
     </header>
 
-    <!-- Search & Category Filter Section -->
-    <section class="bg-white border-b border-gray-200 py-6">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="max-w-2xl">
-                <h1 class="text-2xl font-black text-navy-900 tracking-tight">Diagnostic Test Catalogue</h1>
-                <p class="text-xs text-gray-500 mt-1">Select verified pathology investigations and preventative profiles for certified home sample collection.</p>
-                
-                <!-- Search Box -->
-                <div class="relative mt-4">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400 text-sm"></i>
-                    <input type="text" id="test-search" onkeyup="filterTests()" placeholder="Search test name or organ profile (e.g. CBC, Lipid, Thyroid, LFT)..." 
-                        class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white transition">
-                </div>
-
-                <!-- Category Quick Pills -->
-                <div class="flex flex-wrap gap-2 mt-4 text-[11px] font-bold text-gray-600">
-                    <button onclick="filterCategory('all')" class="category-pill bg-brand-600 text-white px-3 py-1.5 rounded-lg border border-brand-600">All Tests</button>
-                    <button onclick="filterCategory('hematology')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Hematology</button>
-                    <button onclick="filterCategory('biochemistry')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Biochemistry</button>
-                    <button onclick="filterCategory('endocrinology')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Endocrinology</button>
-                    <button onclick="filterCategory('immunology')" class="category-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">Immunology</button>
-                </div>
-            </div>
+    <main class="max-w-3xl mx-auto px-4 py-8">
+        
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-6">Book a Test</h1>
+        
+        <!-- Search Bar -->
+        <div class="bg-white p-1.5 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex items-center border border-slate-100 mb-6">
+            <div class="pl-4 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <input type="text" id="searchInput" onkeyup="filterTests()" placeholder="Search tests or packages..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-700 font-medium text-sm">
         </div>
-    </section>
 
-    <!-- Dynamic Tests Grid -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        {% set cart = session.get('cart', []) %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="catalog-grid">
-            {% for test in tests %}
-            {% set in_cart = test.id in cart %}
-            <div class="test-card bg-white rounded-2xl p-6 border border-gray-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between" 
-                 data-name="{{ test.name|lower }}" 
-                 data-category="{{ (test.category or 'general')|lower }}">
-                <div>
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] font-black uppercase tracking-wider bg-brand-50 text-brand-700 px-2.5 py-1 rounded-md border border-brand-100">
-                            {{ test.category or 'Diagnostic' }}
-                        </span>
-                        {% if test.fasting_required %}
-                        <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
-                            <i class="fa-solid fa-clock mr-1"></i> Fasting Req.
-                        </span>
-                        {% endif %}
-                    </div>
-                    <h3 class="text-base font-bold text-navy-900 mt-2">{{ test.name }}</h3>
-                    <p class="text-xs text-gray-500 mt-1 leading-relaxed">{{ test.description or 'Certified diagnostic investigation handled under sterile cold-chain protocol.' }}</p>
-                    
-                    <div class="mt-4 flex items-center gap-4 text-xs text-gray-400">
-                        <span><i class="fa-regular fa-clock mr-1 text-brand-600"></i> {{ test.turnaround_time or '6 hrs' }}</span>
-                        <span><i class="fa-solid fa-vial mr-1 text-brand-600"></i> {{ test.sample_type or 'Blood Specimen' }}</span>
+        <!-- Filter Pills -->
+        <div class="flex gap-2.5 overflow-x-auto pb-2 hide-scrollbar mb-6">
+            <button class="bg-brand-500 text-white px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap shadow-sm">All</button>
+            <button class="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition">Blood</button>
+            <button class="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition">Liver</button>
+            <button class="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition">Kidney</button>
+            <button class="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition">Thyroid</button>
+        </div>
+
+        <!-- Test List -->
+        <div class="space-y-4" id="test-list">
+            {% for t in tests %}
+            <div class="test-card bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition flex justify-between items-center" data-name="{{ t.name | lower }}">
+                <div class="pr-4">
+                    <h3 class="font-bold text-lg text-slate-900 mb-0.5">{{ t.name }}</h3>
+                    <p class="text-[11px] text-slate-500 font-medium mb-3">{{ t.category }} Panel</p>
+                    <div class="flex items-center gap-3">
+                        <span class="block text-xl font-extrabold text-slate-900">₹{{ t.price|int }}</span>
+                        <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="fa-regular fa-clock"></i> Same day report</span>
                     </div>
                 </div>
-
-                <div class="pt-6 mt-4 border-t border-gray-100 flex items-center justify-between">
-                    <div>
-                        <span class="text-[10px] text-gray-400 block font-semibold uppercase">Standard Fee</span>
-                        <span class="text-lg font-black text-navy-900">₹{{ test.price }}</span>
-                    </div>
-                    
-                    <button onclick="toggleCart({{ test.id }}, this)" 
-                        data-in-cart="{{ 'true' if in_cart else 'false' }}"
-                        class="cart-btn px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 
-                        {% if in_cart %}
-                            bg-brand-600 text-white border border-brand-600 hover:bg-brand-700
-                        {% else %}
-                            border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-white
-                        {% endif %}">
-                        {% if in_cart %}
-                            <i class="fa-solid fa-check text-[10px]"></i> Added
-                        {% else %}
-                            <i class="fa-solid fa-plus text-[10px]"></i> Add
-                        {% endif %}
-                    </button>
-                </div>
+                <button onclick="addToCart({{ t.id }}, {{ t.price }}, this)" class="bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white px-6 py-2.5 rounded-xl font-bold transition text-sm shrink-0 shadow-sm">
+                    Add
+                </button>
             </div>
             {% else %}
-            <div class="col-span-full text-center py-16 bg-white rounded-2xl border border-gray-200">
-                <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-3">
-                    <i class="fa-solid fa-flask text-lg"></i>
-                </div>
-                <h4 class="text-sm font-bold text-navy-900">No Tests Configured Yet</h4>
-                <p class="text-xs text-gray-400 mt-1">Open the CareDrop Admin panel to define tests and pricing.</p>
-                <a href="/admin" class="mt-4 inline-block text-xs font-bold bg-navy-900 text-white px-4 py-2 rounded-xl">Go to Admin</a>
+            <div class="text-center py-12 text-slate-400">
+                <i class="fa-solid fa-vial text-4xl mb-3"></i>
+                <p class="font-semibold">No tests available in catalog.</p>
             </div>
             {% endfor %}
         </div>
     </main>
 
-    <!-- Floating Sticky Cart Bar (Appears when items are selected) -->
-    <div id="sticky-cart-bar" class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 p-4 z-40 shadow-2xl transition-transform duration-300 {% if cart|length == 0 %}hidden translate-y-full{% endif %}">
-        <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <div>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Home Collection Selected</span>
-                <span class="text-sm font-black text-navy-900" id="sticky-item-label">
-                    {{ cart|length }} Test{{ 's' if cart|length != 1 else '' }} in Cart
-                </span>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="/checkout" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-brand-600/30 transition active:scale-95">
-                    Proceed to Booking <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                </a>
-            </div>
+    <!-- Floating Cart Bar (Hidden by default, pops up when tests are added) -->
+    <div id="floating-cart" class="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[600px] bg-brand-900 text-white rounded-2xl px-6 py-4 justify-between items-center shadow-2xl z-50 hidden transition-all duration-300 transform translate-y-0">
+        <div>
+            <span id="cart-count" class="block text-xs text-brand-100 font-semibold mb-0.5">1 test selected</span>
+            <span id="cart-total" class="block text-xl font-black">₹0</span>
         </div>
+        <a href="/checkout" class="bg-white text-brand-900 hover:bg-brand-50 px-6 py-3 rounded-xl font-extrabold text-sm transition shadow-md flex items-center gap-2">
+            View Cart <i class="fa-solid fa-arrow-right"></i>
+        </a>
     </div>
 
-    <!-- Interactive Filtering & Real-Time Cart Synchronization -->
+    <!-- Mobile Bottom Navigation Bar -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-[68px] z-40 px-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
+        <a href="/" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
+            <i class="fa-solid fa-house text-[18px]"></i><span class="text-[10px] font-bold">Home</span>
+        </a>
+        <a href="/tests" class="flex flex-col items-center gap-1 text-brand-500">
+            <i class="fa-solid fa-magnifying-glass text-[18px]"></i><span class="text-[10px] font-bold">Search</span>
+        </a>
+        <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
+            <i class="fa-solid fa-cart-shopping text-[18px]"></i><span class="text-[10px] font-bold">Cart</span>
+        </a>
+        <a href="/login" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
+            <i class="fa-regular fa-user text-[18px]"></i><span class="text-[10px] font-bold">User</span>
+        </a>
+    </div>
+
     <script>
+        let cartTotal = 0;
+        let cartCount = 0;
+
         function filterTests() {
-            const query = document.getElementById('test-search').value.toLowerCase();
-            const cards = document.querySelectorAll('.test-card');
-            cards.forEach(card => {
-                const name = card.getAttribute('data-name');
-                card.style.display = name.includes(query) ? 'flex' : 'none';
-            });
-        }
-
-        function filterCategory(cat) {
-            const cards = document.querySelectorAll('.test-card');
-            const pills = document.querySelectorAll('.category-pill');
-            
-            pills.forEach(p => {
-                p.classList.remove('bg-brand-600', 'text-white', 'border-brand-600');
-                p.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-200');
-            });
-            event.target.classList.add('bg-brand-600', 'text-white', 'border-brand-600');
-            event.target.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-200');
-
-            cards.forEach(card => {
-                const category = card.getAttribute('data-category');
-                if (cat === 'all' || category.includes(cat)) {
-                    card.style.display = 'flex';
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let cards = document.getElementsByClassName('test-card');
+            for (let i = 0; i < cards.length; i++) {
+                let name = cards[i].getAttribute('data-name');
+                if (name.includes(input)) {
+                    cards[i].style.display = "flex";
                 } else {
-                    card.style.display = 'none';
+                    cards[i].style.display = "none";
                 }
-            });
+            }
         }
 
-        async function toggleCart(testId, btn) {
-            btn.disabled = true;
-            const isInCart = btn.getAttribute('data-in-cart') === 'true';
-            const endpoint = isInCart ? `/api/cart/remove/${testId}` : `/api/cart/add/${testId}`;
-
+        async function addToCart(testId, price, btnElement) {
             try {
-                const res = await fetch(endpoint, { method: 'POST' });
+                // Call API to add to Flask session
+                const res = await fetch(`/api/cart/add/${testId}`, { method: 'POST' });
                 const data = await res.json();
                 
-                if (res.ok) {
-                    if (isInCart) {
-                        btn.setAttribute('data-in-cart', 'false');
-                        btn.className = "cart-btn px-5 py-2 rounded-xl text-xs font-bold transition-all border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-white flex items-center gap-1.5";
-                        btn.innerHTML = '<i class="fa-solid fa-plus text-[10px]"></i> Add';
-                    } else {
-                        btn.setAttribute('data-in-cart', 'true');
-                        btn.className = "cart-btn px-5 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white border border-brand-600 hover:bg-brand-700 flex items-center gap-1.5";
-                        btn.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> Added';
-                    }
+                if (data.status === 'success') {
+                    // Update Button UI
+                    btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Added';
+                    btnElement.classList.remove('bg-brand-50', 'text-brand-600', 'hover:bg-brand-500');
+                    btnElement.classList.add('bg-emerald-500', 'text-white', 'cursor-not-allowed');
+                    btnElement.disabled = true;
+
+                    // Update Floating Cart UI
+                    cartCount++;
+                    cartTotal += parseFloat(price);
                     
-                    // Update navigation counter
-                    const countEl = document.getElementById('nav-cart-count');
-                    if (countEl) countEl.innerText = data.total_items;
+                    document.getElementById('cart-count').innerText = `${cartCount} test${cartCount > 1 ? 's' : ''} selected`;
+                    document.getElementById('cart-total').innerText = `₹${cartTotal}`;
                     
-                    // Update bottom floating drawer
-                    const stickyBar = document.getElementById('sticky-cart-bar');
-                    const stickyLabel = document.getElementById('sticky-item-label');
-                    if (stickyBar) {
-                        if (data.total_items > 0) {
-                            stickyBar.classList.remove('hidden', 'translate-y-full');
-                            stickyLabel.innerText = `${data.total_items} Test${data.total_items > 1 ? 's' : ''} in Cart`;
-                        } else {
-                            stickyBar.classList.add('hidden', 'translate-y-full');
-                        }
-                    }
+                    const floatingCart = document.getElementById('floating-cart');
+                    floatingCart.classList.remove('hidden');
+                    floatingCart.classList.add('flex');
                 }
-            } catch (err) {
-                console.error("Cart error:", err);
-            } finally {
-                btn.disabled = false;
+            } catch (e) {
+                console.error("Cart error", e);
             }
         }
     </script>
