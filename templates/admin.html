@@ -70,13 +70,22 @@
                                     <button type="submit" class="bg-slate-800 text-white px-2 py-1 rounded text-[9px] font-bold">Set</button>
                                 </form>
                             </td>
-                            <td class="py-4 px-6"><span class="font-black text-slate-900 text-sm block">₹{{ o.total_bill|int }}</span><span class="text-[9px] {% if o.is_paid %}text-emerald-600 font-bold{% else %}text-slate-400{% endif %}">{{ 'Paid' if o.is_paid else 'Unpaid' }}</span></td>
-                            <td class="py-4 px-6 text-right">
-                                <a href="/lims_report/{{ o.id }}" target="_blank" class="inline-block bg-brand-50 border border-brand-200 text-brand-700 hover:bg-brand-600 hover:text-white px-4 py-2 rounded-lg text-[10px] font-bold transition">{% if o.status != 'Completed' %}Enter Results{% else %}View PDF{% endif %}</a>
+                           <td class="py-4 px-6 text-right space-y-2">
+                                <a href="/lims_report/{{ o.id }}" target="_blank" class="block w-full text-center bg-brand-50 border border-brand-200 text-brand-700 hover:bg-brand-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition shadow-sm">
+                                    {% if o.status != 'Completed' %}Enter Results{% else %}View PDF{% endif %}
+                                </a>
+                                
+                                {% if o.status != 'Completed' and role in ['admin', 'reception'] %}
+                                <!-- Direct PDF Upload -->
+                                <form action="/admin/upload_pdf/{{ o.id }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-1 items-end w-full">
+                                    <input type="file" name="pdf_file" accept=".pdf" class="text-[8px] w-full border border-slate-200 rounded bg-white p-0.5 text-slate-500">
+                                    <button type="submit" class="w-full bg-slate-800 text-white text-[9px] font-bold py-1 rounded shadow-sm hover:bg-slate-700 transition">Upload PDF</button>
+                                </form>
+                                {% endif %}
                                 
                                 <!-- REOPEN BUTTON -->
                                 {% if o.status == 'Completed' %}
-                                <a href="/admin/reopen_order/{{ o.id }}" onclick="return confirm('Reopen this report? This will un-finalize the PDF.')" class="block mt-2 text-[9px] font-bold text-amber-500 hover:text-amber-700"><i class="fa-solid fa-unlock text-[8px]"></i> Edit Report</a>
+                                <a href="/admin/reopen_order/{{ o.id }}" onclick="return confirm('Reopen this report?')" class="inline-block mt-1 text-[9px] font-bold text-amber-500 hover:text-amber-700"><i class="fa-solid fa-unlock text-[8px]"></i> Edit</a>
                                 {% endif %}
                             </td>
                         </tr>
