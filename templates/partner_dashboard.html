@@ -2,120 +2,181 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Partner Portal | CareDrop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Portal | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c', 950: '#060d17' } }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { brand: { 600: '#0d9488' }, navy: { 900: '#0b192c' } } } } }
     </script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased pb-12">
+<body class="bg-slate-100 text-slate-900 font-sans antialiased pb-20">
 
-    <!-- Partner Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <header class="bg-navy-900 border-b border-slate-800 sticky top-0 z-40 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-navy-900 flex items-center justify-center text-white shadow-sm">
-                    <i class="fa-solid fa-stethoscope"></i>
-                </div>
+                <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white"><i class="fa-solid fa-stethoscope"></i></div>
                 <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">CareDrop Network</span>
-                    <span class="text-sm font-black text-navy-900 block leading-none">{{ partner.clinic_name if partner else 'Clinic Partner' }}</span>
+                    <span class="text-sm font-black tracking-tight block">{{ partner.clinic_name }}</span>
+                    <span class="text-[9px] text-teal-300 font-bold block uppercase tracking-widest">Code: {{ partner.referral_code }}</span>
                 </div>
             </div>
-            <a href="/logout" class="text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                Logout
-            </a>
+            <a href="/logout" class="text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">Logout</a>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto px-4 py-6 space-y-6">
-
-        <!-- Metrics & Referral Code -->
-        <div class="grid grid-cols-2 gap-4">
-            <!-- Code Card -->
-            <div class="bg-gradient-to-br from-brand-600 to-brand-800 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
-                <i class="fa-solid fa-qrcode absolute -bottom-4 -right-2 text-6xl text-white/10"></i>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-brand-100 block mb-1">Your Referral Code</span>
-                <span class="text-2xl font-black tracking-widest">{{ partner.referral_code if partner else 'CITYMED' }}</span>
-                <p class="text-[9px] text-brand-200 mt-2 leading-tight">Patients using this code receive 10% off online bookings.</p>
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        
+        <!-- Wallet Metric -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl p-6 text-white shadow-md flex justify-between items-center">
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider block mb-1 text-emerald-100">Wallet Balance</span>
+                <span class="text-3xl font-black">₹{{ partner.wallet_balance|int }}</span>
             </div>
-            
-            <!-- Wallet Card -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center relative">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Pending Commission</span>
-                <span class="text-2xl font-black text-emerald-600">₹{{ partner.wallet_balance|int if partner else 0 }}</span>
-                <p class="text-[9px] text-slate-400 mt-2 leading-tight">Calculated automatically on successful collections.</p>
+            <div class="text-right">
+                <span class="text-[10px] font-bold uppercase tracking-wider block mb-1 text-emerald-100">Your Margin</span>
+                <span class="text-xl font-black">{{ (partner.margin_pool_pct * 100)|int }}%</span>
             </div>
         </div>
 
-        <!-- Direct Booking Shortcut -->
-        <div class="bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
-            <a href="/tests" class="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">
-                        <i class="fa-solid fa-user-plus"></i>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            <!-- Book Test POS -->
+            <div class="md:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="text-sm font-black text-navy-900 uppercase tracking-wider mb-4"><i class="fa-solid fa-plus-circle text-brand-600 mr-2"></i>Book Patient</h2>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div class="flex-1 relative">
+                        <select id="test-selector" class="w-full pl-3 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-1 focus:ring-brand-600">
+                            <option value="" disabled selected>Select Test from Catalog...</option>
+                            {% for t in tests %}
+                            <option value="{{ t.price }}" data-name="{{ t.name }}">{{ t.name }} (MRP: ₹{{ t.price|int }})</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div>
-                        <span class="text-sm font-black text-navy-900 block">Book Patient Manually</span>
-                        <span class="text-[10px] text-slate-500 font-medium">Book directly to bypass patient code entry.</span>
-                    </div>
+                    <button type="button" onclick="addTest()" class="bg-brand-600 text-white font-bold px-6 rounded-xl hover:bg-brand-700 transition shadow-sm text-sm shrink-0">Add to Bill</button>
                 </div>
-                <i class="fa-solid fa-chevron-right text-slate-300"></i>
-            </a>
-        </div>
 
-        <!-- Referral Roster & Report Tracking -->
-        <div>
-            <h3 class="text-sm font-black text-navy-900 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-users text-slate-400"></i> Patient Roster & Reports
-            </h3>
-            
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="divide-y divide-slate-100">
-                    {% for o in orders %}
-                    <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">
-                        <div>
-                            <span class="text-xs font-bold text-navy-900 block">{{ o.full_name }}</span>
-                            <span class="text-[10px] text-slate-500 block mt-0.5">{{ o.tests_requested }}</span>
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mt-1">{{ o.created_at[:10] }}</span>
+                <div id="cart-items" class="space-y-2 mb-6"></div>
+
+                <form action="/partner/book_test" method="POST" class="space-y-3 text-xs" onsubmit="prepareForm(event)">
+                    <input type="hidden" name="tests_requested" id="tests-input">
+                    <input type="hidden" name="total_bill" id="bill-input">
+                    
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[10px] font-bold text-brand-700 uppercase tracking-wider">Patient Discount vs Your Profit</label>
+                            <span class="text-xs font-black text-navy-900" id="discount-display">0% Discount</span>
                         </div>
-                        
+                        <input type="range" name="discount_pct" id="discount-slider" min="0" max="{{ (partner.margin_pool_pct * 100)|int }}" value="0" class="w-full accent-brand-600" oninput="updateFinancials()">
+                        <div class="flex justify-between mt-2 text-[10px] font-bold text-slate-500">
+                            <span>Max Profit (0% off)</span>
+                            <span>Max Discount ({{ (partner.margin_pool_pct * 100)|int }}% off)</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" name="full_name" required placeholder="Patient Name" class="col-span-2 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                        <input type="number" name="age" required placeholder="Age" class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                        <select name="gender" required class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                            <option value="" disabled selected>Gender...</option><option value="Male">Male</option><option value="Female">Female</option>
+                        </select>
+                        <input type="tel" name="phone" required placeholder="Mobile" class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                        <select name="time_slot" required class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600">
+                            <option value="" disabled selected>Time Slot...</option>
+                            <option value="Morning">Morning (7-9 AM)</option><option value="Midday">Midday (10:30-1:30)</option><option value="Evening">Evening (3:30-6)</option>
+                        </select>
+                    </div>
+                    <textarea name="address" rows="2" required placeholder="Collection Address" class="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-600"></textarea>
+
+                    <div class="bg-navy-900 text-white rounded-xl p-4 mt-4 shadow-md">
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">MRP Total</span><span id="ui-mrp">₹0</span></div>
+                        <div class="flex justify-between text-xs mb-3 pb-3 border-b border-slate-700"><span class="text-emerald-400">Patient Discount</span><span id="ui-discount-val" class="text-emerald-400">-₹0</span></div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-bold">Patient Pays Rider</span><span class="text-xl font-black text-white" id="ui-patient-pays">₹0</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-3 border-t border-slate-700">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Added to Your Wallet</span>
+                            <span class="text-sm font-black text-brand-400" id="ui-partner-earns">+₹0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-4 rounded-xl shadow-md transition mt-4 uppercase tracking-widest">Book & Dispatch Rider</button>
+                </form>
+            </div>
+
+            <!-- Booking History -->
+            <div class="md:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-max">
+                <h2 class="text-sm font-black text-navy-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Recent Bookings</h2>
+                <div class="space-y-3">
+                    {% for o in orders %}
+                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs flex justify-between items-center">
+                        <div>
+                            <span class="font-bold text-slate-800 block">{{ o.full_name }}</span>
+                            <span class="text-[9px] text-slate-500 font-mono">{{ o.order_code }} | {{ o.created_at.strftime('%b %d') }}</span>
+                        </div>
                         <div class="text-right">
-                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold inline-block mb-1
-                                {% if o.status == 'Pending' %}bg-amber-50 text-amber-600 border border-amber-200
-                                {% elif o.status == 'Completed' %}bg-emerald-50 text-emerald-600 border border-emerald-200
-                                {% else %}bg-blue-50 text-blue-600 border border-blue-200{% endif %}">
-                                {{ o.status }}
-                            </span>
-                            
-                            {% if o.status == 'Completed' %}
-                            <a href="/lims_report/{{ o.id }}" target="_blank" class="block text-[10px] font-bold text-brand-600 hover:underline">
-                                <i class="fa-solid fa-file-pdf"></i> View Report
-                            </a>
-                            {% else %}
-                            <span class="block text-[10px] font-semibold text-slate-400">Processing</span>
-                            {% endif %}
+                            <span class="font-black text-emerald-600 block">+₹{{ o.partner_commission|int }}</span>
+                            <span class="text-[9px] font-bold text-slate-400">{{ o.status }}</span>
                         </div>
                     </div>
                     {% else %}
-                    <div class="p-8 text-center">
-                        <i class="fa-solid fa-clipboard-user text-3xl text-slate-300 mb-2"></i>
-                        <h4 class="text-xs font-bold text-slate-600">No patients referred yet.</h4>
-                        <p class="text-[10px] text-slate-400 mt-1">Provide patients with your code to track them here.</p>
-                    </div>
+                    <p class="text-xs text-slate-400 text-center py-4">No patients booked yet.</p>
                     {% endfor %}
                 </div>
             </div>
         </div>
-
     </main>
+
+    <script>
+        let cart = [];
+        const marginPool = {{ (partner.margin_pool_pct * 100)|int }};
+
+        function addTest() {
+            const sel = document.getElementById('test-selector');
+            const opt = sel.options[sel.selectedIndex];
+            if(!opt.value) return;
+            cart.push({name: opt.getAttribute('data-name'), price: parseFloat(opt.value)});
+            renderCart();
+        }
+
+        function removeTest(idx) {
+            cart.splice(idx, 1);
+            renderCart();
+        }
+
+        function renderCart() {
+            const div = document.getElementById('cart-items');
+            div.innerHTML = '';
+            cart.forEach((t, i) => {
+                div.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-200 text-xs font-bold text-slate-700">
+                    <span>${t.name}</span>
+                    <div class="flex items-center gap-3"><span>₹${t.price}</span><button type="button" onclick="removeTest(${i})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-xmark"></i></button></div>
+                </div>`;
+            });
+            updateFinancials();
+        }
+
+        function updateFinancials() {
+            const discountPct = parseInt(document.getElementById('discount-slider').value);
+            document.getElementById('discount-display').innerText = `${discountPct}% Discount`;
+            
+            const mrp = cart.reduce((sum, t) => sum + t.price, 0);
+            const discountVal = Math.round(mrp * (discountPct / 100));
+            const patientPays = mrp - discountVal;
+            const partnerEarns = Math.round(mrp * ((marginPool - discountPct) / 100));
+
+            document.getElementById('ui-mrp').innerText = `₹${mrp}`;
+            document.getElementById('ui-discount-val').innerText = `-₹${discountVal}`;
+            document.getElementById('ui-patient-pays').innerText = `₹${patientPays}`;
+            document.getElementById('ui-partner-earns').innerText = `+₹${partnerEarns}`;
+        }
+
+        function prepareForm(e) {
+            if(cart.length === 0) { e.preventDefault(); alert("Add tests first."); return false; }
+            document.getElementById('tests-input').value = cart.map(t => t.name).join(', ');
+            document.getElementById('bill-input').value = cart.reduce((sum, t) => sum + t.price, 0);
+        }
+    </script>
 </body>
 </html>
