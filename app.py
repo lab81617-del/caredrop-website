@@ -481,4 +481,113 @@ def lims_report(order_id):
     cur.execute('SELECT * FROM test_results WHERE order_id = %s', (order_id,))
     results = cur.fetchall()
     cur.close()
-    conn.close(
+    conn.close()
+    return render_template('lims_report.html', order=order, results=results, role=session.get('role'))
+
+# --- ADMIN ROUTES (Assign Rider, Catalog, etc.) ---
+@app.route('/admin/assign_rider/<int:order_id>', methods=['POST'])
+@hq_required
+def admin_assign_rider(order_id):
+    rider_name = request.form.get('rider_name')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE orders SET assigned_rider = %s WHERE id = %s", (rider_name, order_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin'))
+
+@app.route('/admin/catalog')
+@hq_required
+def admin_catalog():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM tests WHERE is_active = TRUE ORDER BY id DESC')
+    tests = cur.fetchall()
+    cur.execute('SELECT * FROM test_parameters')
+    test_params = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('admin_catalog.html', tests=tests, test_params=test_params)
+
+@app.route('/admin/add_test', methods=['POST'])
+@hq_required
+def admin_add_test():
+    name = request.form.get('name')
+    b2b_cost = float(request.form.get('b2b_cost') or 0)
+    price = float(request.form.get('retail_price') or 0)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('INSERT INTO tests (name, category, b2b_cost, price) VALUES (%s, %s, %s, %s)', (name, 'General', b2b_cost, price))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin_catalog'))
+
+@app.route('/admin/add_parameter', methods=['POST'])
+@hq_required
+def admin_add_parameter():
+    test_id = request.form.get('test_id')
+    param_name = request.form.get('param_name')
+    unit = request.form.get('unit')
+    ref_range = request.form.get('ref_range')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s)", (test_id, param_name, unit, ref_range))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin_catalog'))
+
+# --- RIDER LOGISTICS ---
+@app.route('/rider')
+@app.route('/rider_dashboard')
+@hq_required
+def rider_dashboard():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM orders WHERE status != 'Completed' ORDER BY id DESC")
+    orders = cur.fetchall()
+    cur.execute("SELECT COALESCE(SUM(total_bill), 0) as total FROM orders WHERE is_paid = TRUE AND payment_mode = 'Cash'")
+    cash_collected = cur.fetchone()['total']
+    cur.close()
+    conn.close()
+    return render_template('rider_dashboard.html', orders=orders, cash_collected=cash_collected)
+
+@app.route('/api/rider/complete', methods=['POST'])
+@hq_required
+def rider_complete():
+    order_id = request.form.get('order_id')
+    barcode = request.form.get('barcode')
+    temp_log = request.form.get('temperature')
+    payment_mode = request.form.get('payment_mode')
+    is_paid = True if payment_mode in ['Cash', 'UPI'] else False
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE orders SET barcode=%s, temp_log=%s, payment_mode=%s, status='Sample Collected', is_paid=%s WHERE id=%s", (barcode, temp_log, payment_mode, is_paid, order_id))
+    cur.execute("SELECT email, full_name, tests_requested FROM orders WHERE id=%s", (order_id,))
+    order = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    send_email(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected. The rider has marked payment as {payment_mode}.</p>")
+    return redirect(url_for('rider_dashboard'))
+
+# --- PATIENT DASHBOARD ---
+@app.route('/my_bookings')
+def my_bookings():
+    if session.get('role') != 'patient': return redirect(url_for('patient_login'))
+    email = session.get('patient_email')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM orders WHERE email = %s ORDER BY id DESC', (email,))
+    bookings = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('my_bookings.html', bookings=bookings)
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
