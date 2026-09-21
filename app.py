@@ -32,7 +32,6 @@ def send_email(to_email, subject, body):
     brevo_key = os.environ.get('BREVO_API_KEY')
     sender_email = os.environ.get('MAIL_USERNAME', 'ihcdiagnostics.ynr@gmail.com')
     
-    # Fast HTTP API Method (Bypasses Render SMTP Block)
     if brevo_key:
         try:
             url = "https://api.brevo.com/v3/smtp/email"
@@ -48,7 +47,6 @@ def send_email(to_email, subject, body):
         except Exception as e:
             print(f"Brevo API error: {e}")
 
-    # Fallback to slow SMTP
     password = os.environ.get('MAIL_PASSWORD')
     if not password or not to_email: return
     try:
@@ -66,7 +64,7 @@ def send_email(to_email, subject, body):
         print(f"SMTP Email failed: {e}")
 
 # --- STRICT SEPARATED ROLE DECORATORS ---
-def admin_required(f):
+def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get('role') != 'admin': return redirect(url_for('admin_login'))
