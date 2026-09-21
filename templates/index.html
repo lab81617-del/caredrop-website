@@ -2,93 +2,199 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareDrop Diagnostics | Home Sample Collection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CareDrop | Diagnostics Made Simpler</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { brand: { 50: '#f0fdfa', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }, navy: { 900: '#0b192c' } } } }
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#E6F8F8',
+                            100: '#CCF1F1',
+                            500: '#00B4B6',
+                            600: '#009092',
+                            900: '#003637'
+                        }
+                    }
+                }
+            }
         }
     </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-[#F8FBFB] text-slate-900 font-sans antialiased pb-20 md:pb-0">
 
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm w-full">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white shadow-sm">
-                    <i class="fa-solid fa-plus text-sm"></i>
+    <!-- Top Navigation (Desktop) -->
+    <header class="bg-white sticky top-0 z-50 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 h-[72px] flex items-center justify-between">
+            
+            <a href="/" class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded bg-brand-500 flex items-center justify-center text-white">
+                    <i class="fa-solid fa-droplet text-sm"></i>
                 </div>
-                <div>
-                    <span class="text-xl font-black tracking-tight text-navy-900 block leading-none">CareDrop</span>
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">Diagnostics</span>
-                </div>
+                <span class="text-2xl font-bold tracking-tight text-slate-900">CareDrop</span>
             </a>
             
-            <div class="flex items-center gap-4">
-                <a href="/login" class="text-xs font-bold text-slate-600 hover:text-brand-600 transition flex items-center gap-1.5">
-                    <i class="fa-regular fa-folder-open"></i> Download Reports
-                </a>
-                <a href="/tests" class="bg-navy-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm hidden sm:block">
-                    Book Test
-                </a>
+            <div class="hidden md:flex items-center gap-8 font-semibold text-sm text-slate-600">
+                <a href="/tests" class="text-brand-500">Tests</a>
+                <a href="#" class="hover:text-brand-500 transition">Packages</a>
+                <a href="#" class="hover:text-brand-500 transition">About</a>
+                <a href="#" class="hover:text-brand-500 transition">Contact</a>
             </div>
+
+            <a href="/login" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-2 rounded-full font-semibold transition shadow-[0_4px_14px_rgba(0,180,182,0.3)] text-sm">
+                Login
+            </a>
         </div>
     </header>
 
-    <main class="flex-grow flex flex-col justify-center">
-        <section class="max-w-4xl mx-auto px-4 py-16 text-center">
-            <span class="inline-block py-1.5 px-4 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest mb-6 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1 animate-pulse"></span>
-                Serving Yamunanagar & Jagadhri
-            </span>
-            
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-navy-900 leading-tight tracking-tight mb-6">
-                Clinical accuracy, <br><span class="text-brand-600">collected at your door.</span>
-            </h1>
-            
-            <p class="text-slate-500 text-sm md:text-base mb-10 max-w-2xl mx-auto leading-relaxed">
-                Book your diagnostic tests online. Our certified phlebotomists collect your sample at home, and your securely signed PDF reports are emailed directly to you.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/tests" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all text-sm flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-vial"></i> Search Test Catalog
-                </a>
-                
-                <a href="https://wa.me/919485978790?text=Hello%20CareDrop!%20I%20would%20like%20to%20book%20a%20home%20sample%20collection.%20Here%20is%20my%20prescription%20photo:" target="_blank" class="bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold py-4 px-8 rounded-xl shadow-sm transition-all text-sm flex items-center justify-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-lg"></i> Send Prescription
-                </a>
+    <!-- Hero Section -->
+    <main class="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        
+        <div class="space-y-8">
+            <div class="space-y-4">
+                <h1 class="text-[44px] md:text-6xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+                    Diagnostics <br>made simpler.
+                </h1>
+                <p class="text-xl font-semibold text-slate-500">Book. Collect. Know.</p>
             </div>
-        </section>
+            
+            <!-- Global Search Bar -->
+            <form action="/tests" method="GET" class="bg-white p-2 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex items-center border border-slate-100 max-w-lg">
+                <div class="pl-4 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <input type="text" name="q" placeholder="Search tests, packages or health concerns..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-700 placeholder-slate-400 font-medium text-sm">
+                <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold transition text-sm">Search</button>
+            </form>
 
-        <section class="max-w-5xl mx-auto px-4 pb-16 w-full">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-4 font-black">1</div>
-                    <h3 class="text-lg font-black text-navy-900 mb-2">Book easily</h3>
-                    <p class="text-xs text-slate-500">Select tests online or send your doctor's slip via WhatsApp.</p>
+            <!-- Features Array -->
+            <div class="flex items-center gap-4 md:gap-8 pt-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center text-base md:text-lg shrink-0"><i class="fa-regular fa-calendar-check"></i></div>
+                    <div>
+                        <span class="block font-bold text-slate-900 text-sm">Book a Test</span>
+                        <span class="text-[10px] md:text-[11px] text-slate-500 font-medium">Quick & easy booking</span>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-4 font-black">2</div>
-                    <h3 class="text-lg font-black text-navy-900 mb-2">Home Collection</h3>
-                    <p class="text-xs text-slate-500">Our phlebotomist arrives at your location to collect samples safely.</p>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center text-base md:text-lg shrink-0"><i class="fa-solid fa-house-medical"></i></div>
+                    <div>
+                        <span class="block font-bold text-slate-900 text-sm">Home Collection</span>
+                        <span class="text-[10px] md:text-[11px] text-slate-500 font-medium">At your convenience</span>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-4 font-black">3</div>
-                    <h3 class="text-lg font-black text-navy-900 mb-2">Email Reports</h3>
-                    <p class="text-xs text-slate-500">Your NABL-accredited PDF report is emailed directly to your inbox.</p>
+                <div class="hidden md:flex items-center gap-3">
+                    <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-file-shield"></i></div>
+                    <div>
+                        <span class="block font-bold text-slate-900 text-sm">Trusted Reports</span>
+                        <span class="text-[11px] text-slate-500 font-medium">Accurate & secure</span>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <div class="relative hidden md:block">
+            <!-- Using an authentic proxy image for the Figma visual -->
+            <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80" class="rounded-[2.5rem] shadow-2xl object-cover h-[480px] w-full border-8 border-white" alt="Lab Technician holding blood vials">
+        </div>
     </main>
 
-    <footer class="bg-navy-900 text-slate-300 py-8 border-t-4 border-brand-600 w-full text-center">
-        <p class="text-[10px] uppercase tracking-widest font-bold mb-2">CareDrop Diagnostics</p>
-        <p class="text-xs text-slate-500 mb-4">Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001 | +91 9485978790</p>
-        <p class="text-[9px] text-slate-600">&copy; 2026 Industrial Healthcare IHC Diagnostics</p>
-    </footer>
+    <!-- Popular Tests Panel -->
+    <section class="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
+        <div class="flex justify-between items-end mb-6">
+            <h2 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Popular Tests</h2>
+            <a href="/tests" class="text-brand-500 font-semibold hover:underline text-xs md:text-sm">View all tests</a>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex gap-2.5 overflow-x-auto pb-4 hide-scrollbar mb-4">
+            <button class="bg-brand-500 text-white px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap shadow-md">All</button>
+            <button class="bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-500 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition shadow-sm">Blood</button>
+            <button class="bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-500 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition shadow-sm">Liver</button>
+            <button class="bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-500 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition shadow-sm">Kidney</button>
+            <button class="bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-500 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition shadow-sm">Thyroid</button>
+            <button class="bg-white border border-slate-200 text-slate-600 hover:border-brand-500 hover:text-brand-500 px-5 py-2 rounded-full font-semibold text-xs whitespace-nowrap transition shadow-sm">Others</button>
+        </div>
+
+        <!-- Exact Figma Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition flex flex-col justify-between h-[160px]">
+                <div>
+                    <h3 class="font-bold text-[17px] text-slate-900 mb-0.5">CBC</h3>
+                    <p class="text-[11px] text-slate-500 font-medium">Complete Blood Count</p>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹350</span>
+                        <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
+                    </div>
+                    <a href="/tests" class="bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white px-5 py-2 rounded-lg font-bold transition text-xs">Add</a>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition flex flex-col justify-between h-[160px]">
+                <div>
+                    <h3 class="font-bold text-[17px] text-slate-900 mb-0.5">Lipid Profile</h3>
+                    <p class="text-[11px] text-slate-500 font-medium">Complete Panel</p>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹600</span>
+                        <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
+                    </div>
+                    <a href="/tests" class="bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white px-5 py-2 rounded-lg font-bold transition text-xs">Add</a>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition flex flex-col justify-between h-[160px]">
+                <div>
+                    <h3 class="font-bold text-[17px] text-slate-900 mb-0.5">Thyroid Profile</h3>
+                    <p class="text-[11px] text-slate-500 font-medium">Complete Panel</p>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹1,300</span>
+                        <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
+                    </div>
+                    <a href="/tests" class="bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white px-5 py-2 rounded-lg font-bold transition text-xs">Add</a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Mobile Bottom Navigation Bar (Figma Design) -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-[68px] z-50 px-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
+        <a href="/" class="flex flex-col items-center gap-1 text-brand-500">
+            <i class="fa-solid fa-house text-[18px]"></i>
+            <span class="text-[10px] font-bold">Home</span>
+        </a>
+        <a href="/tests" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
+            <i class="fa-solid fa-magnifying-glass text-[18px]"></i>
+            <span class="text-[10px] font-bold">Search</span>
+        </a>
+        <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition relative">
+            <div class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-brand-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold border border-white">0</div>
+            <i class="fa-solid fa-cart-shopping text-[18px]"></i>
+            <span class="text-[10px] font-bold">Cart</span>
+        </a>
+        <a href="/login" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
+            <i class="fa-regular fa-user text-[18px]"></i>
+            <span class="text-[10px] font-bold">User</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
+            <i class="fa-regular fa-bell text-[18px]"></i>
+            <span class="text-[10px] font-bold">Bell</span>
+        </a>
+    </div>
 
 </body>
 </html>
