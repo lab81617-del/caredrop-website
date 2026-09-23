@@ -171,8 +171,17 @@ def verify_login_otp():
 # ==========================================
 @app.route('/')
 def index(): 
-    return render_template('index.html')
-
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # Pull up to 4 active tests for the homepage
+        cur.execute('SELECT * FROM tests WHERE is_active = TRUE ORDER BY id DESC LIMIT 4')
+        recent_tests = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return render_template('index.html', tests=recent_tests)
+    except Exception:
+        return render_template('index.html', tests=[])
 @app.route('/tests')
 def tests_catalogue():
     try:
