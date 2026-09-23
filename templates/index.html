@@ -12,166 +12,131 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: { brand: { 50: '#E6F8F8', 100: '#CCF1F1', 500: '#00B4B6', 600: '#009092', 900: '#003637' } }
+                    colors: { brand: { 50: '#E6F8F8', 500: '#00B4B6', 600: '#009092', 900: '#003637' } }
                 }
             }
         }
     </script>
-    <style>
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
 </head>
 <body class="bg-[#F8FBFB] text-slate-900 font-sans antialiased pb-20 md:pb-0 flex flex-col min-h-screen">
 
     <!-- Top Navigation -->
     <header class="bg-white sticky top-0 z-50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] w-full">
-        <div class="max-w-7xl mx-auto px-4 md:px-8 h-[72px] flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
             <a href="/" class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded bg-brand-500 flex items-center justify-center text-white shadow-sm"><i class="fa-solid fa-droplet text-sm"></i></div>
-                <span class="text-2xl font-bold tracking-tight text-slate-900">CareDrop</span>
+                <div class="w-8 h-8 rounded bg-brand-500 flex items-center justify-center text-white"><i class="fa-solid fa-droplet text-sm"></i></div>
+                <span class="text-[22px] font-bold tracking-tight text-slate-900">CareDrop</span>
             </a>
             
             <div class="hidden md:flex items-center gap-8 font-semibold text-sm text-slate-600">
-                <a href="/tests" class="hover:text-brand-500 transition">Book Test</a>
-                <a href="https://wa.me/919485978790" target="_blank" class="hover:text-brand-500 transition">WhatsApp Us</a>
+                <a href="/tests" class="hover:text-brand-500 transition">Tests</a>
+                <a href="/tests" class="hover:text-brand-500 transition">Packages</a>
+                <a href="https://wa.me/919485978790" class="hover:text-brand-500 transition">Contact</a>
             </div>
 
-            <a href="/login" class="bg-brand-50 hover:bg-brand-100 text-brand-600 px-6 py-2 rounded-full font-bold transition text-sm border border-brand-200">
-                Patient Login
+            <a href="/login" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-2 rounded-full font-bold transition text-sm">
+                Login
             </a>
         </div>
     </header>
 
-    <!-- Hero Section -->
     <main class="flex-grow">
-        <section class="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            
+        <!-- Hero Section -->
+        <section class="max-w-7xl mx-auto px-6 py-12 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div class="space-y-8 z-10">
                 <div class="space-y-4">
-                    <span class="inline-block py-1 px-3 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1 animate-pulse"></span> Serving Yamunanagar & Jagadhri
-                    </span>
-                    <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+                    <h1 class="text-[40px] md:text-6xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
                         Diagnostics <br>made simpler.
                     </h1>
-                    <p class="text-lg md:text-xl font-medium text-slate-500">Book online. Collect at home. Know your health.</p>
+                    <p class="text-lg md:text-xl font-semibold text-slate-500">Book. Collect. Know.</p>
                 </div>
                 
-                <!-- Search Bar routing to tests -->
-                <form action="/tests" method="GET" class="bg-white p-2 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex items-center border border-slate-100 max-w-lg">
+                <form action="/tests" method="GET" class="bg-white p-2 rounded-[1rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex items-center border border-slate-100 max-w-[480px]">
                     <div class="pl-4 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
-                    <input type="text" name="q" placeholder="Search tests or health concerns..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-700 placeholder-slate-400 font-medium text-sm">
+                    <input type="text" name="q" placeholder="Search tests, packages..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-700 font-medium text-sm">
                     <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold transition text-sm shadow-sm">Search</button>
                 </form>
 
-                <!-- Clickable Action Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                    <a href="/tests" class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-brand-500 transition group">
-                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-lg flex items-center justify-center text-lg group-hover:bg-brand-500 group-hover:text-white transition"><i class="fa-regular fa-calendar-check"></i></div>
+                <div class="grid grid-cols-2 gap-4 max-w-[480px]">
+                    <a href="/tests" class="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm hover:border-brand-500 transition">
+                        <div class="w-11 h-11 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center text-lg"><i class="fa-regular fa-calendar-check"></i></div>
                         <div>
-                            <span class="block font-bold text-slate-900 text-xs md:text-sm">Book a Test</span>
-                            <span class="text-[9px] md:text-[10px] text-slate-500 font-medium">Quick booking</span>
+                            <span class="block font-bold text-slate-900 text-sm">Book a Test</span>
+                            <span class="text-[10px] text-slate-500 font-medium">Quick & easy booking</span>
                         </div>
                     </a>
-                    <a href="https://wa.me/919485978790" target="_blank" class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-emerald-500 transition group">
-                        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg group-hover:bg-emerald-500 group-hover:text-white transition"><i class="fa-brands fa-whatsapp"></i></div>
+                    <a href="https://wa.me/919485978790" class="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-500 transition">
+                        <div class="w-11 h-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-lg"><i class="fa-brands fa-whatsapp"></i></div>
                         <div>
-                            <span class="block font-bold text-slate-900 text-xs md:text-sm">Send Rx</span>
-                            <span class="text-[9px] md:text-[10px] text-slate-500 font-medium">Upload via chat</span>
+                            <span class="block font-bold text-slate-900 text-sm">Send Rx</span>
+                            <span class="text-[10px] text-slate-500 font-medium">Upload via chat</span>
                         </div>
                     </a>
                 </div>
             </div>
 
-            <div class="relative hidden md:block">
-                <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80" class="rounded-[2.5rem] shadow-2xl object-cover h-[480px] w-full border-8 border-white" alt="Lab Technician">
+            <div class="hidden md:block w-full">
+                <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80" class="rounded-[2rem] shadow-2xl object-cover h-[450px] w-full border-8 border-white" alt="Lab Technician">
             </div>
         </section>
 
-        <!-- Static Popular Tests (Routes to catalog) -->
-        <section class="max-w-7xl mx-auto px-4 md:px-8 pb-16">
+        <!-- Popular Tests -->
+        <section class="max-w-7xl mx-auto px-6 pb-16">
             <div class="flex justify-between items-end mb-6">
-                <h2 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Popular Tests</h2>
-                <a href="/tests" class="text-brand-500 font-semibold hover:underline text-sm">View all tests</a>
+                <h2 class="text-xl md:text-[22px] font-bold text-slate-900 tracking-tight">Popular Tests</h2>
+                <a href="/tests" class="text-brand-500 font-bold hover:underline text-xs md:text-sm">View all tests</a>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition flex flex-col justify-between h-[160px]">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-[160px]">
                     <div>
-                        <h3 class="font-bold text-[17px] text-slate-900 mb-0.5">Complete Blood Count</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">Basic wellness check</p>
+                        <h3 class="font-bold text-[18px] text-slate-900 mb-1">CBC</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Complete Blood Count</p>
                     </div>
                     <div class="flex justify-between items-end">
-                        <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded"><i class="fa-regular fa-clock"></i> Same day report</span>
-                        <a href="/tests?q=cbc" class="bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white px-5 py-2 rounded-lg font-bold transition text-xs">Book</a>
+                        <div>
+                            <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹350</span>
+                            <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
+                        </div>
+                        <a href="/tests?q=cbc" class="bg-brand-50 text-brand-600 font-bold px-5 py-2.5 rounded-xl transition text-xs">Add</a>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition flex flex-col justify-between h-[160px]">
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-[160px]">
                     <div>
-                        <h3 class="font-bold text-[17px] text-slate-900 mb-0.5">Lipid Profile</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">Heart health panel</p>
+                        <h3 class="font-bold text-[18px] text-slate-900 mb-1">Lipid Profile</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Complete Heart Panel</p>
                     </div>
                     <div class="flex justify-between items-end">
-                        <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded"><i class="fa-regular fa-clock"></i> Same day report</span>
-                        <a href="/tests?q=lipid" class="bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white px-5 py-2 rounded-lg font-bold transition text-xs">Book</a>
+                        <div>
+                            <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹600</span>
+                            <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
+                        </div>
+                        <a href="/tests?q=lipid" class="bg-brand-50 text-brand-600 font-bold px-5 py-2.5 rounded-xl transition text-xs">Add</a>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition flex flex-col justify-between h-[160px]">
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-[160px]">
                     <div>
-                        <h3 class="font-bold text-[17px] text-slate-900 mb-0.5">Thyroid Profile</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">T3, T4, TSH evaluation</p>
+                        <h3 class="font-bold text-[18px] text-slate-900 mb-1">Thyroid Profile</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">T3, T4, TSH Panel</p>
                     </div>
                     <div class="flex justify-between items-end">
-                        <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded"><i class="fa-regular fa-clock"></i> Same day report</span>
-                        <a href="/tests?q=thyroid" class="bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white px-5 py-2 rounded-lg font-bold transition text-xs">Book</a>
+                        <div>
+                            <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹1,300</span>
+                            <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
+                        </div>
+                        <a href="/tests?q=thyroid" class="bg-brand-50 text-brand-600 font-bold px-5 py-2.5 rounded-xl transition text-xs">Add</a>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Trust Footer -->
-    <footer class="bg-white border-t border-slate-200 pt-10 pb-24 md:pb-10 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-                <a href="/" class="flex items-center gap-2 mb-4">
-                    <div class="w-6 h-6 rounded bg-brand-500 flex items-center justify-center text-white"><i class="fa-solid fa-droplet text-[10px]"></i></div>
-                    <span class="text-lg font-bold tracking-tight text-slate-900">CareDrop</span>
-                </a>
-                <p class="text-xs text-slate-500 leading-relaxed max-w-xs">CareDrop brings world-class pathology directly to your doorstep. Trusted NABL-partnered diagnostics in Yamunanagar & Jagadhri.</p>
-            </div>
-            <div>
-                <h4 class="font-bold text-slate-900 mb-4 text-sm">Contact Us</h4>
-                <ul class="space-y-2 text-xs text-slate-600 font-medium">
-                    <li class="flex items-start gap-2"><i class="fa-solid fa-location-dot mt-1 text-brand-500"></i> Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001</li>
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-phone text-brand-500"></i> +91 9485978790</li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="font-bold text-slate-900 mb-4 text-sm">Portals</h4>
-                <ul class="space-y-2 text-xs text-slate-600 font-medium">
-                    <li><a href="/partner/login" class="hover:text-brand-500">Clinic Partner Login</a></li>
-                    <li><a href="/hq/login" class="hover:text-brand-500">Staff Access (HQ)</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 md:px-8 mt-8 pt-6 border-t border-slate-100 text-[10px] text-slate-400 font-medium flex justify-between items-center">
-            <span>&copy; 2026 Industrial Healthcare IHC Diagnostics. All rights reserved.</span>
-        </div>
-    </footer>
-
-    <!-- Mobile App-like Bottom Nav -->
+    <!-- Mobile Nav -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-[68px] z-50 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
-        <a href="/" class="flex flex-col items-center gap-1 text-brand-500">
-            <i class="fa-solid fa-house text-[18px]"></i><span class="text-[10px] font-bold">Home</span>
-        </a>
-        <a href="/tests" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
-            <i class="fa-solid fa-magnifying-glass text-[18px]"></i><span class="text-[10px] font-bold">Search</span>
-        </a>
-        <a href="/login" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-900 transition">
-            <i class="fa-regular fa-user text-[18px]"></i><span class="text-[10px] font-bold">User</span>
-        </a>
+        <a href="/" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-house text-[18px]"></i><span class="text-[10px] font-bold">Home</span></a>
+        <a href="/tests" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-solid fa-magnifying-glass text-[18px]"></i><span class="text-[10px] font-bold">Search</span></a>
+        <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-solid fa-cart-shopping text-[18px]"></i><span class="text-[10px] font-bold">Cart</span></a>
+        <a href="/login" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-regular fa-user text-[18px]"></i><span class="text-[10px] font-bold">User</span></a>
     </div>
 
 </body>
