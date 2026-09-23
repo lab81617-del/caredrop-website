@@ -14,7 +14,6 @@ def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # 1. Create Core Tables
     cur.execute('''CREATE TABLE IF NOT EXISTS tests (
         id SERIAL PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, sample_type TEXT, b2b_cost REAL DEFAULT 0, price REAL NOT NULL, is_active BOOLEAN DEFAULT TRUE
     );''')
@@ -31,15 +30,17 @@ def init_db():
         id SERIAL PRIMARY KEY, order_code TEXT UNIQUE, full_name TEXT NOT NULL, age TEXT, gender TEXT, phone TEXT NOT NULL, email TEXT NOT NULL, address TEXT NOT NULL, time_slot TEXT, tests_requested TEXT NOT NULL, gross_bill REAL NOT NULL, discount_given REAL DEFAULT 0, total_bill REAL NOT NULL, b2b_total_cost REAL DEFAULT 0, referral_code TEXT, partner_commission REAL DEFAULT 0, is_commission_paid BOOLEAN DEFAULT FALSE, assigned_rider TEXT DEFAULT 'Unassigned', status TEXT DEFAULT 'Pending', barcode TEXT, temp_log TEXT, payment_mode TEXT DEFAULT 'Cash', is_paid BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, completed_at TIMESTAMP, uploaded_pdf TEXT
     );''')
     
-    # 2. THE FIX: Auto-Patch Missing Columns
+    # AGGRESSIVE AUTO-PATCHER: Forces missing columns to exist
     patch_queries = [
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS price REAL DEFAULT 0",
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS b2b_cost REAL DEFAULT 0",
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General'",
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS sample_type TEXT DEFAULT 'Blood'",
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE",
         "ALTER TABLE partners ADD COLUMN IF NOT EXISTS wallet_balance REAL DEFAULT 0",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS uploaded_pdf TEXT",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS b2b_total_cost REAL DEFAULT 0",
-        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS email TEXT",
-        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE",
-        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General'",
-        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS sample_type TEXT DEFAULT 'Blood'"
+        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS email TEXT"
     ]
     
     for query in patch_queries:
