@@ -3,141 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CareDrop | Diagnostics Made Simpler</title>
+    <title>Book a Test | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: { brand: { 50: '#E6F8F8', 500: '#00B4B6', 600: '#009092', 900: '#003637' } }
-                }
-            }
+            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E6F8F8', 500: '#00B4B6', 600: '#009092', 900: '#003637' } } } }
         }
     </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-[#F8FBFB] text-slate-900 font-sans antialiased pb-20 md:pb-0 flex flex-col min-h-screen">
+<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-28 md:pb-12">
 
-    <!-- Top Navigation -->
-    <header class="bg-white sticky top-0 z-50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] w-full">
-        <div class="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
+    <!-- Desktop Navigation -->
+    <header class="bg-white sticky top-0 z-40 shadow-sm hidden md:block">
+        <div class="max-w-7xl mx-auto px-8 h-[72px] flex items-center justify-between">
             <a href="/" class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded bg-brand-500 flex items-center justify-center text-white"><i class="fa-solid fa-droplet text-sm"></i></div>
-                <span class="text-[22px] font-bold tracking-tight text-slate-900">CareDrop</span>
+                <span class="text-[22px] font-black tracking-tight text-slate-900">CareDrop</span>
             </a>
-            
-            <div class="hidden md:flex items-center gap-8 font-semibold text-sm text-slate-600">
-                <a href="/tests" class="hover:text-brand-500 transition">Tests</a>
-                <a href="/tests" class="hover:text-brand-500 transition">Packages</a>
-                <a href="https://wa.me/919485978790" class="hover:text-brand-500 transition">Contact</a>
-            </div>
-
-            <a href="/login" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-2 rounded-full font-bold transition text-sm">
-                Login
+            <a href="/checkout" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold transition text-sm flex items-center gap-2 shadow-md">
+                <i class="fa-solid fa-cart-shopping"></i> Go to Checkout
             </a>
         </div>
     </header>
 
-    <main class="flex-grow">
-        <!-- Hero Section -->
-        <section class="max-w-7xl mx-auto px-6 py-12 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div class="space-y-8 z-10">
-                <div class="space-y-4">
-                    <h1 class="text-[40px] md:text-6xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
-                        Diagnostics <br>made simpler.
-                    </h1>
-                    <p class="text-lg md:text-xl font-semibold text-slate-500">Book. Collect. Know.</p>
-                </div>
-                
-                <form action="/tests" method="GET" class="bg-white p-2 rounded-[1rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex items-center border border-slate-100 max-w-[480px]">
-                    <div class="pl-4 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
-                    <input type="text" name="q" placeholder="Search tests, packages..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-700 font-medium text-sm">
-                    <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold transition text-sm shadow-sm">Search</button>
-                </form>
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-white sticky top-0 z-40 px-4 h-16 flex items-center gap-3 shadow-sm border-b border-slate-100">
+        <a href="/" class="text-slate-500 text-lg w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1 class="text-lg font-black tracking-tight text-slate-900">Book a Test</h1>
+    </header>
 
-                <div class="grid grid-cols-2 gap-4 max-w-[480px]">
-                    <a href="/tests" class="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm hover:border-brand-500 transition">
-                        <div class="w-11 h-11 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center text-lg"><i class="fa-regular fa-calendar-check"></i></div>
-                        <div>
-                            <span class="block font-bold text-slate-900 text-sm">Book a Test</span>
-                            <span class="text-[10px] text-slate-500 font-medium">Quick & easy booking</span>
-                        </div>
-                    </a>
-                    <a href="https://wa.me/919485978790" class="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-500 transition">
-                        <div class="w-11 h-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-lg"><i class="fa-brands fa-whatsapp"></i></div>
-                        <div>
-                            <span class="block font-bold text-slate-900 text-sm">Send Rx</span>
-                            <span class="text-[10px] text-slate-500 font-medium">Upload via chat</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
+    <main class="max-w-[700px] mx-auto px-4 py-6 md:py-10">
+        <h1 class="hidden md:block text-3xl font-black text-slate-900 tracking-tight mb-8">Test Catalog</h1>
+        
+        <!-- Search Bar -->
+        <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 mb-6 flex items-center">
+            <div class="pl-4 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <input type="text" id="searchInput" onkeyup="filterTests()" placeholder="Search tests or packages..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-700 font-bold text-sm">
+        </div>
 
-            <div class="hidden md:block w-full">
-                <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80" class="rounded-[2rem] shadow-2xl object-cover h-[450px] w-full border-8 border-white" alt="Lab Technician">
-            </div>
-        </section>
-
-        <!-- Popular Tests -->
-        <section class="max-w-7xl mx-auto px-6 pb-16">
-            <div class="flex justify-between items-end mb-6">
-                <h2 class="text-xl md:text-[22px] font-bold text-slate-900 tracking-tight">Popular Tests</h2>
-                <a href="/tests" class="text-brand-500 font-bold hover:underline text-xs md:text-sm">View all tests</a>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-[160px]">
-                    <div>
-                        <h3 class="font-bold text-[18px] text-slate-900 mb-1">CBC</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">Complete Blood Count</p>
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹350</span>
-                            <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
-                        </div>
-                        <a href="/tests?q=cbc" class="bg-brand-50 text-brand-600 font-bold px-5 py-2.5 rounded-xl transition text-xs">Add</a>
+        <!-- Dynamic Test List (Crash-Proofed with .get) -->
+        <div class="space-y-4" id="test-list">
+            {% for t in tests %}
+            <div class="test-card bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center" data-name="{{ t.get('name', '') | lower }}" data-category="{{ t.get('category', '') | lower }}">
+                <div class="pr-4">
+                    <h3 class="font-black text-lg md:text-xl text-slate-900 mb-1">{{ t.get('name', 'Unknown Test') }}</h3>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3 uppercase tracking-wider">{{ t.get('category', 'General') }} Panel</p>
+                    <div class="flex items-center gap-3">
+                        <span class="block text-xl md:text-2xl font-black text-brand-600 leading-none">₹{{ t.get('price', 0)|int }}</span>
+                        <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded flex items-center gap-1 mt-1 md:mt-0 border border-emerald-100"><i class="fa-regular fa-clock"></i> Same day</span>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-[160px]">
-                    <div>
-                        <h3 class="font-bold text-[18px] text-slate-900 mb-1">Lipid Profile</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">Complete Heart Panel</p>
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹600</span>
-                            <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
-                        </div>
-                        <a href="/tests?q=lipid" class="bg-brand-50 text-brand-600 font-bold px-5 py-2.5 rounded-xl transition text-xs">Add</a>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-[160px]">
-                    <div>
-                        <h3 class="font-bold text-[18px] text-slate-900 mb-1">Thyroid Profile</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">T3, T4, TSH Panel</p>
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <span class="block text-[22px] font-extrabold text-slate-900 leading-none">₹1,300</span>
-                            <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-2 inline-block"><i class="fa-regular fa-clock"></i> Same day report</span>
-                        </div>
-                        <a href="/tests?q=thyroid" class="bg-brand-50 text-brand-600 font-bold px-5 py-2.5 rounded-xl transition text-xs">Add</a>
-                    </div>
-                </div>
+                <button onclick="addToCart({{ t.get('id', 0) }}, {{ t.get('price', 0) }}, this)" class="bg-brand-50 text-brand-600 border border-brand-200 hover:bg-brand-500 hover:text-white px-5 py-2.5 md:px-8 md:py-3 rounded-xl font-bold transition text-xs md:text-sm shrink-0 shadow-sm">
+                    + Add
+                </button>
             </div>
-        </section>
+            {% else %}
+            <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <i class="fa-solid fa-flask text-4xl mb-4 text-slate-300"></i>
+                <p class="font-bold text-slate-500">No tests found in catalog.</p>
+            </div>
+            {% endfor %}
+        </div>
     </main>
 
+    <!-- Floating Cart Bar -->
+    <div id="floating-cart" class="fixed bottom-[80px] md:bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[600px] bg-slate-900 text-white rounded-2xl px-6 py-4 justify-between items-center shadow-2xl z-50 hidden transition-all">
+        <div>
+            <span id="cart-count" class="block text-[10px] text-slate-400 font-bold mb-0.5 uppercase tracking-widest">1 item added</span>
+            <span id="cart-total" class="block text-2xl font-black text-brand-500 leading-none">₹0</span>
+        </div>
+        <a href="/checkout" class="bg-brand-500 text-white hover:bg-brand-600 px-6 py-3.5 rounded-xl font-black text-sm transition shadow-lg flex items-center gap-2">
+            Checkout <i class="fa-solid fa-arrow-right"></i>
+        </a>
+    </div>
+
     <!-- Mobile Nav -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-[68px] z-50 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
-        <a href="/" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-house text-[18px]"></i><span class="text-[10px] font-bold">Home</span></a>
-        <a href="/tests" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-solid fa-magnifying-glass text-[18px]"></i><span class="text-[10px] font-bold">Search</span></a>
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-[68px] z-40 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <a href="/" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-solid fa-house text-[18px]"></i><span class="text-[10px] font-bold">Home</span></a>
+        <a href="/tests" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-magnifying-glass text-[18px]"></i><span class="text-[10px] font-bold">Search</span></a>
         <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-solid fa-cart-shopping text-[18px]"></i><span class="text-[10px] font-bold">Cart</span></a>
         <a href="/login" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-regular fa-user text-[18px]"></i><span class="text-[10px] font-bold">User</span></a>
     </div>
 
+    <script>
+        let cartTotal = 0; let cartCount = 0;
+
+        function filterTests() {
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let cards = document.getElementsByClassName('test-card');
+            for (let i = 0; i < cards.length; i++) {
+                let name = cards[i].getAttribute('data-name');
+                let cat = cards[i].getAttribute('data-category');
+                if (name.includes(input) || cat.includes(input)) cards[i].style.display = "flex";
+                else cards[i].style.display = "none";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const q = new URLSearchParams(window.location.search).get('q');
+            if(q) { document.getElementById('searchInput').value = q; filterTests(); }
+        });
+
+        async function addToCart(testId, price, btnElement) {
+            try {
+                const res = await fetch(`/api/cart/add/${testId}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Added';
+                    btnElement.classList.replace('bg-brand-50', 'bg-emerald-500');
+                    btnElement.classList.replace('text-brand-600', 'text-white');
+                    btnElement.classList.replace('border-brand-200', 'border-emerald-600');
+                    btnElement.disabled = true;
+
+                    cartCount++; cartTotal += parseFloat(price);
+                    document.getElementById('cart-count').innerText = `${cartCount} item${cartCount > 1 ? 's' : ''} added`;
+                    document.getElementById('cart-total').innerText = `₹${cartTotal}`;
+                    
+                    const floatingCart = document.getElementById('floating-cart');
+                    floatingCart.classList.remove('hidden'); floatingCart.classList.add('flex');
+                }
+            } catch (e) {}
+        }
+    </script>
 </body>
 </html>
