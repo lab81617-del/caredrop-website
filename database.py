@@ -6,7 +6,7 @@ DB_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
     if not DB_URL:
-        raise ValueError("DATABASE_URL environment variable is missing. Please check Render settings.")
+        raise ValueError("DATABASE_URL environment variable is missing.")
     return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
 
 def init_db():
@@ -31,20 +31,22 @@ def init_db():
         id SERIAL PRIMARY KEY, order_code TEXT UNIQUE, full_name TEXT NOT NULL, age TEXT, gender TEXT, phone TEXT NOT NULL, email TEXT NOT NULL, address TEXT NOT NULL, time_slot TEXT, tests_requested TEXT NOT NULL, gross_bill REAL NOT NULL, discount_given REAL DEFAULT 0, total_bill REAL NOT NULL, b2b_total_cost REAL DEFAULT 0, referral_code TEXT, partner_commission REAL DEFAULT 0, is_commission_paid BOOLEAN DEFAULT FALSE, assigned_rider TEXT DEFAULT 'Unassigned', status TEXT DEFAULT 'Pending', barcode TEXT, temp_log TEXT, payment_mode TEXT DEFAULT 'Cash', is_paid BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, completed_at TIMESTAMP, uploaded_pdf TEXT
     );''')
     
-    # 2. Auto-Patch Missing Columns (Prevents 500 Errors on old databases)
+    # 2. THE FIX: Auto-Patch Missing Columns
     patch_queries = [
         "ALTER TABLE partners ADD COLUMN IF NOT EXISTS wallet_balance REAL DEFAULT 0",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS uploaded_pdf TEXT",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS b2b_total_cost REAL DEFAULT 0",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS email TEXT",
-        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE"
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General'",
+        "ALTER TABLE tests ADD COLUMN IF NOT EXISTS sample_type TEXT DEFAULT 'Blood'"
     ]
     
     for query in patch_queries:
         try:
             cur.execute(query)
         except Exception:
-            conn.rollback() # Skip if it already exists or fails
+            conn.rollback()
 
     conn.commit()
     cur.close()
