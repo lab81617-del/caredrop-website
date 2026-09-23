@@ -3,31 +3,26 @@ import random
 import base64
 import io
 import requests
+import traceback
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_file
 from database import get_db_connection, init_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
-init_db()
 
-# DB Auto-Fix for missing columns
+# Initialize DB and run auto-patcher on startup
 try:
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS email TEXT")
-    cur.execute("ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE")
-    conn.commit()
-    cur.close()
-    conn.close()
+    init_db()
 except Exception as e:
-    pass
+    print(f"Startup DB Init Failed: {e}")
 
-# --- SUPERCHARGED EMAIL ENGINE (Using Brevo API) ---
+# ==========================================
+# 1. NOTIFICATION ENGINE (BREVO / SMTP)
+# ==========================================
 def send_email(to_email, subject, body):
     brevo_key = os.environ.get('BREVO_API_KEY')
     sender_email = os.environ.get('MAIL_USERNAME', 'ihcdiagnostics.ynr@gmail.com')
@@ -45,7 +40,7 @@ def send_email(to_email, subject, body):
             requests.post(url, json=payload, headers=headers, timeout=3)
             return
         except Exception as e:
-            pass
+            print(f"Brevo API error: {e}")
 
     password = os.environ.get('MAIL_PASSWORD')
     if not password or not to_email: return
@@ -61,9 +56,11 @@ def send_email(to_email, subject, body):
         server.send_message(msg)
         server.quit()
     except Exception as e:
-        pass
+        print(f"SMTP Email failed: {e}")
 
-# --- STRICT SEPARATED ROLE DECORATORS ---
+# ==========================================
+# 2. SECURITY & ACCESS CONTROL
+# ==========================================
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -92,9 +89,12 @@ def partner_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- SEPARATED LOGIN ROUTES ---
+# ==========================================
+# 3. AUTHENTICATION ROUTES
+# ==========================================
 @app.route('/login', methods=['GET', 'POST'])
-def patient_login(): return render_template('auth_patient.html')
+def patient_login(): 
+    return render_template('auth_patient.html')
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -103,7 +103,7 @@ def admin_login():
             session['role'] = 'admin'
             return redirect(url_for('admin'))
         flash("Invalid Admin Clearance")
-    return render_template('auth_admin.html') if os.path.exists('templates/auth_admin.html') else "Please create templates/auth_admin.html"
+    return render_template('auth_admin.html') 
 
 @app.route('/reception/login', methods=['GET', 'POST'])
 def reception_login():
@@ -112,7 +112,7 @@ def reception_login():
             session['role'] = 'reception'
             return redirect(url_for('admin_pos'))
         flash("Invalid Reception Clearance")
-    return render_template('auth_reception.html') if os.path.exists('templates/auth_reception.html') else "Please create templates/auth_reception.html"
+    return render_template('auth_reception.html') 
 
 @app.route('/rider/login', methods=['GET', 'POST'])
 def rider_login():
@@ -121,7 +121,7 @@ def rider_login():
             session['role'] = 'rider'
             return redirect(url_for('rider_dashboard'))
         flash("Invalid Rider Clearance")
-    return render_template('auth_rider.html') if os.path.exists('templates/auth_rider.html') else "Please create templates/auth_rider.html"
+    return render_template('auth_rider.html')
 
 @app.route('/partner/login', methods=['GET', 'POST'])
 def partner_login():
@@ -147,7 +147,6 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# --- EMAIL OTP SYSTEM ---
 @app.route('/api/send_login_otp', methods=['POST'])
 def send_login_otp():
     email = request.form.get('email').lower().strip()
@@ -167,31 +166,38 @@ def verify_login_otp():
     flash("Invalid OTP")
     return redirect(url_for('patient_login'))
 
-# --- PUBLIC PAGES & CART ---
+# ==========================================
+# 4. PATIENT PUBLIC BOOKING FLOW (FIGMA)
+# ==========================================
 @app.route('/')
-def index(): return render_template('index.html')
+def index(): 
+    return render_template('index.html')
 
 @app.route('/tests')
 def tests_catalogue():
-    conn = get_db_connection()
-    cur = conn.cursor()
     try:
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute('SELECT * FROM tests WHERE is_active = TRUE ORDER BY category, name ASC')
-    except Exception:
-        conn.rollback()
-        cur.execute('SELECT * FROM tests ORDER BY category, name ASC')
-    
-    # Safely convert Postgres dictionary to standard Python dictionary to prevent 500 Template Errors
-    tests = [dict(row) for row in cur.fetchall()]
-    cur.close()
-    conn.close()
+        tests = [dict(row) for row in cur.fetchall()] # Safe dictionary conversion
+        cur.close()
+        conn.close()
 
-    # Process the Search Bar query from the Homepage
-    search_query = request.args.get('q', '').lower()
-    if search_query:
-        tests = [t for t in tests if search_query in t['name'].lower() or search_query in t['category'].lower()]
+        # Ultra-safe Search Filter
+        search_query = request.args.get('q', '').lower()
+        if search_query:
+            filtered_tests = []
+            for t in tests:
+                name = str(t.get('name', '') or '').lower()
+                cat = str(t.get('category', '') or '').lower()
+                if search_query in name or search_query in cat:
+                    filtered_tests.append(t)
+            tests = filtered_tests
 
-    return render_template('tests.html', tests=tests)
+        return render_template('tests.html', tests=tests)
+    except Exception as e:
+        error_details = traceback.format_exc()
+        return f"<div style='padding: 20px; font-family: monospace;'><h3>System Crash</h3><p>{str(e)}</p><pre>{error_details}</pre></div>"
 
 @app.route('/api/cart/add/<int:test_id>', methods=['POST'])
 def add_to_cart(test_id):
@@ -215,7 +221,6 @@ def checkout():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM tests WHERE id = ANY(%s)', (cart_ids,))
-    # Safely convert to dictionary
     items = [dict(row) for row in cur.fetchall()]
     cur.close()
     conn.close()
@@ -236,7 +241,6 @@ def validate_promo():
         return jsonify({'valid': True, 'discount': discount, 'new_total': total - discount, 'partner': partner['clinic_name']})
     return jsonify({'valid': False})
 
-# --- BOOKING LOGIC ---
 @app.route('/api/initiate_booking', methods=['POST'])
 def initiate_booking():
     session['pending_order'] = {
@@ -264,11 +268,12 @@ def confirm_booking():
     cur = conn.cursor()
     
     cart_ids = session.get('cart', [])
-    cur.execute('SELECT id, name, price FROM tests WHERE id = ANY(%s)', (cart_ids,))
+    cur.execute('SELECT id, name, price, b2b_cost FROM tests WHERE id = ANY(%s)', (cart_ids,))
     items = cur.fetchall()
     test_ids = [i['id'] for i in items]
     tests_requested = ", ".join([i['name'] for i in items])
     gross_bill = sum(i['price'] for i in items)
+    b2b_cost = sum(i['b2b_cost'] for i in items)
     
     discount_given, partner_commission = 0, 0
     if o_data['referral_code']:
@@ -283,9 +288,9 @@ def confirm_booking():
     order_code = f"CD-{random.randint(1000, 9999)}"
 
     cur.execute('''
-        INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, referral_code, partner_commission)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
-    ''', (order_code, o_data['full_name'], o_data['age'], o_data['gender'], o_data['phone'], o_data['email'], o_data['address'], o_data['time_slot'], tests_requested, gross_bill, discount_given, total_bill, o_data['referral_code'], partner_commission))
+        INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, b2b_total_cost, referral_code, partner_commission)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
+    ''', (order_code, o_data['full_name'], o_data['age'], o_data['gender'], o_data['phone'], o_data['email'], o_data['address'], o_data['time_slot'], tests_requested, gross_bill, discount_given, total_bill, b2b_cost, o_data['referral_code'], partner_commission))
     
     order_id = cur.fetchone()['id']
     
@@ -305,10 +310,23 @@ def confirm_booking():
     session['patient_email'] = o_data['email']
     
     send_email(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test ({tests_requested}) is booked for {o_data['time_slot']}. Order ID: {order_code}</p>")
-    send_email(os.environ.get('MAIL_USERNAME'), f"New Order: {order_code}", f"<p>Order {order_code} received from {o_data['full_name']} for {o_data['time_slot']}.</p>")
     return jsonify({'status': 'success', 'redirect': '/my_bookings'})
 
-# --- RECEPTION POS MANUAL BOOKING ---
+@app.route('/my_bookings')
+def my_bookings():
+    if session.get('role') != 'patient': return redirect(url_for('patient_login'))
+    email = session.get('patient_email')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM orders WHERE email = %s ORDER BY id DESC', (email,))
+    bookings = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('my_bookings.html', bookings=bookings)
+
+# ==========================================
+# 5. RECEPTION & PARTNER POS
+# ==========================================
 @app.route('/pos_book_test', methods=['POST'])
 @reception_required
 def pos_book_test():
@@ -319,7 +337,6 @@ def pos_book_test():
     email = request.form.get('email', '')
     address = request.form.get('address')
     time_slot = request.form.get('time_slot')
-    
     tests_requested = request.form.get('tests_requested')
     gross_bill = float(request.form.get('total_bill', 0))
     order_code = f"CD-{random.randint(1000, 9999)}"
@@ -346,7 +363,6 @@ def pos_book_test():
     conn.close()
     return redirect(url_for('admin_pos'))
 
-# --- PARTNER PORTAL ---
 @app.route('/partner/dashboard')
 @partner_required
 def partner_dashboard():
@@ -404,7 +420,9 @@ def partner_book_test():
     if email: send_email(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total Payable: Rs {total_bill}.</p>")
     return redirect(url_for('partner_dashboard'))
 
-# --- ADMIN / RECEPTION DASHBOARDS ---
+# ==========================================
+# 6. ADMIN & RECEPTION OPERATIONS
+# ==========================================
 @app.route('/admin')
 @reception_required
 def admin():
@@ -457,91 +475,6 @@ def mark_commissions_paid(referral_code):
     conn.close()
     return redirect(url_for('admin_partners'))
 
-# --- DIRECT PDF UPLOAD ---
-@app.route('/admin/upload_pdf/<int:order_id>', methods=['POST'])
-@reception_required
-def upload_pdf(order_id):
-    file = request.files.get('pdf_file')
-    if file and file.filename.endswith('.pdf'):
-        encoded_pdf = base64.b64encode(file.read()).decode('utf-8')
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("UPDATE orders SET uploaded_pdf = %s, status = 'Completed', completed_at = CURRENT_TIMESTAMP WHERE id = %s", (encoded_pdf, order_id))
-        cur.execute("SELECT email, full_name FROM orders WHERE id = %s", (order_id,))
-        order = cur.fetchone()
-        conn.commit()
-        cur.close()
-        conn.close()
-        
-        report_link = url_for('patient_login', _external=True)
-        send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
-    return redirect(url_for('admin'))
-
-@app.route('/download_pdf/<int:order_id>')
-def download_pdf(order_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT uploaded_pdf, order_code FROM orders WHERE id = %s", (order_id,))
-    order = cur.fetchone()
-    cur.close()
-    conn.close()
-    
-    if order and order['uploaded_pdf']:
-        pdf_bytes = base64.b64decode(order['uploaded_pdf'])
-        return send_file(io.BytesIO(pdf_bytes), download_name=f"{order['order_code']}_Report.pdf", mimetype='application/pdf')
-    return "PDF Not Found", 404
-
-# --- LIMS RESULTS & REOPEN ---
-@app.route('/api/lab/submit_results/<int:order_id>', methods=['POST'])
-@reception_required
-def submit_lab_results(order_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    for key, value in request.form.items():
-        if key.startswith('param_'):
-            result_id = key.split('_')[1]
-            cur.execute("UPDATE test_results SET observed_value = %s WHERE id = %s", (value, result_id))
-    
-    cur.execute("UPDATE orders SET status = 'Completed', completed_at = CURRENT_TIMESTAMP WHERE id = %s", (order_id,))
-    cur.execute("SELECT email, full_name FROM orders WHERE id = %s", (order_id,))
-    order = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    report_link = url_for('patient_login', _external=True)
-    send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
-    return redirect(f'/lims_report/{order_id}')
-
-@app.route('/admin/reopen_order/<int:order_id>')
-@admin_only
-def reopen_order(order_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("UPDATE orders SET status = 'Sample Collected', completed_at = NULL, uploaded_pdf = NULL WHERE id = %s", (order_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return redirect(url_for('admin'))
-
-@app.route('/lims_report/<int:order_id>')
-def lims_report(order_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
-    order = cur.fetchone()
-    if order['uploaded_pdf']:
-        cur.close()
-        conn.close()
-        return redirect(url_for('download_pdf', order_id=order_id))
-        
-    cur.execute('SELECT * FROM test_results WHERE order_id = %s', (order_id,))
-    results = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('lims_report.html', order=order, results=results, role=session.get('role'))
-
-# --- ADMIN ROUTES (Assign Rider, Catalog, etc.) ---
 @app.route('/admin/assign_rider/<int:order_id>', methods=['POST'])
 @reception_required
 def admin_assign_rider(order_id):
@@ -596,7 +529,91 @@ def admin_add_parameter():
     conn.close()
     return redirect(url_for('admin_catalog'))
 
-# --- RIDER LOGISTICS ---
+# ==========================================
+# 7. LIMS & PDF ENGINE
+# ==========================================
+@app.route('/admin/upload_pdf/<int:order_id>', methods=['POST'])
+@reception_required
+def upload_pdf(order_id):
+    file = request.files.get('pdf_file')
+    if file and file.filename.endswith('.pdf'):
+        encoded_pdf = base64.b64encode(file.read()).decode('utf-8')
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE orders SET uploaded_pdf = %s, status = 'Completed', completed_at = CURRENT_TIMESTAMP WHERE id = %s", (encoded_pdf, order_id))
+        cur.execute("SELECT email, full_name FROM orders WHERE id = %s", (order_id,))
+        order = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        report_link = url_for('patient_login', _external=True)
+        send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
+    return redirect(url_for('admin'))
+
+@app.route('/download_pdf/<int:order_id>')
+def download_pdf(order_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT uploaded_pdf, order_code FROM orders WHERE id = %s", (order_id,))
+    order = cur.fetchone()
+    cur.close()
+    conn.close()
+    if order and order['uploaded_pdf']:
+        pdf_bytes = base64.b64decode(order['uploaded_pdf'])
+        return send_file(io.BytesIO(pdf_bytes), download_name=f"{order['order_code']}_Report.pdf", mimetype='application/pdf')
+    return "PDF Not Found", 404
+
+@app.route('/api/lab/submit_results/<int:order_id>', methods=['POST'])
+@reception_required
+def submit_lab_results(order_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    for key, value in request.form.items():
+        if key.startswith('param_'):
+            result_id = key.split('_')[1]
+            cur.execute("UPDATE test_results SET observed_value = %s WHERE id = %s", (value, result_id))
+    
+    cur.execute("UPDATE orders SET status = 'Completed', completed_at = CURRENT_TIMESTAMP WHERE id = %s", (order_id,))
+    cur.execute("SELECT email, full_name FROM orders WHERE id = %s", (order_id,))
+    order = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    report_link = url_for('patient_login', _external=True)
+    send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
+    return redirect(f'/lims_report/{order_id}')
+
+@app.route('/admin/reopen_order/<int:order_id>')
+@admin_only
+def reopen_order(order_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE orders SET status = 'Sample Collected', completed_at = NULL, uploaded_pdf = NULL WHERE id = %s", (order_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin'))
+
+@app.route('/lims_report/<int:order_id>')
+def lims_report(order_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
+    order = cur.fetchone()
+    if order and order['uploaded_pdf']:
+        cur.close()
+        conn.close()
+        return redirect(url_for('download_pdf', order_id=order_id))
+        
+    cur.execute('SELECT * FROM test_results WHERE order_id = %s', (order_id,))
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('lims_report.html', order=order, results=results, role=session.get('role'))
+
+# ==========================================
+# 8. RIDER LOGISTICS
+# ==========================================
 @app.route('/rider')
 @app.route('/rider_dashboard')
 @rider_required
@@ -628,22 +645,9 @@ def rider_complete():
     conn.commit()
     cur.close()
     conn.close()
-    
     send_email(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected. The rider has marked payment as {payment_mode}.</p>")
     return redirect(url_for('rider_dashboard'))
 
-# --- PATIENT DASHBOARD ---
-@app.route('/my_bookings')
-def my_bookings():
-    if session.get('role') != 'patient': return redirect(url_for('patient_login'))
-    email = session.get('patient_email')
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM orders WHERE email = %s ORDER BY id DESC', (email,))
-    bookings = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('my_bookings.html', bookings=bookings)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
