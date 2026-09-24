@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secure Checkout | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: { 
+                        brand: { 50: '#E1F6F6', 100: '#CCEEEE', 500: '#00A8A8', 600: '#008F8F' }, 
+                        navy: { 800: '#1A2938', 900: '#0B192C' } 
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#F8F9FA] text-slate-800 font-sans antialiased pb-10">
+
+    <!-- Minimal Checkout Header (Removes distractions) -->
+    <header class="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-200">
+        <div class="max-w-[1200px] w-full mx-auto px-5 h-[70px] flex items-center justify-between">
+            <a href="/tests" class="flex items-center gap-2 text-slate-500 hover:text-brand-500 transition">
+                <i class="fa-solid fa-arrow-left"></i> <span class="text-sm font-bold hidden sm:inline">Back to Catalog</span>
+            </a>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 flex items-center justify-center text-brand-500 text-2xl transform -rotate-6"><i class="fa-solid fa-notes-medical"></i></div>
+                <span class="text-xl font-black tracking-tight text-navy-900">CareDrop</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-emerald-600 text-xs font-bold bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+                <i class="fa-solid fa-lock"></i> <span class="hidden sm:inline">Secure Checkout</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1200px] mx-auto px-4 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        
+        <!-- ================= LEFT: PATIENT DETAILS FORM ================= -->
+        <div class="lg:col-span-7 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:p-8">
+                <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                    <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center font-black">1</div>
+                    <h2 class="text-xl font-black text-navy-900">Patient Details</h2>
+                </div>
+
+                <form id="checkoutForm" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5">Full Name</label>
+                            <input type="text" id="full_name" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-sm" placeholder="Enter patient name">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5">Phone Number</label>
+                            <input type="tel" id="phone" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-sm" placeholder="10-digit mobile number">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5">Age</label>
+                            <input type="number" id="age" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-sm" placeholder="Years">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5">Gender</label>
+                            <select id="gender" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-sm bg-white">
+                                <option value="" disabled selected>Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Email Address <span class="text-slate-400 font-normal">(For digital reports)</span></label>
+                        <input type="email" id="email" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-sm" placeholder="name@example.com">
+                    </div>
+
+                    <div class="pt-4 mt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center font-black">2</div>
+                            <h2 class="text-xl font-black text-navy-900">Collection Details</h2>
+                        </div>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Complete Address <span class="text-slate-400 font-normal">(Yamunanagar/Jagadhri only)</span></label>
+                                <textarea id="address" required rows="2" class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-sm resize-none" placeholder="House/Flat No, Street, Landmark"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Preferred Collection Time</label>
+                                <select id="time_slot" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-sm bg-white">
+                                    <option value="" disabled selected>Select a time slot</option>
+                                    <option value="07:00 AM - 08:00 AM">07:00 AM - 08:00 AM (Fasting)</option>
+                                    <option value="08:00 AM - 09:00 AM">08:00 AM - 09:00 AM (Fasting)</option>
+                                    <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
+                                    <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
+                                    <option value="02:00 PM - 05:00 PM">02:00 PM - 05:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ================= RIGHT: CART SUMMARY ================= -->
+        <div class="lg:col-span-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 sticky top-[90px] overflow-hidden">
+                <div class="px-6 py-5 bg-[#F8FAFA] border-b border-slate-100 flex justify-between items-center">
+                    <h2 class="text-lg font-black text-navy-900">Order Summary</h2>
+                    <span class="text-xs font-bold bg-brand-100 text-brand-600 px-2 py-1 rounded">{{ items|length }} Items</span>
+                </div>
+                
+                <div class="p-6">
+                    <!-- Cart Items -->
+                    <div class="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2 hide-scrollbar">
+                        {% for item in items %}
+                        <div class="flex justify-between items-start gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                            <div>
+                                <h4 class="font-bold text-sm text-navy-900 leading-tight mb-1">{{ item.name }}</h4>
+                                <span class="text-[10px] text-slate-500 font-bold tracking-widest uppercase">{{ item.category }}</span>
+                            </div>
+                            <span class="font-black text-navy-900 shrink-0">₹{{ item.price|int }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Promo Code -->
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-slate-600 mb-2">Have a Clinic Referral Code?</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="promo_code" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 uppercase text-sm" placeholder="Enter Code">
+                            <button type="button" onclick="applyPromo()" class="bg-navy-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold transition text-sm">Apply</button>
+                        </div>
+                        <p id="promo_msg" class="text-xs font-bold mt-2 hidden"></p>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="space-y-3 pt-4 border-t border-slate-100 mb-6">
+                        <div class="flex justify-between items-center text-sm font-bold text-slate-600">
+                            <span>Subtotal</span>
+                            <span>₹{{ total|int }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm font-bold text-slate-600">
+                            <span>Home Collection</span>
+                            <span class="text-emerald-600">Free</span>
+                        </div>
+                        <div id="discount_row" class="flex justify-between items-center text-sm font-bold text-emerald-600 hidden">
+                            <span>Partner Discount (10%)</span>
+                            <span id="discount_amt">- ₹0</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+                            <span class="text-lg font-black text-navy-900">Total Payable</span>
+                            <span id="final_total" class="text-2xl font-black text-brand-500">₹{{ total|int }}</span>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="initiateBooking()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-black py-4 rounded-xl transition shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2">
+                        Proceed to Book <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <p class="text-[10px] text-center text-slate-400 font-bold mt-4 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-shield-check text-emerald-500"></i> Payment is collected at the time of sample collection.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- OTP Modal (Hidden by default) -->
+    <div id="otpModal" class="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative transform scale-95 transition-transform duration-200" id="otpModalContent">
+            <div class="w-16 h-16 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                <i class="fa-solid fa-envelope-open-text"></i>
+            </div>
+            <h3 class="text-xl font-black text-navy-900 mb-2">Verify your Email</h3>
+            <p class="text-sm text-slate-500 font-medium mb-6">We've sent a 4-digit verification code to your email. Enter it below to confirm your booking.</p>
+            
+            <input type="text" id="otp_input" maxlength="4" class="w-full text-center text-3xl tracking-[1em] font-black border-b-2 border-slate-300 pb-2 mb-6 focus:outline-none focus:border-brand-500 bg-transparent text-navy-900 placeholder-slate-200" placeholder="••••">
+            
+            <button onclick="confirmBooking()" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition shadow-md">
+                Confirm Booking
+            </button>
+            <button onclick="closeModal()" class="w-full text-slate-400 font-bold text-sm mt-4 hover:text-navy-900 transition">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let baseTotal = {{ total }};
+        let currentTotal = baseTotal;
+
+        async function applyPromo() {
+            const code = document.getElementById('promo_code').value;
+            const msg = document.getElementById('promo_msg');
+            if(!code) return;
+
+            try {
+                const res = await fetch('/api/validate_promo', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code: code, total: baseTotal})
+                });
+                const data = await res.json();
+                
+                msg.classList.remove('hidden');
+                if(data.valid) {
+                    msg.className = "text-xs font-bold mt-2 text-emerald-600";
+                    msg.innerText = `Valid! Applied via ${data.partner}`;
+                    document.getElementById('discount_row').classList.remove('hidden');
+                    document.getElementById('discount_amt').innerText = `- ₹${data.discount}`;
+                    currentTotal = data.new_total;
+                    document.getElementById('final_total').innerText = `₹${currentTotal}`;
+                } else {
+                    msg.className = "text-xs font-bold mt-2 text-rose-500";
+                    msg.innerText = "Invalid or expired code.";
+                    document.getElementById('discount_row').classList.add('hidden');
+                    currentTotal = baseTotal;
+                    document.getElementById('final_total').innerText = `₹${currentTotal}`;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function initiateBooking() {
+            const form = document.getElementById('checkoutForm');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const btn = event.currentTarget;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('full_name', document.getElementById('full_name').value);
+            formData.append('phone', document.getElementById('phone').value);
+            formData.append('age', document.getElementById('age').value);
+            formData.append('gender', document.getElementById('gender').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('address', document.getElementById('address').value);
+            formData.append('time_slot', document.getElementById('time_slot').value);
+            formData.append('referral_code', document.getElementById('promo_code').value);
+
+            try {
+                const res = await fetch('/api/initiate_booking', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.status === 'otp_sent') {
+                    document.getElementById('otpModal').classList.remove('hidden');
+                    document.getElementById('otpModal').classList.add('flex');
+                    setTimeout(() => {
+                        document.getElementById('otpModalContent').classList.remove('scale-95');
+                        document.getElementById('otpModalContent').classList.add('scale-100');
+                    }, 10);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btn.innerHTML = 'Proceed to Book <i class="fa-solid fa-arrow-right"></i>';
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmBooking() {
+            const otp = document.getElementById('otp_input').value;
+            if(!otp || otp.length < 4) return;
+
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('otp', otp);
+
+            try {
+                const res = await fetch('/api/confirm_booking', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.msg || "Invalid OTP");
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                console.error(e);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('otpModalContent').classList.add('scale-95');
+            document.getElementById('otpModalContent').classList.remove('scale-100');
+            setTimeout(() => {
+                document.getElementById('otpModal').classList.add('hidden');
+                document.getElementById('otpModal').classList.remove('flex');
+            }, 200);
+        }
+    </script>
+</body>
+</html>
