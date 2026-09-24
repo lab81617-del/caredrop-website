@@ -523,6 +523,18 @@ def admin_catalog():
     cur.close()
     conn.close()
     return render_template('admin_catalog.html', tests=tests, test_params=test_params)
+@app.route('/admin/wipe_catalog')
+@admin_only
+def admin_wipe_catalog():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # This deletes all tests and their parameters instantly
+    cur.execute('TRUNCATE TABLE tests CASCADE')
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Catalog completely wiped. You can now start fresh.")
+    return redirect(url_for('admin_catalog'))
 
 @app.route('/admin/add_test', methods=['POST'])
 @admin_only
