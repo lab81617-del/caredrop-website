@@ -189,8 +189,8 @@ def index():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Pull up to 4 active tests for the homepage
-        cur.execute('SELECT * FROM tests WHERE is_active = TRUE ORDER BY id DESC LIMIT 4')
+        # FIX: Only pull tests that have a price > 0 so unfinished tests stay hidden
+        cur.execute('SELECT * FROM tests WHERE is_active = TRUE AND price > 0 ORDER BY id DESC LIMIT 4')
         recent_tests = [dict(row) for row in cur.fetchall()]
         cur.close()
         conn.close()
