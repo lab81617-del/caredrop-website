@@ -540,16 +540,16 @@ def admin_wipe_catalog():
 @admin_only
 def admin_add_test():
     name = request.form.get('name')
-    b2b_cost = float(request.form.get('b2b_cost') or 0)
+    category = request.form.get('category', 'General')
     price = float(request.form.get('retail_price') or 0)
+    
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('INSERT INTO tests (name, category, b2b_cost, price) VALUES (%s, %s, %s, %s)', (name, 'General', b2b_cost, price))
+    cur.execute('INSERT INTO tests (name, category, price) VALUES (%s, %s, %s)', (name, category, price))
     conn.commit()
     cur.close()
     conn.close()
     return redirect(url_for('admin_catalog'))
-
 @app.route('/admin/add_parameter', methods=['POST'])
 @admin_only
 def admin_add_parameter():
