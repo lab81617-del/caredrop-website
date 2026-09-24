@@ -5,7 +5,7 @@ import io
 import requests
 import traceback
 import smtplib
-import threading # <-- ADD THIS LINE
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
@@ -15,7 +15,15 @@ from database import get_db_connection, init_db
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
 
-# --- GLOBAL DYNAMIC SETTINGS ---
+# Initialize DB and patch columns on startup
+try:
+    init_db()
+except Exception as e:
+    print(f"Startup DB Init Failed: {e}")
+
+# ==========================================
+# 0. GLOBAL DYNAMIC SETTINGS CONTEXT
+# ==========================================
 @app.context_processor
 def inject_settings():
     try:
@@ -26,26 +34,27 @@ def inject_settings():
         cur.close()
         conn.close()
         if not settings:
-            settings = {'phone': '+91 9485978790', 'email': 'caredrop.ynr@gmail.com', 'address': 'Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001'}
+            settings = {
+                'phone': '+91 9485978790',
+                'email': 'caredrop.ynr@gmail.com',
+                'address': 'Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001'
+            }
         return dict(site_settings=settings)
     except Exception:
-        return dict(site_settings={'phone': '+91 9485978790', 'email': 'caredrop.ynr@gmail.com', 'address': 'Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001'})
-# Initialize DB and run auto-patcher on startup
-try:
-    init_db()
-except Exception as e:
-    print(f"Startup DB Init Failed: {e}")
+        return dict(site_settings={
+            'phone': '+91 9485978790',
+            'email': 'caredrop.ynr@gmail.com',
+            'address': 'Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001'
+        })
 
 # ==========================================
-# 1. NOTIFICATION ENGINE (BREVO / SMTP)
+# 1. NOTIFICATION ENGINE (BREVO + SMTP FALLBACK)
 # ==========================================
-def send_email_async(to_email, subject, body):
-    thread = threading.Thread(target=send_email, args=(to_email, subject, body))
-    thread.daemon = True
-    thread.start()
+def send_email(to_email, subject, body):
     brevo_key = os.environ.get('BREVO_API_KEY')
     sender_email = os.environ.get('MAIL_USERNAME', 'ihcdiagnostics.ynr@gmail.com')
     
+    # 1. Attempt delivery via Brevo API
     if brevo_key:
         try:
             url = "https://api.brevo.com/v3/smtp/email"
@@ -55,56 +64,81 @@ def send_email_async(to_email, subject, body):
                 "subject": subject,
                 "htmlContent": body
             }
-            headers = {"accept": "application/json", "api-key": brevo_key, "content-type": "application/json"}
-            requests.post(url, json=payload, headers=headers, timeout=3)
-            return
+            headers = {
+                "accept": "application/json", 
+                "api-key": brevo_key.strip(), 
+                "content-type": "application/json"
+            }
+            res = requests.post(url, json=payload, headers=headers, timeout=5)
+            print(f"Brevo API response [{res.status_code}]: {res.text}")
+            
+            if res.status_code in [200, 201, 202]:
+                return
+            else:
+                print("Brevo delivery failed. Falling back to SMTP...")
         except Exception as e:
-            print(f"Brevo API error: {e}")
+            print(f"Brevo connection error: {e}. Falling back to SMTP...")
 
+    # 2. Automatic Fallback: Standard Gmail SMTP
     password = os.environ.get('MAIL_PASSWORD')
-    if not password or not to_email: return
+    if not password or not to_email:
+        print("SMTP password or recipient email missing; dispatch aborted.")
+        return
+        
     try:
         msg = MIMEMultipart()
         msg['From'] = f"CareDrop Diagnostics <{sender_email}>"
         msg['To'] = to_email
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'html'))
+        
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(sender_email, password)
+        server.login(sender_email, password.strip())
         server.send_message(msg)
         server.quit()
+        print(f"Fallback SMTP dispatch successful to {to_email}")
     except Exception as e:
-        print(f"SMTP Email failed: {e}")
+        print(f"SMTP dispatch failed: {e}")
+
+def send_email_async(to_email, subject, body):
+    """Executes email dispatch on a background daemon thread to eliminate UI latency."""
+    thread = threading.Thread(target=send_email, args=(to_email, subject, body))
+    thread.daemon = True
+    thread.start()
 
 # ==========================================
-# 2. SECURITY & ACCESS CONTROL
+# 2. ACCESS CONTROL DECORATORS
 # ==========================================
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') != 'admin': return redirect(url_for('admin_login'))
+        if session.get('role') != 'admin': 
+            return redirect(url_for('admin_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 def reception_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') not in ['admin', 'reception']: return redirect(url_for('reception_login'))
+        if session.get('role') not in ['admin', 'reception']: 
+            return redirect(url_for('reception_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 def rider_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') != 'rider': return redirect(url_for('rider_login'))
+        if session.get('role') != 'rider': 
+            return redirect(url_for('rider_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 def partner_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') != 'partner': return redirect(url_for('partner_login'))
+        if session.get('role') != 'partner': 
+            return redirect(url_for('partner_login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -172,7 +206,11 @@ def send_login_otp():
     otp = str(random.randint(1000, 9999))
     session['login_otp'] = otp
     session['login_email'] = email
-    send_email(email, "CareDrop Login Code", f"<div style='font-family: sans-serif; text-align: center;'><h2>Your login code is:</h2><h1 style='color: #00B4B6; letter-spacing: 5px;'>{otp}</h1></div>")
+    send_email_async(
+        email, 
+        "CareDrop Login Code", 
+        f"<div style='font-family: sans-serif; text-align: center;'><h2>Your login code is:</h2><h1 style='color: #00B4B6; letter-spacing: 5px;'>{otp}</h1></div>"
+    )
     return jsonify({'status': 'success'})
 
 @app.route('/api/verify_login_otp', methods=['POST'])
@@ -186,14 +224,14 @@ def verify_login_otp():
     return redirect(url_for('patient_login'))
 
 # ==========================================
-# 4. PATIENT PUBLIC BOOKING FLOW (FIGMA)
+# 4. PUBLIC PATIENT BOOKING FLOW
 # ==========================================
 @app.route('/')
 def index(): 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # FIX: Only pull tests that have a price > 0 so unfinished tests stay hidden
+        # Only display tests with a defined price greater than 0
         cur.execute('SELECT * FROM tests WHERE is_active = TRUE AND price > 0 ORDER BY id DESC LIMIT 4')
         recent_tests = [dict(row) for row in cur.fetchall()]
         cur.close()
@@ -201,17 +239,17 @@ def index():
         return render_template('index.html', tests=recent_tests)
     except Exception:
         return render_template('index.html', tests=[])
+
 @app.route('/tests')
 def tests_catalogue():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute('SELECT * FROM tests WHERE is_active = TRUE ORDER BY category, name ASC')
-        tests = [dict(row) for row in cur.fetchall()] # Safe dictionary conversion
+        tests = [dict(row) for row in cur.fetchall()]
         cur.close()
         conn.close()
 
-        # Ultra-safe Search Filter
         search_query = request.args.get('q', '').lower()
         if search_query:
             filtered_tests = []
@@ -225,11 +263,12 @@ def tests_catalogue():
         return render_template('tests.html', tests=tests)
     except Exception as e:
         error_details = traceback.format_exc()
-        return f"<div style='padding: 20px; font-family: monospace;'><h3>System Crash</h3><p>{str(e)}</p><pre>{error_details}</pre></div>"
+        return f"<div style='padding: 20px; font-family: monospace;'><h3>System Encountered an Issue</h3><p>{str(e)}</p><pre>{error_details}</pre></div>"
 
 @app.route('/api/cart/add/<int:test_id>', methods=['POST'])
 def add_to_cart(test_id):
-    if 'cart' not in session: session['cart'] = []
+    if 'cart' not in session: 
+        session['cart'] = []
     if test_id not in session['cart']:
         session['cart'].append(test_id)
         session.modified = True
@@ -245,14 +284,15 @@ def remove_from_cart(test_id):
 @app.route('/checkout')
 def checkout():
     cart_ids = session.get('cart', [])
-    if not cart_ids: return redirect(url_for('tests_catalogue'))
+    if not cart_ids: 
+        return redirect(url_for('tests_catalogue'))
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM tests WHERE id = ANY(%s)', (cart_ids,))
     items = [dict(row) for row in cur.fetchall()]
     cur.close()
     conn.close()
-    return render_template('checkout.html', items=items, total=sum(t['price'] for t in items))
+    return render_template('checkout.html', items=items, total=sum(t.get('price', 0) for t in items))
 
 @app.route('/api/validate_promo', methods=['POST'])
 def validate_promo():
@@ -276,27 +316,36 @@ def initiate_booking():
         'age': request.form.get('age'),
         'gender': request.form.get('gender'),
         'phone': request.form.get('phone'),
-        'email': request.form.get('email').lower().strip(),
+        'email': request.form.get('email', '').lower().strip(),
         'address': request.form.get('address'),
-        'booking_date': request.form.get('booking_date'), # New Date Field
+        'booking_date': request.form.get('booking_date'),
         'time_slot': request.form.get('time_slot'),
         'referral_code': request.form.get('referral_code', '').upper()
     }
     otp = str(random.randint(1000, 9999))
     session['booking_otp'] = otp
     
-    # Send email instantly in the background so the UI doesn't freeze
-    email_body = f"<div style='font-family: sans-serif; text-align: center;'><h2>Verify your booking. Your OTP is:</h2><h1 style='color: #00B4B6; letter-spacing: 5px;'>{otp}</h1></div>"
+    email_body = f"""
+    <div style='font-family: sans-serif; text-align: center; padding: 20px;'>
+        <h2>Confirm Your CareDrop Booking</h2>
+        <p>Your one-time verification code is:</p>
+        <h1 style='color: #00A8A8; letter-spacing: 6px; font-size: 32px;'>{otp}</h1>
+        <p style='color: #666; font-size: 12px;'>Valid for 10 minutes. If you did not request this, please ignore.</p>
+    </div>
+    """
     send_email_async(session['pending_order']['email'], "Verify Your CareDrop Booking", email_body)
-    
     return jsonify({'status': 'otp_sent'})
 
 @app.route('/api/confirm_booking', methods=['POST'])
 def confirm_booking():
     user_otp = request.form.get('otp')
-    if user_otp != session.get('booking_otp'): return jsonify({'status': 'error', 'msg': 'Invalid OTP'})
+    if user_otp != session.get('booking_otp'): 
+        return jsonify({'status': 'error', 'msg': 'Invalid OTP code. Please re-enter.'})
         
     o_data = session.get('pending_order')
+    if not o_data:
+        return jsonify({'status': 'error', 'msg': 'Booking session expired. Please refresh.'})
+        
     conn = get_db_connection()
     cur = conn.cursor()
     
@@ -319,21 +368,35 @@ def confirm_booking():
 
     total_bill = gross_bill - discount_given
     order_code = f"CD-{random.randint(1000, 9999)}"
-    
-    # Combine the Date and Time Slot for the database
-    combined_time_slot = f"{o_data['booking_date']} | {o_data['time_slot']}"
+    combined_time_slot = f"{o_data.get('booking_date', '')} | {o_data.get('time_slot', '')}"
 
     cur.execute('''
-        INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, b2b_total_cost, referral_code, partner_commission)
+        INSERT INTO orders (
+            order_code, full_name, age, gender, phone, email, address, 
+            time_slot, tests_requested, gross_bill, discount_given, total_bill, 
+            b2b_total_cost, referral_code, partner_commission
+        )
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
-    ''', (order_code, o_data['full_name'], o_data['age'], o_data['gender'], o_data['phone'], o_data['email'], o_data['address'], combined_time_slot, tests_requested, gross_bill, discount_given, total_bill, b2b_cost, o_data['referral_code'], partner_commission))
+    ''', (
+        order_code, o_data['full_name'], o_data['age'], o_data['gender'], 
+        o_data['phone'], o_data['email'], o_data['address'], combined_time_slot, 
+        tests_requested, gross_bill, discount_given, total_bill, b2b_cost, 
+        o_data['referral_code'], partner_commission
+    ))
     
     order_id = cur.fetchone()['id']
     
-    if test_ids:
-        cur.execute('SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id = ANY(%s)', (test_ids,))
-        for p in cur.fetchall():
-            cur.execute("INSERT INTO test_results (order_id, parameter_name, units, ref_interval) VALUES (%s, %s, %s, %s)", (order_id, p['param_name'], p['unit'], p['ref_range']))
+    # Safe Parameter Sync for LIMS
+    try:
+        if test_ids:
+            cur.execute('SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id = ANY(%s)', (test_ids,))
+            for p in cur.fetchall():
+                cur.execute(
+                    "INSERT INTO test_results (order_id, parameter_name, units, ref_interval) VALUES (%s, %s, %s, %s)", 
+                    (order_id, p['param_name'], p['unit'], p['ref_range'])
+                )
+    except Exception as e:
+        print(f"LIMS Parameter staging note: {e}")
     
     conn.commit()
     cur.close()
@@ -345,12 +408,27 @@ def confirm_booking():
     session['role'] = 'patient'
     session['patient_email'] = o_data['email']
     
-    send_email_async(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test ({tests_requested}) is booked for {combined_time_slot}. Order ID: {order_code}</p>")
+    confirmation_body = f"""
+    <div style='font-family: sans-serif; padding: 20px;'>
+        <h2>Booking Confirmed - CareDrop</h2>
+        <p>Dear {o_data['full_name']},</p>
+        <p>Your sample collection has been scheduled successfully.</p>
+        <ul>
+            <li><strong>Order ID:</strong> {order_code}</li>
+            <li><strong>Tests:</strong> {tests_requested}</li>
+            <li><strong>Scheduled Slot:</strong> {combined_time_slot}</li>
+            <li><strong>Payable at Collection:</strong> ₹{total_bill}</li>
+        </ul>
+        <p>Our phlebotomist will arrive during your selected window.</p>
+    </div>
+    """
+    send_email_async(o_data['email'], "CareDrop Booking Confirmed", confirmation_body)
     return jsonify({'status': 'success', 'redirect': '/my_bookings'})
 
 @app.route('/my_bookings')
 def my_bookings():
-    if session.get('role') != 'patient': return redirect(url_for('patient_login'))
+    if session.get('role') != 'patient': 
+        return redirect(url_for('patient_login'))
     email = session.get('patient_email')
     conn = get_db_connection()
     cur = conn.cursor()
@@ -389,10 +467,13 @@ def pos_book_test():
     cur.execute('SELECT id FROM tests WHERE name = ANY(%s)', (test_names,))
     test_ids = [i['id'] for i in cur.fetchall()]
     
-    if test_ids:
-        cur.execute('SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id = ANY(%s)', (test_ids,))
-        for p in cur.fetchall():
-            cur.execute("INSERT INTO test_results (order_id, parameter_name, units, ref_interval) VALUES (%s, %s, %s, %s)", (order_id, p['param_name'], p['unit'], p['ref_range']))
+    try:
+        if test_ids:
+            cur.execute('SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id = ANY(%s)', (test_ids,))
+            for p in cur.fetchall():
+                cur.execute("INSERT INTO test_results (order_id, parameter_name, units, ref_interval) VALUES (%s, %s, %s, %s)", (order_id, p['param_name'], p['unit'], p['ref_range']))
+    except Exception as e:
+        print(f"LIMS Parameter staging note: {e}")
             
     conn.commit()
     cur.close()
@@ -436,7 +517,8 @@ def partner_book_test():
     partner = cur.fetchone()
     
     margin_pool_pct = partner['margin_pool_pct'] * 100
-    if discount_pct > margin_pool_pct: discount_pct = margin_pool_pct 
+    if discount_pct > margin_pool_pct: 
+        discount_pct = margin_pool_pct 
     
     discount_given = round(gross_bill * (discount_pct / 100))
     total_bill = gross_bill - discount_given
@@ -453,11 +535,12 @@ def partner_book_test():
     cur.close()
     conn.close()
     
-    if email: send_email(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total Payable: Rs {total_bill}.</p>")
+    if email: 
+        send_email_async(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total: ₹{total_bill}.</p>")
     return redirect(url_for('partner_dashboard'))
 
 # ==========================================
-# 6. ADMIN & RECEPTION OPERATIONS
+# 6. ADMIN & OPERATIONS MANAGEMENT
 # ==========================================
 @app.route('/admin')
 @reception_required
@@ -492,9 +575,11 @@ def admin_partners():
     unpaid_orders = cur.fetchall()
     
     ledgers = {}
-    for p in partners: ledgers[p['referral_code']] = {'details': p, 'unpaid': 0}
+    for p in partners: 
+        ledgers[p['referral_code']] = {'details': p, 'unpaid': 0}
     for u in unpaid_orders:
-        if u['referral_code'] in ledgers: ledgers[u['referral_code']]['unpaid'] += u['partner_commission']
+        if u['referral_code'] in ledgers: 
+            ledgers[u['referral_code']]['unpaid'] += u['partner_commission']
         
     cur.close()
     conn.close()
@@ -535,18 +620,6 @@ def admin_catalog():
     cur.close()
     conn.close()
     return render_template('admin_catalog.html', tests=tests, test_params=test_params)
-@app.route('/admin/wipe_catalog')
-@admin_only
-def admin_wipe_catalog():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    # This deletes all tests and their parameters instantly
-    cur.execute('TRUNCATE TABLE tests CASCADE')
-    conn.commit()
-    cur.close()
-    conn.close()
-    flash("Catalog completely wiped. You can now start fresh.")
-    return redirect(url_for('admin_catalog'))
 
 @app.route('/admin/add_test', methods=['POST'])
 @admin_only
@@ -554,14 +627,28 @@ def admin_add_test():
     name = request.form.get('name')
     category = request.form.get('category', 'General')
     price = float(request.form.get('retail_price') or 0)
+    b2b_cost = float(request.form.get('b2b_cost') or 0)
     
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('INSERT INTO tests (name, category, price) VALUES (%s, %s, %s)', (name, category, price))
+    cur.execute('INSERT INTO tests (name, category, price, b2b_cost) VALUES (%s, %s, %s, %s)', (name, category, price, b2b_cost))
     conn.commit()
     cur.close()
     conn.close()
     return redirect(url_for('admin_catalog'))
+
+@app.route('/admin/wipe_catalog')
+@admin_only
+def admin_wipe_catalog():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('TRUNCATE TABLE tests CASCADE')
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Catalog completely wiped. You can now start fresh.")
+    return redirect(url_for('admin_catalog'))
+
 @app.route('/admin/add_parameter', methods=['POST'])
 @admin_only
 def admin_add_parameter():
@@ -578,7 +665,7 @@ def admin_add_parameter():
     return redirect(url_for('admin_catalog'))
 
 # ==========================================
-# 7. LIMS & PDF ENGINE
+# 7. LIMS & REPORT ENGINE
 # ==========================================
 @app.route('/admin/upload_pdf/<int:order_id>', methods=['POST'])
 @reception_required
@@ -595,7 +682,7 @@ def upload_pdf(order_id):
         cur.close()
         conn.close()
         report_link = url_for('patient_login', _external=True)
-        send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
+        send_email_async(order['email'], "Your Diagnostic Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
     return redirect(url_for('admin'))
 
 @app.route('/download_pdf/<int:order_id>')
@@ -628,7 +715,7 @@ def submit_lab_results(order_id):
     cur.close()
     conn.close()
     report_link = url_for('patient_login', _external=True)
-    send_email(order['email'], "Your Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
+    send_email_async(order['email'], "Your Diagnostic Report is Ready", f"<h3>Hello {order['full_name']},</h3><p>Your diagnostic PDF report is ready for download: <a href='{report_link}'>Download Report</a></p>")
     return redirect(f'/lims_report/{order_id}')
 
 @app.route('/admin/reopen_order/<int:order_id>')
@@ -693,7 +780,7 @@ def rider_complete():
     conn.commit()
     cur.close()
     conn.close()
-    send_email(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected. The rider has marked payment as {payment_mode}.</p>")
+    send_email_async(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected. Marked payment: {payment_mode}.</p>")
     return redirect(url_for('rider_dashboard'))
 
 
