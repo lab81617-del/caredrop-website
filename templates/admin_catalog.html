@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Catalog | CareDrop Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+    
+    <header class="bg-white shadow-sm border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+        <h1 class="text-xl font-black text-[#0B192C]">CareDrop <span class="text-slate-400 font-medium">| Catalog Manager</span></h1>
+        <div class="flex gap-6 items-center">
+            <a href="/tests" target="_blank" class="text-sm font-bold text-[#00A8A8] hover:underline">View Live Website</a>
+            <a href="/logout" class="text-sm font-bold text-rose-500 hover:underline">Logout</a>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-8 mt-4">
+        
+        <!-- Left: Add New Test Form -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-max">
+            <h2 class="font-black text-[#0B192C] text-lg mb-4">Add New Test</h2>
+            <form action="/admin/add_test" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Test Name</label>
+                    <input type="text" name="name" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00A8A8]" placeholder="e.g. Complete Blood Count" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Category</label>
+                    <select name="category" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00A8A8]" required>
+                        <option value="Blood">General Health / Blood</option>
+                        <option value="Diabetes">Diabetes</option>
+                        <option value="Heart">Heart Health / Lipid</option>
+                        <option value="Thyroid">Thyroid</option>
+                        <option value="Liver">Liver & Kidney</option>
+                        <option value="Popular">Most Popular</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Retail Price (₹)</label>
+                    <input type="number" name="retail_price" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00A8A8]" placeholder="e.g. 250" required>
+                </div>
+                <button type="submit" class="w-full bg-[#00A8A8] text-white font-bold py-2.5 rounded-lg text-sm shadow-sm hover:bg-[#008F8F] transition">Add to Catalog</button>
+            </form>
+        </div>
+
+        <!-- Right: Existing Tests & Danger Zone -->
+        <div class="md:col-span-2 space-y-6">
+            
+            <!-- Danger Zone -->
+            <div class="bg-rose-50 p-6 rounded-2xl border border-rose-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 class="font-black text-rose-900 text-lg">Danger Zone</h3>
+                    <p class="text-xs text-rose-700 font-medium">Instantly wipe all ₹0 dummy tests from the database. This cannot be undone.</p>
+                </div>
+                <a href="/admin/wipe_catalog" onclick="return confirm('Are you sure? This will delete ALL tests forever.')" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition shadow-sm whitespace-nowrap">
+                    Wipe All Tests
+                </a>
+            </div>
+
+            <!-- Live Catalog Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-500 uppercase tracking-widest">
+                            <th class="px-6 py-3 font-bold">ID</th>
+                            <th class="px-6 py-3 font-bold">Test Name</th>
+                            <th class="px-6 py-3 font-bold">Category</th>
+                            <th class="px-6 py-3 font-bold text-right">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for t in tests %}
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-6 py-4 text-xs text-slate-400 font-bold">#{{ t.id }}</td>
+                            <td class="px-6 py-4 text-sm font-bold text-[#0B192C]">{{ t.name }}</td>
+                            <td class="px-6 py-4 text-[10px] font-bold text-[#00A8A8] uppercase tracking-wider">{{ t.category }}</td>
+                            <td class="px-6 py-4 text-sm font-black text-slate-800 text-right">₹{{ t.price|int }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-slate-400 font-bold text-sm">Catalog is completely empty.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
