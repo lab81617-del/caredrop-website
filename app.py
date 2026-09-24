@@ -5,6 +5,7 @@ import io
 import requests
 import traceback
 import smtplib
+import threading # <-- ADD THIS LINE
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
@@ -38,7 +39,10 @@ except Exception as e:
 # ==========================================
 # 1. NOTIFICATION ENGINE (BREVO / SMTP)
 # ==========================================
-def send_email(to_email, subject, body):
+def send_email_async(to_email, subject, body):
+    thread = threading.Thread(target=send_email, args=(to_email, subject, body))
+    thread.daemon = True
+    thread.start()
     brevo_key = os.environ.get('BREVO_API_KEY')
     sender_email = os.environ.get('MAIL_USERNAME', 'ihcdiagnostics.ynr@gmail.com')
     
@@ -274,12 +278,17 @@ def initiate_booking():
         'phone': request.form.get('phone'),
         'email': request.form.get('email').lower().strip(),
         'address': request.form.get('address'),
+        'booking_date': request.form.get('booking_date'), # New Date Field
         'time_slot': request.form.get('time_slot'),
         'referral_code': request.form.get('referral_code', '').upper()
     }
     otp = str(random.randint(1000, 9999))
     session['booking_otp'] = otp
-    send_email(session['pending_order']['email'], "Verify Your CareDrop Booking", f"<div style='font-family: sans-serif; text-align: center;'><h2>Verify your booking. Your OTP is:</h2><h1 style='color: #00B4B6; letter-spacing: 5px;'>{otp}</h1></div>")
+    
+    # Send email instantly in the background so the UI doesn't freeze
+    email_body = f"<div style='font-family: sans-serif; text-align: center;'><h2>Verify your booking. Your OTP is:</h2><h1 style='color: #00B4B6; letter-spacing: 5px;'>{otp}</h1></div>"
+    send_email_async(session['pending_order']['email'], "Verify Your CareDrop Booking", email_body)
+    
     return jsonify({'status': 'otp_sent'})
 
 @app.route('/api/confirm_booking', methods=['POST'])
@@ -310,11 +319,14 @@ def confirm_booking():
 
     total_bill = gross_bill - discount_given
     order_code = f"CD-{random.randint(1000, 9999)}"
+    
+    # Combine the Date and Time Slot for the database
+    combined_time_slot = f"{o_data['booking_date']} | {o_data['time_slot']}"
 
     cur.execute('''
         INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, b2b_total_cost, referral_code, partner_commission)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
-    ''', (order_code, o_data['full_name'], o_data['age'], o_data['gender'], o_data['phone'], o_data['email'], o_data['address'], o_data['time_slot'], tests_requested, gross_bill, discount_given, total_bill, b2b_cost, o_data['referral_code'], partner_commission))
+    ''', (order_code, o_data['full_name'], o_data['age'], o_data['gender'], o_data['phone'], o_data['email'], o_data['address'], combined_time_slot, tests_requested, gross_bill, discount_given, total_bill, b2b_cost, o_data['referral_code'], partner_commission))
     
     order_id = cur.fetchone()['id']
     
@@ -333,7 +345,7 @@ def confirm_booking():
     session['role'] = 'patient'
     session['patient_email'] = o_data['email']
     
-    send_email(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test ({tests_requested}) is booked for {o_data['time_slot']}. Order ID: {order_code}</p>")
+    send_email_async(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test ({tests_requested}) is booked for {combined_time_slot}. Order ID: {order_code}</p>")
     return jsonify({'status': 'success', 'redirect': '/my_bookings'})
 
 @app.route('/my_bookings')
