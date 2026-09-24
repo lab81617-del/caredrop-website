@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Book Lab Tests | CareDrop</title>
+    <title>Test Catalog | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
                 extend: {
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
                     colors: { 
-                        brand: { 50: '#E6F7F7', 100: '#CCEEEE', 500: '#00A8A8', 600: '#008F8F' }, 
+                        brand: { 50: '#E1F6F6', 100: '#CCEEEE', 500: '#00A8A8', 600: '#008F8F' }, 
                         navy: { 800: '#1A2938', 900: '#0B192C' } 
                     }
                 }
@@ -23,206 +23,160 @@
     <style>
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .category-active { background-color: #E6F7F7; color: #00A8A8; font-weight: 700; border-right: 3px solid #00A8A8; }
-        .mobile-cat-active { background-color: #00A8A8; color: white; border-color: #00A8A8; }
+        .cat-btn.active { background-color: #00A8A8; color: white; border-color: #00A8A8; }
+        .desktop-cat-active { background-color: #E1F6F6; color: #00A8A8; font-weight: 700; border-right: 3px solid #00A8A8; }
     </style>
 </head>
 <body class="bg-[#F8F9FA] text-slate-800 font-sans antialiased pb-24 lg:pb-12">
 
     <!-- Desktop Navigation -->
-    <header class="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-200">
-        <div class="max-w-[1440px] w-full mx-auto px-4 lg:px-8 h-[76px] flex items-center justify-between">
+    <header class="hidden lg:flex bg-white sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+        <div class="max-w-[1440px] w-full mx-auto px-8 h-[76px] flex items-center justify-between">
             <a href="/" class="flex items-center gap-3">
-                <div class="w-9 h-9 flex items-center justify-center text-brand-500 text-3xl"><i class="fa-solid fa-notes-medical"></i></div>
-                <div>
-                    <span class="block text-xl font-black tracking-tight text-navy-900 leading-none">CareDrop</span>
-                    <span class="block text-[8px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">Diagnostics made simpler.</span>
-                </div>
+                <div class="w-9 h-9 flex items-center justify-center text-brand-500 text-3xl transform -rotate-6"><i class="fa-solid fa-notes-medical"></i></div>
+                <span class="text-2xl font-black tracking-tight text-navy-900">CareDrop</span>
             </a>
             
-            <div class="hidden lg:flex items-center gap-8 font-bold text-sm text-slate-600">
+            <div class="flex items-center gap-8 font-bold text-sm text-slate-600">
                 <a href="/" class="hover:text-brand-500 transition">Home</a>
                 <a href="/tests" class="text-brand-500 border-b-2 border-brand-500 pb-1">Tests</a>
-                <a href="/tests" class="hover:text-brand-500 transition">Packages</a>
-                <a href="#" class="hover:text-brand-500 transition">How it Works</a>
-                <a href="#about" class="hover:text-brand-500 transition">About Us</a>
-                <a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" class="hover:text-brand-500 transition">Contact</a>
+                <a href="/login" class="hover:text-brand-500 transition">Download Reports</a>
             </div>
 
-            <div class="flex items-center gap-6">
-                <div class="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                    <i class="fa-solid fa-location-dot text-brand-500"></i> Yamunanagar & Jagadhri
-                </div>
-                <a href="/login" class="hidden md:block bg-white border border-brand-500 text-brand-600 hover:bg-brand-50 px-5 py-2 rounded-full font-bold transition text-xs shadow-sm">
-                    Patient Login
+            <div class="flex items-center gap-4">
+                <a href="/checkout" class="bg-navy-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold transition text-sm flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-cart-shopping"></i> View Cart
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Mobile Header -->
-    <header class="lg:hidden bg-white px-5 h-16 flex items-center justify-between shadow-sm border-b border-slate-100">
+    <!-- Mobile Header (Clean & Compact) -->
+    <header class="lg:hidden bg-white sticky top-0 z-50 px-5 h-16 flex items-center justify-between shadow-sm border-b border-slate-100">
         <div class="flex items-center gap-3">
-            <button class="text-slate-500 text-xl"><i class="fa-solid fa-bars"></i></button>
-            <div class="flex items-center gap-2">
-                <div class="text-brand-500 text-xl"><i class="fa-solid fa-notes-medical"></i></div>
-                <span class="text-lg font-black tracking-tight text-navy-900">CareDrop</span>
-            </div>
+            <a href="/" class="text-slate-500 text-xl w-8 flex items-center"><i class="fa-solid fa-arrow-left"></i></a>
+            <h1 class="text-lg font-black tracking-tight text-navy-900">All Tests</h1>
         </div>
-        <a href="/login" class="text-brand-500 font-bold text-xs flex items-center gap-1 bg-brand-50 px-3 py-1.5 rounded-full">
-            <i class="fa-regular fa-user"></i> Patient Login
-        </a>
+        <div class="flex items-center gap-4">
+            <button class="text-slate-500 text-lg"><i class="fa-solid fa-share-nodes"></i></button>
+            <button onclick="toggleMobileMenu()" class="text-navy-900 text-2xl"><i class="fa-solid fa-bars"></i></button>
+        </div>
     </header>
 
+    <!-- Mobile Slide-out Menu -->
+    <div id="mobileMenu" class="fixed inset-0 bg-white z-[60] hidden flex-col">
+        <div class="px-5 h-16 flex items-center justify-between border-b border-slate-100">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 flex items-center justify-center text-brand-500 text-2xl transform -rotate-6"><i class="fa-solid fa-notes-medical"></i></div>
+                <span class="text-xl font-black tracking-tight text-navy-900">CareDrop</span>
+            </div>
+            <button onclick="toggleMobileMenu()" class="text-3xl text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex flex-col px-6 py-6 space-y-5 text-lg font-bold text-navy-900">
+            <a href="/" class="border-b border-slate-100 pb-3">Home</a>
+            <a href="/tests" class="text-brand-500 border-b border-slate-100 pb-3">Test Catalog</a>
+            <a href="/login" class="border-b border-slate-100 pb-3">Download Reports</a>
+            <a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" class="border-b border-slate-100 pb-3">Contact Support</a>
+        </div>
+    </div>
+
     <!-- Main 3-Column Layout -->
-    <main class="max-w-[1440px] mx-auto px-4 lg:px-8 py-6 lg:py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <main class="max-w-[1440px] mx-auto px-4 lg:px-8 py-4 lg:py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        <!-- ================= LEFT SIDEBAR (Categories) ================= -->
+        <!-- ================= LEFT SIDEBAR (Desktop Categories) ================= -->
         <aside class="hidden lg:block lg:col-span-3">
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden sticky top-[100px]">
                 <div class="px-6 py-4 border-b border-slate-100">
-                    <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">All Categories</h3>
+                    <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Categories</h3>
                 </div>
                 <div class="flex flex-col py-2" id="desktop-category-list">
-                    <button onclick="setFilter('', this)" class="cat-btn category-active flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
-                        <span class="flex items-center gap-3 text-sm font-semibold"><i class="fa-regular fa-star w-5 text-center"></i> Popular Tests</span>
+                    <button onclick="setFilter('', this)" class="desktop-cat-btn desktop-cat-active flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
+                        <span class="flex items-center gap-3 text-sm font-semibold"><i class="fa-solid fa-layer-group w-5 text-center"></i> All Tests</span>
                     </button>
-                    <button onclick="setFilter('blood', this)" class="cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
+                    <button onclick="setFilter('blood', this)" class="desktop-cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
                         <span class="flex items-center gap-3 text-sm font-semibold"><i class="fa-solid fa-droplet w-5 text-center"></i> General Health</span>
                     </button>
-                    <button onclick="setFilter('diabetes', this)" class="cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
+                    <button onclick="setFilter('diabetes', this)" class="desktop-cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
                         <span class="flex items-center gap-3 text-sm font-semibold"><i class="fa-solid fa-cubes-stacked w-5 text-center"></i> Diabetes</span>
                     </button>
-                    <button onclick="setFilter('lipid', this)" class="cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
+                    <button onclick="setFilter('lipid', this)" class="desktop-cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
                         <span class="flex items-center gap-3 text-sm font-semibold"><i class="fa-solid fa-heart-pulse w-5 text-center"></i> Heart Health</span>
                     </button>
-                    <button onclick="setFilter('thyroid', this)" class="cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
+                    <button onclick="setFilter('thyroid', this)" class="desktop-cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
                         <span class="flex items-center gap-3 text-sm font-semibold"><i class="fa-solid fa-dna w-5 text-center"></i> Thyroid</span>
-                    </button>
-                    <button onclick="setFilter('liver', this)" class="cat-btn text-slate-600 flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition w-full text-left">
-                        <span class="flex items-center gap-3 text-sm font-semibold"><i class="fa-solid fa-lungs w-5 text-center"></i> Liver & Kidney</span>
                     </button>
                 </div>
             </div>
         </aside>
 
         <!-- ================= CENTER COLUMN (Main Content) ================= -->
-        <div class="lg:col-span-6 space-y-6">
+        <div class="lg:col-span-6 space-y-4 lg:space-y-6">
             
-            <!-- Mobile Location Indicator -->
-            <div class="lg:hidden flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-brand-50 w-max px-3 py-1.5 rounded-full border border-brand-100">
-                <i class="fa-solid fa-location-dot text-brand-500"></i> Yamunanagar & Jagadhri
-            </div>
-
-            <!-- Page Header / Banner -->
-            <div class="bg-gradient-to-r from-brand-50 to-white rounded-2xl p-6 lg:p-8 border border-brand-100 shadow-sm relative overflow-hidden flex flex-col justify-center min-h-[140px]">
-                <span class="inline-block text-brand-600 font-bold text-[10px] tracking-widest uppercase mb-2"><i class="fa-solid fa-shield-halved mr-1"></i> Trusted Diagnostics</span>
-                <h1 class="text-3xl lg:text-4xl font-black text-navy-900 tracking-tight mb-2">Book Lab Tests</h1>
-                <p class="text-xs lg:text-sm text-slate-500 font-medium relative z-10">Find the right test, check the price, and book in minutes.</p>
-                <!-- Decorative BG image for desktop -->
-                <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-[url('https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=400&q=80')] bg-cover bg-center opacity-20 hidden md:block" style="mask-image: linear-gradient(to right, transparent, black);"></div>
+            <!-- Desktop Banner (Hidden on Mobile for screen space) -->
+            <div class="hidden lg:flex bg-gradient-to-r from-brand-50 to-white rounded-2xl p-8 border border-brand-100 shadow-sm relative overflow-hidden flex-col justify-center min-h-[140px]">
+                <h1 class="text-4xl font-black text-navy-900 tracking-tight mb-2">Book Lab Tests</h1>
+                <p class="text-sm text-slate-500 font-medium relative z-10">Find the right test, check the price, and book in minutes.</p>
+                <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-[url('https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=400&q=80')] bg-cover bg-center opacity-20" style="mask-image: linear-gradient(to right, transparent, black);"></div>
             </div>
 
             <!-- Search Bar -->
-            <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex items-center sticky top-[80px] lg:static z-30">
-                <div class="pl-4 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
-                <input type="text" id="searchInput" onkeyup="filterTests()" placeholder="Search tests, health concerns or packages..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-800 font-bold text-sm">
-                <button class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold transition text-sm shadow-sm hidden md:block">Search</button>
+            <div class="bg-white p-1.5 lg:p-2 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 flex items-center">
+                <div class="pl-3 text-slate-400 text-lg"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <input type="text" id="searchInput" onkeyup="filterTests()" placeholder="Search tests or health concerns..." class="w-full pl-3 pr-4 py-2.5 bg-transparent outline-none text-slate-800 font-medium text-sm lg:text-base">
+                <button class="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-lg font-bold transition text-sm shadow-sm hidden md:block">Search</button>
+                <button class="md:hidden text-brand-500 pr-3 text-lg"><i class="fa-solid fa-filter"></i></button>
             </div>
 
-            <!-- Mobile Horizontal Category Pills -->
-            <div class="lg:hidden flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
-                <button onclick="setMobileFilter('', this)" class="mob-cat-btn flex flex-col items-center gap-2 min-w-[70px]">
-                    <div class="w-14 h-14 rounded-full border-2 mobile-cat-active flex items-center justify-center text-xl shadow-sm transition"><i class="fa-regular fa-star"></i></div>
-                    <span class="text-[10px] font-bold text-slate-700">Popular</span>
-                </button>
-                <button onclick="setMobileFilter('diabetes', this)" class="mob-cat-btn flex flex-col items-center gap-2 min-w-[70px]">
-                    <div class="w-14 h-14 rounded-full border-2 border-slate-200 bg-white text-slate-400 flex items-center justify-center text-xl shadow-sm transition"><i class="fa-solid fa-cubes-stacked text-brand-500"></i></div>
-                    <span class="text-[10px] font-bold text-slate-600">Diabetes</span>
-                </button>
-                <button onclick="setMobileFilter('lipid', this)" class="mob-cat-btn flex flex-col items-center gap-2 min-w-[70px]">
-                    <div class="w-14 h-14 rounded-full border-2 border-slate-200 bg-white text-slate-400 flex items-center justify-center text-xl shadow-sm transition"><i class="fa-solid fa-heart-pulse text-rose-500"></i></div>
-                    <span class="text-[10px] font-bold text-slate-600">Heart</span>
-                </button>
-                <button onclick="setMobileFilter('thyroid', this)" class="mob-cat-btn flex flex-col items-center gap-2 min-w-[70px]">
-                    <div class="w-14 h-14 rounded-full border-2 border-slate-200 bg-white text-slate-400 flex items-center justify-center text-xl shadow-sm transition"><i class="fa-solid fa-dna text-blue-500"></i></div>
-                    <span class="text-[10px] font-bold text-slate-600">Thyroid</span>
-                </button>
-                <button onclick="setMobileFilter('liver', this)" class="mob-cat-btn flex flex-col items-center gap-2 min-w-[70px]">
-                    <div class="w-14 h-14 rounded-full border-2 border-slate-200 bg-white text-slate-400 flex items-center justify-center text-xl shadow-sm transition"><i class="fa-solid fa-lungs text-amber-500"></i></div>
-                    <span class="text-[10px] font-bold text-slate-600">Liver</span>
-                </button>
+            <!-- Mobile App Horizontal Pills -->
+            <div class="lg:hidden flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-4 px-4">
+                <button onclick="setMobileFilter('', this)" class="cat-btn active bg-brand-500 text-white px-5 py-2 rounded-full font-bold text-[11px] whitespace-nowrap shadow-sm border border-brand-500 transition">Popular</button>
+                <button onclick="setMobileFilter('blood', this)" class="cat-btn bg-white text-slate-600 px-5 py-2 rounded-full font-bold text-[11px] whitespace-nowrap border border-slate-200 transition">General Health</button>
+                <button onclick="setMobileFilter('diabetes', this)" class="cat-btn bg-white text-slate-600 px-5 py-2 rounded-full font-bold text-[11px] whitespace-nowrap border border-slate-200 transition">Diabetes</button>
+                <button onclick="setMobileFilter('lipid', this)" class="cat-btn bg-white text-slate-600 px-5 py-2 rounded-full font-bold text-[11px] whitespace-nowrap border border-slate-200 transition">Heart</button>
             </div>
 
-            <!-- Sort Bar (Desktop) -->
-            <div class="hidden lg:flex items-center justify-between pb-2 border-b border-slate-200">
-                <div class="flex items-center gap-2">
-                    <button class="bg-brand-500 text-white px-4 py-1.5 rounded-full font-bold text-xs">Popular</button>
-                    <button class="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-1.5 rounded-full font-bold text-xs transition">Price (Low to High)</button>
-                    <button class="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-1.5 rounded-full font-bold text-xs transition">TAT (Fastest First)</button>
-                </div>
-                <span class="text-xs font-bold text-slate-400" id="test-counter">Showing tests</span>
-            </div>
-
-            <!-- Mobile Section Header -->
-            <div class="lg:hidden flex items-center justify-between pb-2">
-                <h2 class="text-lg font-black text-navy-900">Popular Tests</h2>
-                <a href="#" class="text-brand-500 text-xs font-bold flex items-center gap-1">View all <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-
-            <!-- Dynamic Test List -->
-            <div class="space-y-4" id="test-list">
+            <!-- Dynamic Test List (App Style Cards) -->
+            <div class="space-y-3 lg:space-y-4" id="test-list">
                 {% for t in tests %}
-                <div class="test-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-5" data-name="{{ t.get('name', '') | lower }}" data-category="{{ t.get('category', '') | lower }}">
+                <div class="test-card bg-white p-4 lg:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3 lg:gap-4 transition hover:shadow-md" data-name="{{ t.get('name', '') | lower }}" data-category="{{ t.get('category', '') | lower }}">
                     
                     <!-- Left: Icon & Details -->
-                    <div class="flex-1 flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-2xl shrink-0 border border-slate-100 shadow-inner">
-                            {% if 'thyroid' in t.get('category', '').lower() %} <i class="fa-solid fa-dna text-brand-500"></i>
-                            {% elif 'lipid' in t.get('category', '').lower() %} <i class="fa-solid fa-heart-pulse text-rose-500"></i>
-                            {% elif 'liver' in t.get('category', '').lower() %} <i class="fa-solid fa-lungs text-amber-500"></i>
-                            {% else %} <i class="fa-solid fa-droplet text-red-500"></i> {% endif %}
+                    <div class="flex items-start gap-3 w-full">
+                        <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-lg lg:text-xl shrink-0">
+                            {% if 'thyroid' in t.get('category', '').lower() %} <i class="fa-solid fa-dna text-brand-500 bg-brand-50 w-full h-full rounded-full flex items-center justify-center"></i>
+                            {% elif 'lipid' in t.get('category', '').lower() %} <i class="fa-solid fa-heart-pulse text-rose-500 bg-rose-50 w-full h-full rounded-full flex items-center justify-center"></i>
+                            {% elif 'liver' in t.get('category', '').lower() %} <i class="fa-solid fa-lungs text-amber-500 bg-amber-50 w-full h-full rounded-full flex items-center justify-center"></i>
+                            {% else %} <i class="fa-solid fa-droplet text-red-500 bg-red-50 w-full h-full rounded-full flex items-center justify-center"></i> {% endif %}
                         </div>
-                        <div class="w-full">
-                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <h3 class="font-black text-base lg:text-lg text-navy-900 leading-tight">{{ t.get('name', 'Lab Test') }}</h3>
-                                <span class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest"><i class="fa-solid fa-shield-check"></i> Most Popular</span>
-                            </div>
-                            <p class="text-[11px] text-slate-500 font-medium mb-3">Diagnostic evaluation for {{ t.get('category', 'General') }}.</p>
+                        
+                        <div class="flex-1">
+                            <h3 class="font-black text-sm lg:text-base text-navy-900 leading-tight mb-0.5">{{ t.get('name', 'Lab Test') }}</h3>
+                            <p class="text-[10px] lg:text-[11px] text-slate-500 font-medium mb-1.5">Diagnostic evaluation for {{ t.get('category', 'General') }}</p>
                             
-                            <!-- Detailed tags -->
-                            <div class="flex flex-wrap items-center gap-3 text-[10px] font-bold text-slate-500">
-                                <span class="flex items-center gap-1.5"><i class="fa-solid fa-vial text-brand-500"></i> {{ t.get('sample_type', 'Blood') }} sample</span>
-                                <span class="flex items-center gap-1.5"><i class="fa-solid fa-house text-brand-500"></i> Home / Lab</span>
-                                <span class="flex items-center gap-1.5"><i class="fa-solid fa-ban text-brand-500"></i> No fasting required</span>
-                            </div>
+                            <span class="block text-base lg:text-lg font-black text-navy-900 mb-1.5">₹{{ t.get('price', 0)|int }}</span>
                             
-                            <a href="#" class="hidden md:inline-block text-brand-500 text-[11px] font-bold mt-3 hover:underline">View details <i class="fa-solid fa-chevron-down ml-1"></i></a>
+                            <!-- Inline Tags -->
+                            <div class="flex flex-wrap items-center gap-3 text-[9px] lg:text-[10px] font-bold text-emerald-600">
+                                <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> Same day</span>
+                                <span class="flex items-center gap-1"><i class="fa-solid fa-vial"></i> Blood sample</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Right: Price & Actions -->
-                    <div class="flex md:flex-col justify-between items-center md:items-end md:w-[140px] border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
-                        <div class="text-left md:text-right w-full md:w-auto">
-                            <span class="block text-xl lg:text-2xl font-black text-navy-900">₹{{ t.get('price', 0)|int }}</span>
-                            <span class="text-[10px] text-slate-400 font-bold flex items-center md:justify-end gap-1"><i class="fa-regular fa-clock"></i> Same day</span>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 mt-3 w-full md:w-auto">
-                            <button onclick="addToCart({{ t.get('id', 0) }}, {{ t.get('price', 0) }}, this)" class="bg-brand-500 hover:bg-brand-600 text-white w-full md:w-auto px-4 py-2 rounded-lg font-bold transition text-[11px] shadow-sm whitespace-nowrap">
-                                Add to Cart
-                            </button>
-                            <a href="/checkout" class="hidden md:block bg-white text-navy-900 border border-slate-300 hover:bg-slate-50 px-4 py-2 rounded-lg font-bold transition text-[11px] whitespace-nowrap">
-                                Book Now
-                            </a>
-                            <button class="text-slate-300 hover:text-brand-500 transition text-lg px-1"><i class="fa-regular fa-bookmark"></i></button>
-                        </div>
+                    <!-- Right: Action -->
+                    <div class="shrink-0 flex flex-col justify-end items-end h-full">
+                        <button onclick="addToCart({{ t.get('id', 0) }}, {{ t.get('price', 0) }}, this)" class="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2 rounded-lg font-bold transition text-[11px] lg:text-xs shadow-sm mt-4 lg:mt-6">
+                            Book
+                        </button>
                     </div>
                 </div>
                 {% else %}
-                <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-                    <i class="fa-solid fa-box-open text-4xl mb-4 text-slate-300"></i>
-                    <p class="font-bold text-slate-500">No tests match your search criteria.</p>
+                <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm mt-2">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300 text-2xl">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <p class="font-bold text-slate-600 text-sm">No tests match your criteria.</p>
+                    <p class="text-xs text-slate-400 mt-1">Please try a different search term.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -231,169 +185,142 @@
         <!-- ================= RIGHT SIDEBAR (Widgets) ================= -->
         <aside class="hidden lg:block lg:col-span-3 space-y-6">
             
-            <!-- Dynamic Cart Widget -->
+            <!-- Cart Widget -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sticky top-[100px]">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-black text-navy-900 text-base">Your Cart</h3>
-                    <i class="fa-solid fa-money-bill-wave text-brand-500"></i>
+                    <h3 class="font-black text-navy-900 text-sm">Your Cart</h3>
+                    <i class="fa-solid fa-cart-shopping text-slate-400 text-xs"></i>
                 </div>
                 <div class="pb-4 border-b border-slate-100 mb-4">
-                    <span id="side-cart-count" class="text-xs font-bold text-slate-400 block mb-1">0 items</span>
+                    <span id="side-cart-count" class="text-[11px] font-bold text-slate-400 block mb-1">0 items</span>
                     <span id="side-cart-total" class="text-2xl font-black text-navy-900">₹0</span>
                 </div>
-                <a href="/checkout" id="side-cart-btn" class="block w-full text-center bg-slate-100 text-slate-400 cursor-not-allowed py-3 rounded-xl font-bold transition text-sm">
+                <a href="/checkout" id="side-cart-btn" class="block w-full text-center bg-slate-100 text-slate-400 cursor-not-allowed py-3 rounded-xl font-bold transition text-xs">
                     Proceed to Checkout
                 </a>
-            </div>
-
-           <!-- Trust Widget -->
-            <div class="bg-[#F8FCFC] rounded-2xl border border-brand-100 p-6">
-                <h3 class="font-black text-navy-900 text-sm mb-4">Why Choose CareDrop?</h3>
-                <ul class="space-y-4">
-                    <li class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-brand-500 border border-brand-100 shadow-sm"><i class="fa-solid fa-microscope"></i></div>
-                        <span class="text-xs font-bold text-slate-600">NABL partnered labs<br><span class="text-[9px] text-slate-400 font-normal">(Where applicable)</span></span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-brand-500 border border-brand-100 shadow-sm"><i class="fa-solid fa-user-nurse"></i></div>
-                        <span class="text-xs font-bold text-slate-600">Trained & certified staff</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-brand-500 border border-brand-100 shadow-sm"><i class="fa-solid fa-house-medical"></i></div>
-                        <span class="text-xs font-bold text-slate-600">Home collection available</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-brand-500 border border-brand-100 shadow-sm"><i class="fa-solid fa-file-shield"></i></div>
-                        <span class="text-xs font-bold text-slate-600">Secure & digital reports</span>
-                    </li>
-                </ul>
             </div>
 
             <!-- Support Widget -->
             <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <div class="flex items-center gap-2 mb-2">
-                    <i class="fa-solid fa-headset text-brand-500"></i>
+                    <div class="w-6 h-6 bg-brand-50 text-brand-500 rounded flex items-center justify-center"><i class="fa-solid fa-headset text-xs"></i></div>
                     <h3 class="font-black text-navy-900 text-sm">Need help?</h3>
                 </div>
-                <p class="text-xs font-medium text-slate-500 mb-4">Our team is here for you.</p>
+                <p class="text-[11px] font-medium text-slate-500 mb-4">Our team is here for you.</p>
                 <ul class="space-y-3">
-                    <li><a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" target="_blank" class="flex items-center gap-3 text-xs font-bold text-slate-600 hover:text-brand-500 transition"><div class="w-6 text-center text-emerald-500 text-lg"><i class="fa-brands fa-whatsapp"></i></div> Chat on WhatsApp</a></li>
-                    <li><a href="tel:{{ site_settings.phone|replace(' ', '') }}" class="flex items-center gap-3 text-xs font-bold text-slate-600 hover:text-brand-500 transition"><div class="w-6 text-center text-blue-500"><i class="fa-solid fa-phone"></i></div> Call us</a></li>
-                    <li><a href="/#about" class="flex items-center gap-3 text-xs font-bold text-slate-600 hover:text-brand-500 transition"><div class="w-6 text-center text-brand-500"><i class="fa-solid fa-circle-question"></i></div> FAQs</a></li>
+                    <li><a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" target="_blank" class="flex items-center gap-3 text-xs font-bold text-slate-600 hover:text-brand-500 transition"><i class="fa-brands fa-whatsapp text-emerald-500 text-base w-4"></i> Chat on WhatsApp</a></li>
+                    <li><a href="tel:{{ site_settings.phone|replace(' ', '') }}" class="flex items-center gap-3 text-xs font-bold text-slate-600 hover:text-brand-500 transition"><i class="fa-solid fa-phone text-blue-500 text-sm w-4"></i> Call us</a></li>
                 </ul>
             </div>
         </aside>
-
     </main>
 
-    <!-- Mobile Floating Cart (Shows only when items are added) -->
-    <div id="floating-cart" class="lg:hidden fixed bottom-[88px] left-4 right-4 bg-navy-900 text-white rounded-2xl px-5 py-3 justify-between items-center shadow-[0_10px_40px_rgba(11,25,44,0.4)] z-50 hidden transition-all">
-        <div>
-            <span id="mobile-cart-count" class="block text-[10px] text-slate-400 font-bold mb-0.5 uppercase tracking-widest">1 item</span>
-            <span id="mobile-cart-total" class="block text-xl font-black text-brand-400 leading-none">₹0</span>
+    <!-- Mobile Floating Cart -->
+    <div id="floating-cart" class="lg:hidden fixed bottom-[84px] left-4 right-4 bg-navy-900 text-white rounded-xl px-5 py-3 justify-between items-center shadow-xl z-50 hidden transition-all">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-brand-400 relative">
+                <i class="fa-solid fa-cart-shopping text-sm"></i>
+                <span id="mobile-cart-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">1</span>
+            </div>
+            <div>
+                <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total</span>
+                <span id="mobile-cart-total" class="block text-lg font-black text-white leading-none">₹0</span>
+            </div>
         </div>
-        <a href="/checkout" class="bg-brand-500 text-white hover:bg-brand-600 px-5 py-2.5 rounded-xl font-black text-sm transition shadow-md">
-            Checkout
+        <a href="/checkout" class="bg-brand-500 text-white hover:bg-brand-600 px-5 py-2.5 rounded-lg font-bold text-xs transition">
+            Proceed
         </a>
     </div>
 
-    <!-- Mobile Bottom Navigation Bar -->
-    <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-[72px] z-40 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-        <a href="/" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold">Home</span></a>
-        <a href="/tests" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-magnifying-glass text-xl"></i><span class="text-[10px] font-bold">Search</span></a>
+    <!-- Mobile Bottom Navigation Bar (Line Icon Style) -->
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-[68px] z-40 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+        <a href="/" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition"><i class="fa-solid fa-house text-lg"></i><span class="text-[9px] font-bold">Home</span></a>
+        <a href="/tests" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-magnifying-glass text-lg"></i><span class="text-[9px] font-bold">Search</span></a>
         <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition relative">
-            <div id="nav-cart-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center hidden border border-white">0</div>
-            <i class="fa-solid fa-cart-shopping text-xl"></i><span class="text-[10px] font-bold">Cart</span>
+            <i class="fa-solid fa-cart-shopping text-lg"></i><span class="text-[9px] font-bold">Cart</span>
         </a>
-        <a href="/login" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition"><i class="fa-regular fa-user text-xl"></i><span class="text-[10px] font-bold">User</span></a>
+        <a href="/login" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition"><i class="fa-regular fa-user text-lg"></i><span class="text-[9px] font-bold">User</span></a>
     </div>
 
     <script>
         let cartTotal = 0; let cartCount = 0;
 
-        // Search functionality
         function filterTests() {
             let input = document.getElementById('searchInput').value.toLowerCase();
             let cards = document.getElementsByClassName('test-card');
+            let visibleCount = 0;
             for (let i = 0; i < cards.length; i++) {
                 let name = cards[i].getAttribute('data-name');
                 let cat = cards[i].getAttribute('data-category');
-                if (name.includes(input) || cat.includes(input)) cards[i].style.display = "flex";
-                else cards[i].style.display = "none";
+                if (name.includes(input) || cat.includes(input)) {
+                    cards[i].style.display = "flex";
+                    visibleCount++;
+                } else {
+                    cards[i].style.display = "none";
+                }
             }
         }
 
-        // Desktop Sidebar Filter
         function setFilter(term, btn) { 
             document.getElementById('searchInput').value = term; 
             filterTests(); 
-            
-            // Update active state
-            let btns = document.getElementsByClassName('cat-btn');
+            let btns = document.getElementsByClassName('desktop-cat-btn');
             for(let b of btns) {
-                b.classList.remove('category-active');
+                b.classList.remove('desktop-cat-active');
                 b.classList.add('text-slate-600');
             }
-            btn.classList.add('category-active');
+            btn.classList.add('desktop-cat-active');
             btn.classList.remove('text-slate-600');
         }
 
-        // Mobile Top Pills Filter
         function setMobileFilter(term, btn) {
             document.getElementById('searchInput').value = term; 
             filterTests();
-
-            let btns = document.getElementsByClassName('mob-cat-btn');
+            let btns = document.getElementsByClassName('cat-btn');
             for(let b of btns) {
-                let iconDiv = b.firstElementChild;
-                iconDiv.className = "w-14 h-14 rounded-full border-2 border-slate-200 bg-white text-slate-400 flex items-center justify-center text-xl shadow-sm transition";
-                b.lastElementChild.className = "text-[10px] font-bold text-slate-600";
+                b.classList.remove('active', 'bg-brand-500', 'text-white', 'border-brand-500');
+                b.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
             }
-            
-            // Activate clicked
-            let clickedIconDiv = btn.firstElementChild;
-            clickedIconDiv.className = "w-14 h-14 rounded-full border-2 mobile-cat-active flex items-center justify-center text-xl shadow-sm transition";
-            btn.lastElementChild.className = "text-[10px] font-bold text-slate-800";
+            btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+            btn.classList.add('active', 'bg-brand-500', 'text-white', 'border-brand-500');
         }
 
-        // Add to Cart Logic
         async function addToCart(testId, price, btnElement) {
             try {
                 const res = await fetch(`/api/cart/add/${testId}`, { method: 'POST' });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    // Button UI change
                     btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Added';
-                    btnElement.className = "bg-emerald-50 text-emerald-600 border border-emerald-200 w-full md:w-auto px-4 py-2 rounded-lg font-bold text-[11px] shadow-sm cursor-not-allowed";
+                    btnElement.className = "bg-brand-50 text-brand-600 px-5 py-2 rounded-lg font-bold text-[11px] lg:text-xs shadow-sm mt-4 lg:mt-6 cursor-not-allowed";
                     btnElement.disabled = true;
 
                     cartCount++; cartTotal += parseFloat(price);
                     
-                    // Update Desktop Right Sidebar Widget
                     document.getElementById('side-cart-count').innerText = `${cartCount} item${cartCount > 1 ? 's' : ''}`;
                     document.getElementById('side-cart-total').innerText = `₹${cartTotal}`;
                     let sideBtn = document.getElementById('side-cart-btn');
                     sideBtn.className = "block w-full text-center bg-brand-500 hover:bg-brand-600 text-white py-3 rounded-xl font-bold transition text-sm shadow-md";
 
-                    // Update Mobile Floating Cart
-                    document.getElementById('mobile-cart-count').innerText = `${cartCount} item${cartCount > 1 ? 's' : ''}`;
+                    document.getElementById('mobile-cart-badge').innerText = cartCount;
                     document.getElementById('mobile-cart-total').innerText = `₹${cartTotal}`;
                     document.getElementById('floating-cart').classList.remove('hidden');
                     document.getElementById('floating-cart').classList.add('flex');
-
-                    // Update Mobile Bottom Nav Badge
-                    let badge = document.getElementById('nav-cart-badge');
-                    badge.innerText = cartCount;
-                    badge.classList.remove('hidden');
                 }
             } catch (e) { console.error(e); }
         }
 
-        // Read URL query parameters on load
-        document.addEventListener('DOMContentLoaded', () => {
-            const q = new URLSearchParams(window.location.search).get('q');
-            if(q) { document.getElementById('searchInput').value = q; filterTests(); }
-        });
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+                document.body.style.overflow = 'hidden'; 
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                document.body.style.overflow = 'auto';
+            }
+        }
     </script>
 </body>
 </html>
