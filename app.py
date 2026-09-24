@@ -782,7 +782,41 @@ def rider_complete():
     conn.close()
     send_email_async(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected. Marked payment: {payment_mode}.</p>")
     return redirect(url_for('rider_dashboard'))
-
+@app.route('/debug_email')
+def debug_email():
+    brevo_key = os.environ.get('BREVO_API_KEY')
+    sender_email = os.environ.get('MAIL_USERNAME', 'ihcdiagnostics.ynr@gmail.com')
+    pwd = os.environ.get('MAIL_PASSWORD')
+    
+    html = f"<div style='font-family: monospace; padding: 20px;'>"
+    html += f"<h2>CareDrop Email Diagnostic System</h2><hr>"
+    html += f"<p><b>Sender Email Used:</b> {sender_email}</p>"
+    html += f"<p><b>Brevo API Key Configured:</b> {'Yes' if brevo_key else 'No (Missing in Render)'}</p>"
+    html += f"<p><b>Gmail Password Configured:</b> {'Yes' if pwd else 'No (Missing in Render)'}</p>"
+    
+    if brevo_key:
+        html += "<hr><h3>Testing Brevo API...</h3>"
+        try:
+            url = "https://api.brevo.com/v3/smtp/email"
+            payload = {
+                "sender": {"name": "CareDrop Diagnostics", "email": sender_email},
+                "to": [{"email": sender_email}], # Sending an email to yourself to test
+                "subject": "CareDrop Diagnostic Test",
+                "htmlContent": "<p>If you get this, Brevo is working perfectly!</p>"
+            }
+            headers = {"accept": "application/json", "api-key": brevo_key.strip(), "content-type": "application/json"}
+            res = requests.post(url, json=payload, headers=headers, timeout=5)
+            
+            if res.status_code in [200, 201, 202]:
+                html += f"<p style='color: green;'><b>SUCCESS!</b> Brevo accepted the email. Check your inbox.</p>"
+            else:
+                html += f"<p style='color: red;'><b>BREVO REJECTED IT (Error {res.status_code}):</b></p>"
+                html += f"<p style='background: #eee; padding: 10px;'>{res.text}</p>"
+        except Exception as e:
+            html += f"<p style='color: red;'><b>System Crash:</b> {str(e)}</p>"
+            
+    html += "</div>"
+    return html
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
