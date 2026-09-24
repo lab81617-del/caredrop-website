@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E1F6F6', 500: '#00A8A8', 600: '#008F8F' }, navy: { 900: '#0B192C' } } } }
+        }
+    </script>
+</head>
+<body class="bg-[#F8F9FA] flex flex-col items-center justify-center min-h-screen p-4 font-sans antialiased">
+    
+    <a href="/" class="mb-8 flex items-center gap-2">
+        <div class="w-10 h-10 bg-brand-500 text-white rounded-xl flex items-center justify-center text-2xl transform -rotate-6 shadow-sm"><i class="fa-solid fa-notes-medical"></i></div>
+        <span class="text-2xl font-black text-navy-900 tracking-tight">CareDrop</span>
+    </a>
+
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-md">
+        <div id="email-step">
+            <h2 class="text-2xl font-black text-navy-900 mb-2">Access Your Reports</h2>
+            <p class="text-sm text-slate-500 font-medium mb-6">Enter the email address you used during booking to download your diagnostic reports.</p>
+            
+            <form id="sendOtpForm" class="space-y-4" onsubmit="sendOtp(event)">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Email Address</label>
+                    <input type="email" id="login_email" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="name@example.com">
+                </div>
+                <button type="submit" id="sendBtn" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 rounded-xl transition shadow-md flex justify-center items-center gap-2">
+                    Send Login Code <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+
+        <div id="otp-step" class="hidden">
+            <button onclick="backToEmail()" class="text-slate-400 hover:text-brand-500 text-sm font-bold mb-4 flex items-center gap-1 transition"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="text-2xl font-black text-navy-900 mb-2">Enter Code</h2>
+            <p class="text-sm text-slate-500 font-medium mb-6">We sent a 4-digit code to <span id="display_email" class="font-bold text-navy-900"></span>.</p>
+            
+            <form action="/api/verify_login_otp" method="POST" class="space-y-6">
+                <input type="text" name="otp" maxlength="4" required class="w-full text-center text-4xl tracking-[0.5em] font-black border-b-2 border-slate-300 pb-2 focus:outline-none focus:border-brand-500 bg-transparent text-navy-900 placeholder-slate-200" placeholder="••••">
+                <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition shadow-md">
+                    Verify & Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function sendOtp(e) {
+            e.preventDefault();
+            const email = document.getElementById('login_email').value;
+            const btn = document.getElementById('sendBtn');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('email', email);
+
+            try {
+                const res = await fetch('/api/send_login_otp', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('email-step').classList.add('hidden');
+                    document.getElementById('otp-step').classList.remove('hidden');
+                    document.getElementById('display_email').innerText = email;
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Failed to send OTP.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function backToEmail() {
+            document.getElementById('otp-step').classList.add('hidden');
+            document.getElementById('email-step').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
