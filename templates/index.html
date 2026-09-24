@@ -12,165 +12,311 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: { brand: { 50: '#E1F6F6', 100: '#C4EEEE', 500: '#00A8A8', 600: '#008F8F', 900: '#064E4E' }, navy: { 900: '#0B192C' } }
+                    colors: { 
+                        brand: { 50: '#E6F7F7', 100: '#CCEEEE', 500: '#009B9B', 600: '#008282' }, 
+                        navy: { 800: '#1A2938', 900: '#0B192C' } 
+                    }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased pb-24 md:pb-0">
+<body class="bg-white text-slate-800 font-sans antialiased">
 
     <!-- Desktop Navigation -->
-    <header class="hidden md:flex bg-white sticky top-0 z-50 border-b border-slate-100 shadow-sm">
-        <div class="max-w-[1400px] w-full mx-auto px-8 h-[80px] flex items-center justify-between">
+    <header class="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
+        <div class="max-w-[1400px] w-full mx-auto px-6 h-[80px] flex items-center justify-between">
+            <!-- Logo -->
             <a href="/" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white text-xl shadow-md transform -rotate-6"><i class="fa-solid fa-plus"></i></div>
+                <div class="w-10 h-10 flex items-center justify-center text-brand-500 text-3xl">
+                    <i class="fa-solid fa-notes-medical"></i>
+                </div>
                 <div>
-                    <span class="block text-2xl font-black tracking-tight text-navy-900 leading-none mb-0.5">CareDrop</span>
-                    <span class="block text-[10px] font-bold text-slate-400 tracking-widest uppercase">Tests. Reports. Care.</span>
+                    <span class="block text-2xl font-black tracking-tight text-navy-900 leading-none">CareDrop</span>
+                    <span class="block text-[9px] font-bold text-slate-400 tracking-widest uppercase">Tests. Reports. Care.</span>
                 </div>
             </a>
-            <div class="flex items-center gap-10 font-bold text-sm text-slate-600">
-                <a href="/" class="text-brand-500">Home</a>
-                <a href="/tests" class="hover:text-brand-500 transition">Test Catalog</a>
-                <a href="https://wa.me/919485978790?text=Hi%20CareDrop,%20I%20have%20a%20query." target="_blank" class="hover:text-brand-500 transition">WhatsApp Support</a>
+            
+            <!-- Center Links -->
+            <div class="hidden lg:flex items-center gap-8 font-bold text-sm text-slate-600">
+                <a href="/" class="text-brand-500 border-b-2 border-brand-500 pb-1">Home</a>
+                <a href="/tests" class="hover:text-brand-500 transition">Tests & Packages</a>
+                <a href="#" class="hover:text-brand-500 transition">About Us</a>
+                <a href="/login" class="hover:text-brand-500 transition">Results</a>
+                <a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" target="_blank" class="hover:text-brand-500 transition">Contact</a>
             </div>
-            <a href="/tests" class="bg-brand-500 hover:bg-brand-600 text-white px-7 py-2.5 rounded-full font-bold transition text-sm shadow-md">Book a Test</a>
-        </div>
-    </header>
 
-    <!-- Mobile Top Bar -->
-    <header class="md:hidden bg-white sticky top-0 z-50 px-5 h-16 flex items-center justify-between shadow-sm border-b border-slate-100">
-        <a href="/" class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white text-sm shadow-sm transform -rotate-6"><i class="fa-solid fa-plus"></i></div>
-            <span class="text-xl font-black tracking-tight text-navy-900">CareDrop</span>
-        </a>
-        <div class="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
-            <i class="fa-solid fa-location-dot text-brand-500"></i> Yamunanagar
-        </div>
-    </header>
-
-    <main>
-        <!-- App-Like Mobile Hero -->
-        <section class="bg-white rounded-b-3xl shadow-sm pt-8 pb-10 px-5 md:px-8 max-w-[1400px] mx-auto">
-            <div class="md:hidden mb-6">
-                <h1 class="text-4xl font-black text-navy-900 leading-[1.1] tracking-tight mb-3">Your Health,<br>Our Priority.</h1>
-                <p class="text-sm font-medium text-slate-500">World-class NABL diagnostics at your doorstep.</p>
+            <!-- Right Actions -->
+            <div class="hidden md:flex items-center gap-6">
+                <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <i class="fa-solid fa-location-dot text-brand-500"></i> Yamunanagar - Jagadhri
+                </div>
+                <a href="/tests" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-2.5 rounded font-bold transition text-sm">
+                    Book Test
+                </a>
             </div>
             
-            <div class="hidden md:block text-center max-w-3xl mx-auto py-16">
-                <span class="inline-block bg-brand-50 text-brand-600 font-bold px-4 py-1.5 rounded-full text-xs tracking-widest uppercase mb-4 border border-brand-100">Trusted Diagnostic Laboratory</span>
-                <h1 class="text-5xl lg:text-[64px] font-black text-navy-900 leading-[1.1] tracking-tight mb-6">World-class diagnostics, <br>collected at your door.</h1>
+            <!-- Mobile Menu Icon -->
+            <div class="md:hidden text-2xl text-navy-900">
+                <i class="fa-solid fa-bars"></i>
             </div>
+        </div>
+    </header>
 
-            <!-- Search Bar -->
-            <form action="/tests" method="GET" class="bg-slate-50 p-1.5 rounded-2xl shadow-inner border border-slate-200 flex items-center max-w-2xl mx-auto mb-6">
-                <div class="pl-4 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></div>
-                <input type="text" name="q" placeholder="Search for CBC, Lipid Profile..." class="w-full pl-3 pr-4 py-3 bg-transparent outline-none text-slate-700 font-bold text-sm md:text-base">
-                <button type="submit" class="bg-navy-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold transition text-sm shadow-md">Search</button>
-            </form>
-
-            <!-- Quick Actions Grid -->
-            <div class="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
-                <a href="/tests" class="bg-brand-50 border border-brand-100 p-4 rounded-2xl flex flex-col items-start gap-3 transition active:scale-95">
-                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-500 shadow-sm text-lg"><i class="fa-regular fa-calendar-check"></i></div>
-                    <div>
-                        <span class="block font-black text-navy-900 text-sm">Book Test</span>
-                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Browse Catalog</span>
-                    </div>
-                </a>
-                <a href="https://wa.me/919485978790?text=Hi%20CareDrop,%20I%20want%20to%20book%20a%20test%20using%20my%20prescription." target="_blank" class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col items-start gap-3 transition active:scale-95">
-                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-emerald-500 shadow-sm text-lg"><i class="fa-solid fa-file-prescription"></i></div>
-                    <div>
-                        <span class="block font-black text-navy-900 text-sm">Upload Rx</span>
-                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Via WhatsApp</span>
-                    </div>
-                </a>
-            </div>
-        </section>
-
-        <!-- Dynamic Popular Tests -->
-        <section class="py-10 md:py-16 px-5 md:px-8 max-w-[1400px] mx-auto">
-            <div class="flex justify-between items-end mb-6">
-                <div>
-                    <h2 class="text-2xl md:text-3xl font-black text-navy-900 tracking-tight">Most Booked</h2>
+    <!-- Hero Section -->
+    <section class="relative bg-[#F4FAFA] overflow-hidden">
+        <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 items-center min-h-[500px]">
+            
+            <!-- Left Content -->
+            <div class="py-16 z-10 space-y-6">
+                <span class="inline-block bg-[#DFF1F1] text-[#006B6B] font-bold px-4 py-1.5 rounded-full text-xs">
+                    Trusted Diagnostic Laboratory
+                </span>
+                
+                <h1 class="text-[44px] lg:text-[56px] font-black text-navy-900 leading-[1.1] tracking-tight">
+                    Your Health, Our Priority
+                </h1>
+                
+                <p class="text-lg text-slate-600 font-medium leading-relaxed max-w-lg">
+                    Accurate. Fast. Reliable. CareDrop brings world-class diagnostic services closer to you in Yamunanagar – Jagadhri.
+                </p>
+                
+                <div class="flex flex-wrap items-center gap-4 pt-2">
+                    <a href="/tests" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 rounded-full font-bold transition flex items-center gap-2 shadow-md">
+                        Book a Test Now <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    <a href="/tests" class="bg-transparent text-brand-500 border-2 border-brand-500 hover:bg-brand-50 px-8 py-3.5 rounded-full font-bold transition">
+                        View Test Catalogue
+                    </a>
                 </div>
-                <a href="/tests" class="text-brand-600 font-bold text-xs md:text-sm flex items-center gap-1 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200">View All <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
 
-            <!-- Horizontal Scroll on Mobile, Grid on Desktop -->
-            <div class="flex overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4 hide-scrollbar -mx-5 px-5 md:mx-0 md:px-0">
-                {% if tests %}
-                    {% for t in tests %}
-                    <div class="min-w-[240px] md:min-w-0 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-[220px]">
-                        <div>
-                            <div class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-lg mb-3">
-                                {% if 'thyroid' in t.get('category', '').lower() %} <i class="fa-solid fa-dna text-brand-500 bg-brand-50 w-full h-full rounded-full flex items-center justify-center"></i>
-                                {% elif 'lipid' in t.get('category', '').lower() %} <i class="fa-solid fa-heart-pulse text-rose-500 bg-rose-50 w-full h-full rounded-full flex items-center justify-center"></i>
-                                {% elif 'liver' in t.get('category', '').lower() %} <i class="fa-solid fa-lungs text-amber-600 bg-amber-50 w-full h-full rounded-full flex items-center justify-center"></i>
-                                {% else %} <i class="fa-solid fa-droplet text-red-500 bg-red-50 w-full h-full rounded-full flex items-center justify-center"></i> {% endif %}
-                            </div>
-                            <h3 class="font-black text-base text-navy-900 leading-tight mb-1 truncate">{{ t.get('name', 'Lab Test') }}</h3>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ t.get('category', 'General') }}</p>
-                        </div>
-                        <div class="flex justify-between items-center mt-4">
-                            <span class="block text-xl font-black text-navy-900">₹{{ t.get('price', 0)|int }}</span>
-                            <a href="/tests?q={{ t.get('name', '') }}" class="bg-white text-brand-600 border border-brand-200 hover:bg-brand-50 px-4 py-2 rounded-lg font-bold text-xs shadow-sm">
-                                Book
-                            </a>
-                        </div>
+                <!-- 4 Icons Row -->
+                <div class="flex items-center justify-between max-w-lg pt-10">
+                    <div class="flex flex-col items-center text-center gap-2">
+                        <div class="text-brand-500 text-2xl"><i class="fa-regular fa-square-check"></i></div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Accurate<br>Results</span>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="w-full py-10 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
-                        <p class="text-slate-500 font-bold text-sm">Tests are being updated. Check back soon.</p>
+                    <div class="w-px h-8 bg-slate-300 hidden sm:block"></div>
+                    <div class="flex flex-col items-center text-center gap-2">
+                        <div class="text-brand-500 text-2xl"><i class="fa-regular fa-clock"></i></div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Fast<br>Turnaround</span>
                     </div>
-                {% endif %}
+                    <div class="w-px h-8 bg-slate-300 hidden sm:block"></div>
+                    <div class="flex flex-col items-center text-center gap-2">
+                        <div class="text-brand-500 text-2xl"><i class="fa-solid fa-house-chimney-medical"></i></div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Home Sample<br>Collection</span>
+                    </div>
+                    <div class="w-px h-8 bg-slate-300 hidden sm:block"></div>
+                    <div class="flex flex-col items-center text-center gap-2">
+                        <div class="text-brand-500 text-2xl"><i class="fa-solid fa-file-invoice"></i></div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Digital Reports<br>(Email/SMS)</span>
+                    </div>
+                </div>
             </div>
-        </section>
-    </main>
 
-    <!-- Floating WhatsApp Action Button -->
-    <a href="https://wa.me/919485978790?text=Hello%20CareDrop%2C%20I%20need%20help%20booking%20a%20test." target="_blank" class="fixed bottom-[88px] md:bottom-8 right-5 md:right-8 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-[0_8px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform z-50">
-        <i class="fa-brands fa-whatsapp"></i>
-    </a>
-
-    <!-- Footer -->
-    <footer class="bg-navy-900 pt-12 pb-24 md:pb-8 border-t-4 border-brand-500 mt-10">
-        <div class="max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 md:grid-cols-3 gap-10 text-white">
-            <div class="space-y-4">
-                <span class="block text-2xl font-black tracking-tight text-white leading-none">CareDrop</span>
-                <p class="text-xs text-slate-400 font-medium leading-relaxed max-w-xs">Trusted NABL-partnered diagnostics delivering accuracy directly to your home in Yamunanagar & Jagadhri.</p>
+            <!-- Right Image Area -->
+            <div class="relative hidden lg:block h-full w-full">
+                <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80" class="absolute inset-0 w-full h-full object-cover rounded-l-[100px]" alt="Doctor">
+                
+                <!-- Floating Trust Badge -->
+                <div class="absolute top-16 -left-12 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4">
+                    <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-lg flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <span class="block font-black text-navy-900 text-sm">Your sample</span>
+                        <span class="block font-black text-navy-900 text-sm mb-0.5">Our responsibility</span>
+                        <span class="text-[10px] text-slate-500 font-bold">Safe • Secure • Accurate</span>
+                    </div>
+                </div>
             </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section class="py-16 border-b border-slate-100">
+        <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <div class="lg:col-span-4 space-y-3">
+                <span class="inline-block bg-brand-50 text-brand-600 font-black px-3 py-1 rounded text-[10px] tracking-widest uppercase">Fast & Easy</span>
+                <h2 class="text-3xl font-black text-navy-900">Book Your Tests Online</h2>
+                <p class="text-slate-500 font-medium text-sm leading-relaxed max-w-sm">Select from our wide range of health packages and individual tests. Get your reports digitally, hassle-free.</p>
+            </div>
+            
+            <div class="lg:col-span-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center">
+                <div class="flex-1">
+                    <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-solid fa-magnifying-glass"></i></div>
+                    <h3 class="font-black text-navy-900 mb-1">1. Search</h3>
+                    <p class="text-[11px] text-slate-500 font-medium leading-tight">Find the test or package you need</p>
+                </div>
+                <div class="hidden md:block text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
+                
+                <div class="flex-1">
+                    <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-solid fa-cart-shopping"></i></div>
+                    <h3 class="font-black text-navy-900 mb-1">2. Book</h3>
+                    <p class="text-[11px] text-slate-500 font-medium leading-tight">Add to cart and choose a time slot</p>
+                </div>
+                <div class="hidden md:block text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
+                
+                <div class="flex-1">
+                    <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-regular fa-calendar-check"></i></div>
+                    <h3 class="font-black text-navy-900 mb-1">3. Pay</h3>
+                    <p class="text-[11px] text-slate-500 font-medium leading-tight">Secure cash or UPI to rider directly</p>
+                </div>
+                <div class="hidden md:block text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
+                
+                <div class="flex-1">
+                    <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-solid fa-file-invoice"></i></div>
+                    <h3 class="font-black text-navy-900 mb-1">4. Get Report</h3>
+                    <p class="text-[11px] text-slate-500 font-medium leading-tight">Receive your report via email</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Tests Section -->
+    <section class="py-16 max-w-[1400px] mx-auto px-6 bg-[#FAFCFC]">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
             <div>
-                <h4 class="font-bold text-sm mb-4 text-white uppercase tracking-widest">Contact</h4>
+                <span class="inline-block bg-brand-50 text-brand-600 font-black px-3 py-1 rounded text-[10px] tracking-widest uppercase mb-2">Popular Tests</span>
+                <h2 class="text-3xl font-black text-navy-900">Most Booked Tests</h2>
+            </div>
+            <a href="/tests" class="text-brand-600 font-bold hover:text-brand-700 transition flex items-center gap-2 text-sm">View All Tests <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% if tests %}
+                {% for t in tests %}
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-[280px]">
+                    <div>
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl mb-4
+                            {% if 'thyroid' in t.get('category', '').lower() %} bg-blue-50 text-blue-500
+                            {% elif 'lipid' in t.get('category', '').lower() %} bg-red-50 text-red-500
+                            {% elif 'liver' in t.get('category', '').lower() %} bg-purple-50 text-purple-500
+                            {% else %} bg-rose-50 text-rose-500 {% endif %}">
+                            {% if 'thyroid' in t.get('category', '').lower() %} <i class="fa-solid fa-dna"></i>
+                            {% elif 'lipid' in t.get('category', '').lower() %} <i class="fa-solid fa-heart-pulse"></i>
+                            {% elif 'liver' in t.get('category', '').lower() %} <i class="fa-solid fa-lungs"></i>
+                            {% else %} <i class="fa-solid fa-droplet"></i> {% endif %}
+                        </div>
+                        <h3 class="font-black text-[15px] text-navy-900 mb-2 leading-tight">{{ t.get('name', 'Lab Test') }}</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Diagnostic evaluation for {{ t.get('category', 'General') }}.</p>
+                    </div>
+                    <div class="mt-4">
+                        <span class="block text-[22px] font-black text-navy-900 mb-4">₹ {{ t.get('price', 0)|int }}</span>
+                        <a href="/tests?q={{ t.get('name', '') }}" class="block w-full text-center bg-transparent text-brand-500 border border-brand-500 hover:bg-brand-500 hover:text-white font-bold py-2 rounded-full transition text-sm">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full py-12 text-center">
+                    <p class="text-slate-500 font-medium text-sm">Tests are being configured. Check back soon.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="py-16 bg-[#FAFCFC]">
+        <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-12">
+            
+            <div class="lg:col-span-1 space-y-3">
+                <span class="inline-block bg-brand-50 text-brand-600 font-black px-3 py-1 rounded text-[10px] tracking-widest uppercase">Why Choose Us</span>
+                <h2 class="text-3xl font-black text-navy-900 leading-tight">Why CareDrop?</h2>
+                <p class="text-slate-500 text-sm font-medium leading-relaxed">We combine advanced technology with compassionate care to deliver the best diagnostic experience.</p>
+            </div>
+            
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8 pt-2">
+                <div class="flex flex-col items-start text-left">
+                    <i class="fa-regular fa-user text-3xl text-brand-500 mb-4"></i>
+                    <h3 class="font-black text-navy-900 text-[15px] mb-2">Experienced Professionals</h3>
+                    <p class="text-xs text-slate-500 font-medium">Skilled pathologists and trained technicians handle your samples.</p>
+                </div>
+                <div class="flex flex-col items-start text-left">
+                    <i class="fa-solid fa-gear text-3xl text-brand-500 mb-4"></i>
+                    <h3 class="font-black text-navy-900 text-[15px] mb-2">Advanced Technology</h3>
+                    <p class="text-xs text-slate-500 font-medium">Modern equipment ensuring accurate and timely LIMS results.</p>
+                </div>
+                <div class="flex flex-col items-start text-left">
+                    <i class="fa-solid fa-user-group text-3xl text-brand-500 mb-4"></i>
+                    <h3 class="font-black text-navy-900 text-[15px] mb-2">Trusted locally</h3>
+                    <p class="text-xs text-slate-500 font-medium">Proudly serving and growing within the Yamunanagar & Jagadhri community.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Heavy Corporate Footer -->
+    <footer class="bg-navy-900 pt-16 pb-12 border-t-[6px] border-brand-500">
+        <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 text-white">
+            
+            <!-- Brand Column -->
+            <div class="lg:col-span-2 space-y-4">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="w-10 h-10 flex items-center justify-center text-brand-500 text-4xl">
+                        <i class="fa-solid fa-notes-medical"></i>
+                    </div>
+                    <div>
+                        <span class="block text-2xl font-black tracking-tight text-white leading-none">CareDrop</span>
+                        <span class="block text-[9px] font-bold text-slate-400 tracking-widest uppercase">Tests. Reports. Care.</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <h4 class="font-bold text-sm mb-4 text-white">Quick Links</h4>
                 <ul class="space-y-3 text-xs text-slate-300 font-medium">
-                    <li class="flex items-center gap-3"><i class="fa-solid fa-phone text-brand-400"></i> +91 9485978790</li>
-                    <li class="flex items-center gap-3"><i class="fa-solid fa-envelope text-brand-400"></i> caredrop.ynr@gmail.com</li>
-                    <li class="flex items-start gap-3"><i class="fa-solid fa-location-dot mt-0.5 text-brand-400"></i> Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar</li>
+                    <li><a href="/" class="hover:text-brand-500 transition">Home</a></li>
+                    <li><a href="/tests" class="hover:text-brand-500 transition">Tests & Packages</a></li>
+                    <li><a href="#" class="hover:text-brand-500 transition">About Us</a></li>
+                    <li><a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" target="_blank" class="hover:text-brand-500 transition">Contact</a></li>
                 </ul>
             </div>
+
+            <!-- Contact -->
             <div>
-                <h4 class="font-bold text-sm mb-4 text-white uppercase tracking-widest">Partner Access</h4>
+                <h4 class="font-bold text-sm mb-4 text-white">Contact Us</h4>
                 <ul class="space-y-3 text-xs text-slate-300 font-medium">
-                    <li><a href="/partner/login" class="hover:text-brand-400 transition">B2B Clinic Portal</a></li>
-                    <li><a href="/admin/login" class="hover:text-brand-400 transition">HQ Operations</a></li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-location-dot mt-0.5 text-brand-500"></i> 
+                        <span>{{ site_settings.address }}</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i class="fa-solid fa-phone text-brand-500"></i> 
+                        <span>{{ site_settings.phone }}</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i class="fa-solid fa-envelope text-brand-500"></i> 
+                        <span>{{ site_settings.email }}</span>
+                    </li>
                 </ul>
             </div>
+
+            <!-- Follow Us & Portals -->
+            <div>
+                <h4 class="font-bold text-sm mb-4 text-white">Follow Us</h4>
+                <div class="flex items-center gap-4 text-lg mb-6">
+                    <a href="#" class="text-slate-400 hover:text-white transition"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-white transition"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+                <h4 class="font-bold text-sm mb-3 text-white">Partner Access</h4>
+                <ul class="space-y-2 text-xs text-slate-300 font-medium">
+                    <li><a href="/partner/login" class="hover:text-brand-500 transition">B2B Portal</a></li>
+                    <li><a href="/admin/login" class="hover:text-brand-500 transition">HQ Operations</a></li>
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="max-w-[1400px] mx-auto px-6 mt-12 pt-8 border-t border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-slate-400 font-medium">
+            <span>&copy; 2026 CareDrop. All rights reserved.</span>
+            <span>Powered by Industrial Healthcare IHC Diagnostics</span>
         </div>
     </footer>
 
-    <!-- Mobile Bottom Navigation -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-[72px] z-40 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-        <a href="/" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold">Home</span></a>
-        <a href="/tests" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xl"></i><span class="text-[10px] font-bold">Search</span></a>
-        <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-solid fa-cart-shopping text-xl"></i><span class="text-[10px] font-bold">Cart</span></a>
-        <a href="/login" class="flex flex-col items-center gap-1 text-slate-400"><i class="fa-regular fa-user text-xl"></i><span class="text-[10px] font-bold">User</span></a>
-    </div>
-
-    <style>
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
 </body>
 </html>
