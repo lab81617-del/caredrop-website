@@ -30,7 +30,18 @@ def init_db():
         id SERIAL PRIMARY KEY, order_code TEXT UNIQUE, full_name TEXT NOT NULL, age TEXT, gender TEXT, phone TEXT NOT NULL, email TEXT NOT NULL, address TEXT NOT NULL, time_slot TEXT, tests_requested TEXT NOT NULL, gross_bill REAL NOT NULL, discount_given REAL DEFAULT 0, total_bill REAL NOT NULL, b2b_total_cost REAL DEFAULT 0, referral_code TEXT, partner_commission REAL DEFAULT 0, is_commission_paid BOOLEAN DEFAULT FALSE, assigned_rider TEXT DEFAULT 'Unassigned', status TEXT DEFAULT 'Pending', barcode TEXT, temp_log TEXT, payment_mode TEXT DEFAULT 'Cash', is_paid BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, completed_at TIMESTAMP, uploaded_pdf TEXT
     );''')
     
-    # AGGRESSIVE AUTO-PATCHER: Forces missing columns to exist
+    # NEW: Dynamic Site Settings Table
+    cur.execute('''CREATE TABLE IF NOT EXISTS site_settings (
+        id SERIAL PRIMARY KEY, phone TEXT, email TEXT, address TEXT
+    );''')
+
+    # Seed default settings if the table is empty
+    cur.execute('SELECT COUNT(*) FROM site_settings')
+    if cur.fetchone()['count'] == 0:
+        cur.execute("INSERT INTO site_settings (id, phone, email, address) VALUES (1, %s, %s, %s)", 
+                    ('+91 9485978790', 'caredrop.ynr@gmail.com', 'Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001'))
+
+    # Auto-Patcher
     patch_queries = [
         "ALTER TABLE tests ADD COLUMN IF NOT EXISTS price REAL DEFAULT 0",
         "ALTER TABLE tests ADD COLUMN IF NOT EXISTS b2b_cost REAL DEFAULT 0",
