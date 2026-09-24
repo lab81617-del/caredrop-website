@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 flex items-center justify-center h-screen p-4 font-sans">
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-md">
+        <div class="flex justify-center mb-6">
+            <div class="w-12 h-12 bg-[#00A8A8] text-white rounded-xl flex items-center justify-center text-2xl shadow-sm transform -rotate-6">
+                <i class="fa-solid fa-notes-medical"></i>
+            </div>
+        </div>
+        <h2 class="text-2xl font-black text-[#0B192C] text-center mb-2">CareDrop Workspace</h2>
+        <p class="text-xs text-slate-500 font-bold text-center mb-6 uppercase tracking-widest">HQ Operations Portal</p>
+        
+        <form method="POST" action="/admin/login" class="space-y-5">
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Passcode</label>
+                <input type="password" name="password" class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-[#00A8A8]" placeholder="Enter admin password" required>
+            </div>
+            <button type="submit" class="w-full bg-[#00A8A8] hover:bg-[#008F8F] text-white font-bold py-3 rounded-xl transition shadow-md">Secure Login</button>
+        </form>
+    </div>
+</body>
+</html>
