@@ -21,9 +21,9 @@
         }
     </script>
 </head>
-<body class="bg-white text-slate-800 font-sans antialiased">
+<body class="bg-white text-slate-800 font-sans antialiased relative">
 
-    <!-- Desktop Navigation -->
+    <!-- Desktop & Mobile Navigation -->
     <header class="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
         <div class="max-w-[1400px] w-full mx-auto px-6 h-[80px] flex items-center justify-between">
             <!-- Logo -->
@@ -37,79 +37,93 @@
                 </div>
             </a>
             
-            <!-- Center Links -->
+            <!-- Desktop Center Links -->
             <div class="hidden lg:flex items-center gap-8 font-bold text-sm text-slate-600">
                 <a href="/" class="text-brand-500 border-b-2 border-brand-500 pb-1">Home</a>
                 <a href="/tests" class="hover:text-brand-500 transition">Tests & Packages</a>
                 <a href="#" class="hover:text-brand-500 transition">About Us</a>
-                <a href="/login" class="hover:text-brand-500 transition">Results</a>
                 <a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" target="_blank" class="hover:text-brand-500 transition">Contact</a>
             </div>
 
-            <!-- Right Actions -->
+            <!-- Desktop Right Actions -->
             <div class="hidden md:flex items-center gap-6">
-                <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
-                    <i class="fa-solid fa-location-dot text-brand-500"></i> Yamunanagar - Jagadhri
-                </div>
-                <a href="/tests" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-2.5 rounded font-bold transition text-sm">
+                <a href="/login" class="text-brand-600 font-bold hover:text-brand-700 transition text-sm">
+                    Download Reports
+                </a>
+                <a href="/tests" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-2.5 rounded font-bold transition text-sm shadow-sm">
                     Book Test
                 </a>
             </div>
             
-            <!-- Mobile Menu Icon -->
-            <div class="md:hidden text-2xl text-navy-900">
+            <!-- Mobile Menu Hamburger Icon -->
+            <button onclick="toggleMobileMenu()" class="md:hidden text-2xl text-navy-900 p-2 focus:outline-none">
                 <i class="fa-solid fa-bars"></i>
-            </div>
+            </button>
         </div>
     </header>
+
+    <!-- FULL SCREEN MOBILE MENU (Hidden by default) -->
+    <div id="mobileMenu" class="fixed inset-0 bg-white z-[60] hidden flex-col">
+        <div class="px-6 h-[80px] flex items-center justify-between border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex items-center justify-center text-brand-500 text-3xl"><i class="fa-solid fa-notes-medical"></i></div>
+                <span class="block text-2xl font-black tracking-tight text-navy-900 leading-none">CareDrop</span>
+            </div>
+            <button onclick="toggleMobileMenu()" class="text-3xl text-slate-400 p-2 focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex flex-col px-8 py-8 space-y-6 text-xl font-bold text-navy-900">
+            <a href="/" class="text-brand-500 border-b border-slate-100 pb-4">Home</a>
+            <a href="/tests" class="border-b border-slate-100 pb-4">Tests & Packages</a>
+            <a href="/login" class="border-b border-slate-100 pb-4">Download Reports</a>
+            <a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" class="border-b border-slate-100 pb-4">Contact Support</a>
+            <a href="/tests" class="bg-brand-500 text-white text-center py-4 rounded-xl shadow-md mt-4">Book a Test</a>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="relative bg-[#F4FAFA] overflow-hidden">
         <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 items-center min-h-[500px]">
             
             <!-- Left Content -->
-            <div class="py-16 z-10 space-y-6">
+            <div class="py-12 lg:py-16 z-10 space-y-6">
                 <span class="inline-block bg-[#DFF1F1] text-[#006B6B] font-bold px-4 py-1.5 rounded-full text-xs">
                     Trusted Diagnostic Laboratory
                 </span>
                 
                 <h1 class="text-[44px] lg:text-[56px] font-black text-navy-900 leading-[1.1] tracking-tight">
-                    Your Health, Our Priority
+                    Your Health,<br>Our Priority
                 </h1>
                 
                 <p class="text-lg text-slate-600 font-medium leading-relaxed max-w-lg">
                     Accurate. Fast. Reliable. CareDrop brings world-class diagnostic services closer to you in Yamunanagar – Jagadhri.
                 </p>
                 
-                <div class="flex flex-wrap items-center gap-4 pt-2">
-                    <a href="/tests" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 rounded-full font-bold transition flex items-center gap-2 shadow-md">
+                <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                    <a href="/tests" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 rounded-full font-bold transition flex items-center justify-center gap-2 shadow-md">
                         Book a Test Now <i class="fa-solid fa-arrow-right"></i>
                     </a>
-                    <a href="/tests" class="bg-transparent text-brand-500 border-2 border-brand-500 hover:bg-brand-50 px-8 py-3.5 rounded-full font-bold transition">
+                    <a href="/tests" class="bg-transparent text-brand-500 border-2 border-brand-500 hover:bg-brand-50 px-8 py-3.5 rounded-full font-bold transition text-center">
                         View Test Catalogue
                     </a>
                 </div>
 
                 <!-- 4 Icons Row -->
-                <div class="flex items-center justify-between max-w-lg pt-10">
+                <div class="grid grid-cols-4 gap-2 pt-10">
                     <div class="flex flex-col items-center text-center gap-2">
                         <div class="text-brand-500 text-2xl"><i class="fa-regular fa-square-check"></i></div>
-                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Accurate<br>Results</span>
+                        <span class="text-[10px] md:text-[11px] font-bold text-slate-700 leading-tight">Accurate<br>Results</span>
                     </div>
-                    <div class="w-px h-8 bg-slate-300 hidden sm:block"></div>
                     <div class="flex flex-col items-center text-center gap-2">
                         <div class="text-brand-500 text-2xl"><i class="fa-regular fa-clock"></i></div>
-                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Fast<br>Turnaround</span>
+                        <span class="text-[10px] md:text-[11px] font-bold text-slate-700 leading-tight">Fast<br>Turnaround</span>
                     </div>
-                    <div class="w-px h-8 bg-slate-300 hidden sm:block"></div>
                     <div class="flex flex-col items-center text-center gap-2">
                         <div class="text-brand-500 text-2xl"><i class="fa-solid fa-house-chimney-medical"></i></div>
-                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Home Sample<br>Collection</span>
+                        <span class="text-[10px] md:text-[11px] font-bold text-slate-700 leading-tight">Home Sample<br>Collection</span>
                     </div>
-                    <div class="w-px h-8 bg-slate-300 hidden sm:block"></div>
                     <div class="flex flex-col items-center text-center gap-2">
                         <div class="text-brand-500 text-2xl"><i class="fa-solid fa-file-invoice"></i></div>
-                        <span class="text-[11px] font-bold text-slate-700 leading-tight">Digital Reports<br>(Email/SMS)</span>
+                        <span class="text-[10px] md:text-[11px] font-bold text-slate-700 leading-tight">Digital Reports<br>(Email/SMS)</span>
                     </div>
                 </div>
             </div>
@@ -117,12 +131,8 @@
             <!-- Right Image Area -->
             <div class="relative hidden lg:block h-full w-full">
                 <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80" class="absolute inset-0 w-full h-full object-cover rounded-l-[100px]" alt="Doctor">
-                
-                <!-- Floating Trust Badge -->
                 <div class="absolute top-16 -left-12 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-lg flex items-center justify-center text-2xl">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
+                    <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-lg flex items-center justify-center text-2xl"><i class="fa-solid fa-shield-halved"></i></div>
                     <div>
                         <span class="block font-black text-navy-900 text-sm">Your sample</span>
                         <span class="block font-black text-navy-900 text-sm mb-0.5">Our responsibility</span>
@@ -134,52 +144,41 @@
     </section>
 
     <!-- How it Works Section -->
-    <section class="py-16 border-b border-slate-100">
+    <section class="py-16 border-b border-slate-100 hidden md:block">
         <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
             <div class="lg:col-span-4 space-y-3">
                 <span class="inline-block bg-brand-50 text-brand-600 font-black px-3 py-1 rounded text-[10px] tracking-widest uppercase">Fast & Easy</span>
                 <h2 class="text-3xl font-black text-navy-900">Book Your Tests Online</h2>
                 <p class="text-slate-500 font-medium text-sm leading-relaxed max-w-sm">Select from our wide range of health packages and individual tests. Get your reports digitally, hassle-free.</p>
             </div>
-            
-            <div class="lg:col-span-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center">
+            <div class="lg:col-span-8 flex justify-between items-center gap-6 text-center">
                 <div class="flex-1">
                     <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-solid fa-magnifying-glass"></i></div>
                     <h3 class="font-black text-navy-900 mb-1">1. Search</h3>
                     <p class="text-[11px] text-slate-500 font-medium leading-tight">Find the test or package you need</p>
                 </div>
-                <div class="hidden md:block text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
-                
+                <div class="text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
                 <div class="flex-1">
                     <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-solid fa-cart-shopping"></i></div>
                     <h3 class="font-black text-navy-900 mb-1">2. Book</h3>
                     <p class="text-[11px] text-slate-500 font-medium leading-tight">Add to cart and choose a time slot</p>
                 </div>
-                <div class="hidden md:block text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
-                
+                <div class="text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
                 <div class="flex-1">
                     <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-regular fa-calendar-check"></i></div>
                     <h3 class="font-black text-navy-900 mb-1">3. Pay</h3>
                     <p class="text-[11px] text-slate-500 font-medium leading-tight">Secure cash or UPI to rider directly</p>
-                </div>
-                <div class="hidden md:block text-slate-300 text-2xl"><i class="fa-solid fa-arrow-right-long"></i></div>
-                
-                <div class="flex-1">
-                    <div class="w-20 h-20 mx-auto bg-brand-50 rounded-full flex items-center justify-center text-2xl text-brand-500 mb-4"><i class="fa-solid fa-file-invoice"></i></div>
-                    <h3 class="font-black text-navy-900 mb-1">4. Get Report</h3>
-                    <p class="text-[11px] text-slate-500 font-medium leading-tight">Receive your report via email</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Popular Tests Section -->
-    <section class="py-16 max-w-[1400px] mx-auto px-6 bg-[#FAFCFC]">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+    <section class="py-12 md:py-16 max-w-[1400px] mx-auto px-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>
                 <span class="inline-block bg-brand-50 text-brand-600 font-black px-3 py-1 rounded text-[10px] tracking-widest uppercase mb-2">Popular Tests</span>
-                <h2 class="text-3xl font-black text-navy-900">Most Booked Tests</h2>
+                <h2 class="text-2xl md:text-3xl font-black text-navy-900">Most Booked Tests</h2>
             </div>
             <a href="/tests" class="text-brand-600 font-bold hover:text-brand-700 transition flex items-center gap-2 text-sm">View All Tests <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
         </div>
@@ -187,73 +186,47 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if tests %}
                 {% for t in tests %}
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-[280px]">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between h-[290px]">
                     <div>
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl mb-4
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg mb-4
                             {% if 'thyroid' in t.get('category', '').lower() %} bg-blue-50 text-blue-500
                             {% elif 'lipid' in t.get('category', '').lower() %} bg-red-50 text-red-500
                             {% elif 'liver' in t.get('category', '').lower() %} bg-purple-50 text-purple-500
                             {% else %} bg-rose-50 text-rose-500 {% endif %}">
-                            {% if 'thyroid' in t.get('category', '').lower() %} <i class="fa-solid fa-dna"></i>
-                            {% elif 'lipid' in t.get('category', '').lower() %} <i class="fa-solid fa-heart-pulse"></i>
-                            {% elif 'liver' in t.get('category', '').lower() %} <i class="fa-solid fa-lungs"></i>
-                            {% else %} <i class="fa-solid fa-droplet"></i> {% endif %}
+                            <i class="fa-solid fa-droplet"></i>
                         </div>
-                        <h3 class="font-black text-[15px] text-navy-900 mb-2 leading-tight">{{ t.get('name', 'Lab Test') }}</h3>
+                        <h3 class="font-black text-base md:text-lg text-navy-900 mb-1 leading-tight">{{ t.get('name', 'Lab Test') }}</h3>
                         <p class="text-[11px] text-slate-500 font-medium">Diagnostic evaluation for {{ t.get('category', 'General') }}.</p>
+                        
+                        <!-- Added Precaution/Summary Line -->
+                        <div class="mt-3 flex items-start gap-1.5 text-[10px] font-bold text-slate-400 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                            <i class="fa-solid fa-circle-info mt-0.5 text-brand-500"></i>
+                            <span>Preparation: Fasting may be required as per doctor's advice.</span>
+                        </div>
                     </div>
-                    <div class="mt-4">
-                        <span class="block text-[22px] font-black text-navy-900 mb-4">₹ {{ t.get('price', 0)|int }}</span>
-                        <a href="/tests?q={{ t.get('name', '') }}" class="block w-full text-center bg-transparent text-brand-500 border border-brand-500 hover:bg-brand-500 hover:text-white font-bold py-2 rounded-full transition text-sm">
+                    
+                    <div class="mt-4 flex items-center justify-between">
+                        <span class="block text-xl md:text-2xl font-black text-navy-900">₹ {{ t.get('price', 0)|int }}</span>
+                        <a href="/tests?q={{ t.get('name', '') }}" class="bg-white text-brand-600 border border-brand-500 hover:bg-brand-50 px-6 py-2 rounded-full font-bold transition text-xs shadow-sm">
                             Book Now
                         </a>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="col-span-full py-12 text-center">
-                    <p class="text-slate-500 font-medium text-sm">Tests are being configured. Check back soon.</p>
+                <div class="col-span-full py-12 text-center bg-slate-50 rounded-xl border border-slate-200">
+                    <p class="text-slate-500 font-bold text-sm">Tests are currently being configured by the lab.</p>
                 </div>
             {% endif %}
         </div>
     </section>
 
-    <!-- Why Choose Us -->
-    <section class="py-16 bg-[#FAFCFC]">
-        <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-12">
-            
-            <div class="lg:col-span-1 space-y-3">
-                <span class="inline-block bg-brand-50 text-brand-600 font-black px-3 py-1 rounded text-[10px] tracking-widest uppercase">Why Choose Us</span>
-                <h2 class="text-3xl font-black text-navy-900 leading-tight">Why CareDrop?</h2>
-                <p class="text-slate-500 text-sm font-medium leading-relaxed">We combine advanced technology with compassionate care to deliver the best diagnostic experience.</p>
-            </div>
-            
-            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8 pt-2">
-                <div class="flex flex-col items-start text-left">
-                    <i class="fa-regular fa-user text-3xl text-brand-500 mb-4"></i>
-                    <h3 class="font-black text-navy-900 text-[15px] mb-2">Experienced Professionals</h3>
-                    <p class="text-xs text-slate-500 font-medium">Skilled pathologists and trained technicians handle your samples.</p>
-                </div>
-                <div class="flex flex-col items-start text-left">
-                    <i class="fa-solid fa-gear text-3xl text-brand-500 mb-4"></i>
-                    <h3 class="font-black text-navy-900 text-[15px] mb-2">Advanced Technology</h3>
-                    <p class="text-xs text-slate-500 font-medium">Modern equipment ensuring accurate and timely LIMS results.</p>
-                </div>
-                <div class="flex flex-col items-start text-left">
-                    <i class="fa-solid fa-user-group text-3xl text-brand-500 mb-4"></i>
-                    <h3 class="font-black text-navy-900 text-[15px] mb-2">Trusted locally</h3>
-                    <p class="text-xs text-slate-500 font-medium">Proudly serving and growing within the Yamunanagar & Jagadhri community.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Heavy Corporate Footer -->
     <footer class="bg-navy-900 pt-16 pb-12 border-t-[6px] border-brand-500">
-        <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 text-white">
+        <div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-white">
             
             <!-- Brand Column -->
-            <div class="lg:col-span-2 space-y-4">
+            <div class="space-y-4">
                 <a href="/" class="flex items-center gap-3">
                     <div class="w-10 h-10 flex items-center justify-center text-brand-500 text-4xl">
                         <i class="fa-solid fa-notes-medical"></i>
@@ -267,18 +240,18 @@
 
             <!-- Quick Links -->
             <div>
-                <h4 class="font-bold text-sm mb-4 text-white">Quick Links</h4>
+                <h4 class="font-bold text-sm mb-4 text-white uppercase tracking-widest">Quick Links</h4>
                 <ul class="space-y-3 text-xs text-slate-300 font-medium">
                     <li><a href="/" class="hover:text-brand-500 transition">Home</a></li>
                     <li><a href="/tests" class="hover:text-brand-500 transition">Tests & Packages</a></li>
-                    <li><a href="#" class="hover:text-brand-500 transition">About Us</a></li>
-                    <li><a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" target="_blank" class="hover:text-brand-500 transition">Contact</a></li>
+                    <li><a href="/login" class="hover:text-brand-500 transition">Download Reports</a></li>
+                    <li><a href="https://wa.me/{{ site_settings.phone|replace(' ', '')|replace('+', '') }}" target="_blank" class="hover:text-brand-500 transition">Contact Support</a></li>
                 </ul>
             </div>
 
             <!-- Contact -->
             <div>
-                <h4 class="font-bold text-sm mb-4 text-white">Contact Us</h4>
+                <h4 class="font-bold text-sm mb-4 text-white uppercase tracking-widest">Contact Us</h4>
                 <ul class="space-y-3 text-xs text-slate-300 font-medium">
                     <li class="flex items-start gap-2">
                         <i class="fa-solid fa-location-dot mt-0.5 text-brand-500"></i> 
@@ -295,28 +268,36 @@
                 </ul>
             </div>
 
-            <!-- Follow Us & Portals -->
+            <!-- Portals -->
             <div>
-                <h4 class="font-bold text-sm mb-4 text-white">Follow Us</h4>
-                <div class="flex items-center gap-4 text-lg mb-6">
-                    <a href="#" class="text-slate-400 hover:text-white transition"><i class="fa-brands fa-facebook"></i></a>
-                    <a href="#" class="text-slate-400 hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" class="text-slate-400 hover:text-white transition"><i class="fa-brands fa-youtube"></i></a>
-                </div>
-                <h4 class="font-bold text-sm mb-3 text-white">Partner Access</h4>
-                <ul class="space-y-2 text-xs text-slate-300 font-medium">
-                    <li><a href="/partner/login" class="hover:text-brand-500 transition">B2B Portal</a></li>
-                    <li><a href="/admin/login" class="hover:text-brand-500 transition">HQ Operations</a></li>
+                <h4 class="font-bold text-sm mb-3 text-white uppercase tracking-widest">For Professionals</h4>
+                <ul class="space-y-3 text-xs text-slate-300 font-medium">
+                    <li><a href="/partner/login" class="hover:text-brand-500 transition">Clinic / Doctor Login</a></li>
+                    <li><a href="/admin/login" class="hover:text-brand-500 transition">Staff Login</a></li>
                 </ul>
             </div>
 
         </div>
 
-        <div class="max-w-[1400px] mx-auto px-6 mt-12 pt-8 border-t border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-slate-400 font-medium">
+        <div class="max-w-[1400px] mx-auto px-6 mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-slate-500 font-bold">
             <span>&copy; 2026 CareDrop. All rights reserved.</span>
             <span>Powered by Industrial Healthcare IHC Diagnostics</span>
         </div>
     </footer>
 
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+                document.body.style.overflow = 'hidden'; // Stop background scrolling
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                document.body.style.overflow = 'auto';
+            }
+        }
+    </script>
 </body>
 </html>
