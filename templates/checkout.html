@@ -14,6 +14,11 @@
             }
         }
     </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        select option:disabled { color: #cbd5e1; font-style: italic; }
+    </style>
 </head>
 <body class="bg-[#F8F9FA] text-slate-800 font-sans antialiased pb-10">
 
@@ -34,6 +39,7 @@
 
     <main class="max-w-[1200px] mx-auto px-4 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
+        <!-- LEFT: PATIENT DETAILS FORM -->
         <div class="lg:col-span-7 space-y-6">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:p-8">
                 <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
@@ -74,6 +80,7 @@
                         <input type="email" id="email" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="name@example.com">
                     </div>
 
+                    <!-- 2. COLLECTION DETAILS -->
                     <div class="pt-4 mt-4 border-t border-slate-100">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center font-black">2</div>
@@ -95,13 +102,17 @@
                                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Time Slot</label>
                                     <select id="time_slot" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 text-sm bg-white">
                                         <option value="" disabled selected>Select a time</option>
-                                        <option value="07:00 AM - 08:00 AM">07:00 AM - 08:00 AM (Fasting)</option>
-                                        <option value="08:00 AM - 09:00 AM">08:00 AM - 09:00 AM (Fasting)</option>
-                                        <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
-                                        <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
-                                        <option value="02:00 PM - 05:00 PM">02:00 PM - 05:00 PM</option>
+                                        <!-- Custom data attributes to prevent past time selection -->
+                                        <option value="07:00 AM - 08:45 AM" data-end-hour="8" data-end-min="45">07:00 AM - 08:45 AM (Fasting)</option>
+                                        <option value="10:00 AM - 01:30 PM" data-end-hour="13" data-end-min="30">10:00 AM - 01:30 PM</option>
+                                        <option value="03:30 PM - 06:30 PM" data-end-hour="18" data-end-min="30">03:30 PM - 06:30 PM</option>
                                     </select>
                                 </div>
+                            </div>
+                            
+                            <div class="bg-brand-50 border border-brand-100 p-3 rounded-xl flex items-start gap-3">
+                                <i class="fa-solid fa-phone text-brand-500 mt-0.5"></i>
+                                <p class="text-[11px] font-bold text-slate-600">Urgent requirement? Please book any available slot and call us directly at <a href="tel:{{ site_settings.phone|replace(' ', '') }}" class="text-brand-600 underline">{{ site_settings.phone }}</a>.</p>
                             </div>
                         </div>
                     </div>
@@ -109,6 +120,7 @@
             </div>
         </div>
 
+        <!-- RIGHT: CART SUMMARY -->
         <div class="lg:col-span-5">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 sticky top-[90px] overflow-hidden">
                 <div class="px-6 py-5 bg-[#F8FAFA] border-b border-slate-100 flex justify-between items-center">
@@ -157,26 +169,41 @@
                         </div>
                     </div>
 
+                    <!-- NEW: Mandatory Digital Consent -->
+                    <div class="flex items-start gap-3 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <input type="checkbox" id="consent_checkbox" class="mt-0.5 w-4 h-4 text-brand-600 bg-white border-slate-300 rounded focus:ring-brand-500 shrink-0 cursor-pointer">
+                        <label for="consent_checkbox" class="text-[10px] font-bold text-slate-600 cursor-pointer leading-tight">
+                            I give my legal consent for sample collection and agree to securely store my digital reports in the CareDrop platform system.
+                        </label>
+                    </div>
+
                     <button type="button" onclick="initiateBooking()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-black py-4 rounded-xl transition shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2">
                         Proceed to Book <i class="fa-solid fa-arrow-right"></i>
                     </button>
                     <p class="text-[10px] text-center text-slate-400 font-bold mt-4 flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-shield-check text-emerald-500"></i> Payment is collected at time of sample collection.
+                        <i class="fa-solid fa-shield-check text-emerald-500"></i> Payment is collected at the time of sample collection.
                     </p>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- OTP Modal with Timer & Resend -->
     <div id="otpModal" class="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative transform scale-95 transition-transform duration-200" id="otpModalContent">
             <div class="w-16 h-16 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                 <i class="fa-solid fa-envelope-open-text"></i>
             </div>
             <h3 class="text-xl font-black text-navy-900 mb-2">Verify your Email</h3>
-            <p class="text-sm text-slate-500 font-medium mb-6">We've sent a 4-digit verification code to your email. Enter it below to confirm your booking.</p>
+            <p class="text-xs text-slate-500 font-bold mb-6">We've sent a 4-digit verification code to your email. <br><span class="text-rose-500">(Please check your Spam folder if not received).</span></p>
             
-            <input type="text" id="otp_input" maxlength="4" class="w-full text-center text-3xl tracking-[1em] font-black border-b-2 border-slate-300 pb-2 mb-6 focus:outline-none focus:border-brand-500 bg-transparent text-navy-900 placeholder-slate-200" placeholder="••••">
+            <input type="text" id="otp_input" maxlength="4" class="w-full text-center text-3xl tracking-[1em] font-black border-b-2 border-slate-300 pb-2 mb-4 focus:outline-none focus:border-brand-500 bg-transparent text-navy-900 placeholder-slate-200" placeholder="••••">
+            
+            <!-- OTP Timer and Resend -->
+            <div class="mb-6 h-6 flex items-center justify-center">
+                <p id="timerText" class="text-xs text-slate-400 font-bold">Resend OTP in <span id="countdown" class="text-navy-900">60</span>s</p>
+                <button id="resendBtn" type="button" onclick="initiateBooking(true)" class="hidden text-brand-600 hover:text-brand-800 text-xs font-black underline">Resend OTP Now</button>
+            </div>
             
             <button onclick="confirmBooking()" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition shadow-md">
                 Confirm Booking
@@ -188,12 +215,48 @@
     <script>
         let baseTotal = {{ total }};
         let currentTotal = baseTotal;
+        let timerInterval;
 
-        // Prevent users from selecting past dates
+        // Smart Time Slot Logic: Disable past times for TODAY
         document.addEventListener('DOMContentLoaded', () => {
             const dateInput = document.getElementById('booking_date');
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.setAttribute('min', today);
+            const timeSelect = document.getElementById('time_slot');
+            const timeOptions = timeSelect.querySelectorAll('option[data-end-hour]');
+            
+            // Set min date to today
+            const today = new Date();
+            const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            dateInput.setAttribute('min', todayStr);
+
+            // Listen for date changes
+            dateInput.addEventListener('change', function() {
+                const selectedDate = this.value;
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMin = now.getMinutes();
+
+                if (selectedDate === todayStr) {
+                    // It's today. Gray out passed slots.
+                    timeOptions.forEach(opt => {
+                        const endHour = parseInt(opt.getAttribute('data-end-hour'));
+                        const endMin = parseInt(opt.getAttribute('data-end-min'));
+                        
+                        if (currentHour > endHour || (currentHour === endHour && currentMin >= endMin)) {
+                            opt.disabled = true;
+                            opt.text = opt.value.replace(/ \(Fasting\)/g, '') + " (Slot Passed)";
+                        } else {
+                            opt.disabled = false;
+                            opt.text = opt.value;
+                        }
+                    });
+                } else {
+                    // Future date. Open all slots.
+                    timeOptions.forEach(opt => {
+                        opt.disabled = false;
+                        opt.text = opt.value;
+                    });
+                }
+            });
         });
 
         async function applyPromo() {
@@ -227,15 +290,42 @@
             } catch (e) { console.error(e); }
         }
 
-        async function initiateBooking() {
+       // Timer Logic
+        function startTimer() {
+            let timeLeft = 60;
+            document.getElementById('resendBtn').classList.add('hidden');
+            document.getElementById('timerText').classList.remove('hidden');
+            document.getElementById('countdown').innerText = timeLeft;
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('countdown').innerText = timeLeft;
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timerText').classList.add('hidden');
+                    document.getElementById('resendBtn').classList.remove('hidden');
+                }
+            }, 1000);
+        }
+
+        async function initiateBooking(isResend = false) {
             const form = document.getElementById('checkoutForm');
             if(!form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
 
-            const btn = event.currentTarget;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Securing Slot...';
+            // Verify Consent
+            const consentCheckbox = document.getElementById('consent_checkbox');
+            if(!consentCheckbox.checked && !isResend) {
+                alert("You must agree to the sample collection consent before booking.");
+                return;
+            }
+
+            const btn = isResend ? document.getElementById('resendBtn') : event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = isResend ? 'Sending...' : '<i class="fa-solid fa-spinner fa-spin"></i> Securing Slot...';
             btn.disabled = true;
 
             const formData = new FormData();
@@ -250,24 +340,26 @@
             formData.append('referral_code', document.getElementById('promo_code').value);
 
             try {
-                const res = await fetch('/api/initiate_booking', {
-                    method: 'POST',
-                    body: formData
-                });
+                const res = await fetch('/api/initiate_booking', { method: 'POST', body: formData });
                 const data = await res.json();
                 
                 if (data.status === 'otp_sent') {
-                    document.getElementById('otpModal').classList.remove('hidden');
-                    document.getElementById('otpModal').classList.add('flex');
-                    setTimeout(() => {
-                        document.getElementById('otpModalContent').classList.remove('scale-95');
-                        document.getElementById('otpModalContent').classList.add('scale-100');
-                    }, 10);
+                    if(!isResend) {
+                        document.getElementById('otpModal').classList.remove('hidden');
+                        document.getElementById('otpModal').classList.add('flex');
+                        setTimeout(() => {
+                            document.getElementById('otpModalContent').classList.remove('scale-95');
+                            document.getElementById('otpModalContent').classList.add('scale-100');
+                        }, 10);
+                    } else {
+                        alert("New OTP sent! Please check your Spam or Promotions folder.");
+                    }
+                    startTimer();
                 }
             } catch (e) {
                 console.error(e);
             } finally {
-                btn.innerHTML = 'Proceed to Book <i class="fa-solid fa-arrow-right"></i>';
+                btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         }
@@ -285,10 +377,7 @@
             formData.append('otp', otp);
 
             try {
-                const res = await fetch('/api/confirm_booking', {
-                    method: 'POST',
-                    body: formData
-                });
+                const res = await fetch('/api/confirm_booking', { method: 'POST', body: formData });
                 const data = await res.json();
                 
                 if (data.status === 'success') {
@@ -312,6 +401,7 @@
                 document.getElementById('otpModal').classList.add('hidden');
                 document.getElementById('otpModal').classList.remove('flex');
             }, 200);
+            clearInterval(timerInterval);
         }
     </script>
 </body>
