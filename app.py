@@ -14,6 +14,21 @@ from database import get_db_connection, init_db
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
 
+# --- GLOBAL DYNAMIC SETTINGS ---
+@app.context_processor
+def inject_settings():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM site_settings WHERE id = 1')
+        settings = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not settings:
+            settings = {'phone': '+91 9485978790', 'email': 'caredrop.ynr@gmail.com', 'address': 'Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001'}
+        return dict(site_settings=settings)
+    except Exception:
+        return dict(site_settings={'phone': '+91 9485978790', 'email': 'caredrop.ynr@gmail.com', 'address': 'Shop No 434 L, Near Hospital, Sarojini Colony, Yamuna Nagar 135001'})
 # Initialize DB and run auto-patcher on startup
 try:
     init_db()
