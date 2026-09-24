@@ -21,11 +21,13 @@
     </a>
 
     <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-md">
+        
+        <!-- Step 1: Email Input -->
         <div id="email-step">
             <h2 class="text-2xl font-black text-navy-900 mb-2">Access Your Reports</h2>
             <p class="text-sm text-slate-500 font-medium mb-6">Enter the email address you used during booking to download your diagnostic reports.</p>
             
-            <form id="sendOtpForm" class="space-y-4" onsubmit="sendOtp(event)">
+            <form id="sendOtpForm" class="space-y-4" onsubmit="sendOtp(event, false)">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Email Address</label>
                     <input type="email" id="login_email" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="name@example.com">
@@ -36,14 +38,28 @@
             </form>
         </div>
 
-        <div id="otp-step" class="hidden">
-            <button onclick="backToEmail()" class="text-slate-400 hover:text-brand-500 text-sm font-bold mb-4 flex items-center gap-1 transition"><i class="fa-solid fa-arrow-left"></i> Back</button>
-            <h2 class="text-2xl font-black text-navy-900 mb-2">Enter Code</h2>
-            <p class="text-sm text-slate-500 font-medium mb-6">We sent a 4-digit code to <span id="display_email" class="font-bold text-navy-900"></span>.</p>
+        <!-- Step 2: OTP Verification -->
+        <div id="otp-step" class="hidden text-center">
+            <div class="flex justify-start">
+                <button onclick="backToEmail()" class="text-slate-400 hover:text-brand-500 text-sm font-bold mb-4 flex items-center gap-1 transition"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            </div>
             
-            <form action="/api/verify_login_otp" method="POST" class="space-y-6">
+            <div class="w-16 h-16 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                <i class="fa-solid fa-envelope-open-text"></i>
+            </div>
+            <h2 class="text-2xl font-black text-navy-900 mb-2">Verify your Email</h2>
+            <p class="text-sm text-slate-500 font-medium mb-6">We sent a 4-digit code to <br><span id="display_email" class="font-bold text-navy-900"></span>.</p>
+            
+            <form action="/api/verify_login_otp" method="POST" class="space-y-4">
                 <input type="text" name="otp" maxlength="4" required class="w-full text-center text-4xl tracking-[0.5em] font-black border-b-2 border-slate-300 pb-2 focus:outline-none focus:border-brand-500 bg-transparent text-navy-900 placeholder-slate-200" placeholder="••••">
-                <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition shadow-md">
+                
+                <!-- Timer and Resend -->
+                <div class="h-6 flex items-center justify-center mt-4">
+                    <p id="timerText" class="text-xs text-slate-400 font-bold">Resend OTP in <span id="countdown" class="text-navy-900">60</span>s</p>
+                    <button id="resendBtn" type="button" onclick="sendOtp(event, true)" class="hidden text-brand-600 hover:text-brand-800 text-xs font-black underline">Resend OTP Now</button>
+                </div>
+
+                <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition shadow-md mt-2">
                     Verify & Login
                 </button>
             </form>
@@ -51,13 +67,33 @@
     </div>
 
     <script>
-        async function sendOtp(e) {
-            e.preventDefault();
+        let timerInterval;
+
+        function startTimer() {
+            let timeLeft = 60;
+            document.getElementById('resendBtn').classList.add('hidden');
+            document.getElementById('timerText').classList.remove('hidden');
+            document.getElementById('countdown').innerText = timeLeft;
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('countdown').innerText = timeLeft;
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timerText').classList.add('hidden');
+                    document.getElementById('resendBtn').classList.remove('hidden');
+                }
+            }, 1000);
+        }
+
+        async function sendOtp(e, isResend = false) {
+            if(e) e.preventDefault();
             const email = document.getElementById('login_email').value;
-            const btn = document.getElementById('sendBtn');
+            const btn = isResend ? document.getElementById('resendBtn') : document.getElementById('sendBtn');
             const originalText = btn.innerHTML;
             
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            btn.innerHTML = isResend ? 'Sending...' : '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
             btn.disabled = true;
 
             const formData = new FormData();
@@ -71,6 +107,11 @@
                     document.getElementById('email-step').classList.add('hidden');
                     document.getElementById('otp-step').classList.remove('hidden');
                     document.getElementById('display_email').innerText = email;
+                    
+                    if(isResend) {
+                        alert("New OTP sent! Please check your inbox and spam folder.");
+                    }
+                    startTimer();
                 }
             } catch (error) {
                 console.error(error);
@@ -84,6 +125,7 @@
         function backToEmail() {
             document.getElementById('otp-step').classList.add('hidden');
             document.getElementById('email-step').classList.remove('hidden');
+            clearInterval(timerInterval);
         }
     </script>
 </body>
