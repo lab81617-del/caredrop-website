@@ -15,7 +15,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
 
-    <!-- SIDEBAR NAVIGATION -->
+    <!-- CLEANED SIDEBAR NAVIGATION -->
     <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
         <div class="h-[72px] flex items-center px-6 border-b border-white/10">
             <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
@@ -25,7 +25,6 @@
             </div>
         </div>
         
-       <!-- CLEANED SIDEBAR -->
         <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
             <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
             
@@ -76,15 +75,17 @@
         <!-- Scrollable Dashboard -->
         <div class="flex-1 overflow-y-auto p-8">
             
-            <!-- Welcome & Stats Row -->
+            <!-- DYNAMIC TIME GREETING -->
             <div class="mb-8">
-               <h3 class="text-2xl font-black text-navy-900 mb-1" id="dynamic-greeting">Welcome, Team!</h3>
-<script>
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-    document.getElementById('dynamic-greeting').innerText = greeting + ', Team!';
-</script>
+                <h3 class="text-2xl font-black text-navy-900 mb-1" id="dynamic-greeting">Welcome, Team!</h3>
                 <p class="text-sm text-slate-500 font-medium mb-6">Here is what's happening today at your lab.</p>
+                <script>
+                    const hour = new Date().getHours();
+                    let greeting = 'Good evening';
+                    if (hour < 12) greeting = 'Good morning';
+                    else if (hour < 18) greeting = 'Good afternoon';
+                    document.getElementById('dynamic-greeting').innerText = greeting + ', Team!';
+                </script>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
