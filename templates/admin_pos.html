@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Order (POS) | CareDrop Reception</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#F0FDF4', 500: '#0D9488', 600: '#0F766E' }, navy: { 800: '#1E293B', 900: '#0F172A' } } } }
+        }
+    </script>
+</head>
+<body class="bg-[#F1F5F9] text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
+
+    <!-- SIDEBAR (Matching Mockup Design) -->
+    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
+        <div class="h-[72px] flex items-center px-6 border-b border-white/10">
+            <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight leading-tight">CareDrop</h1>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Workspace</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Reception</p>
+            
+            <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
+            </a>
+            <a href="/admin/pos" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500/10 text-brand-400 font-bold text-sm transition">
+                <i class="fa-solid fa-plus-circle w-5 text-center"></i> New Order / POS
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-users w-5 text-center"></i> Patients
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-clipboard-list w-5 text-center"></i> Orders
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-vial w-5 text-center"></i> Samples
+            </a>
+            
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Finance & Settings</p>
+            
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-credit-card w-5 text-center"></i> Payments
+            </a>
+            <a href="/admin/catalog" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-book-medical w-5 text-center"></i> Test Catalog
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-user"></i></div>
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-white leading-tight">Receptionist</p>
+                    <a href="/logout" class="text-[10px] text-slate-400 hover:text-brand-400 font-medium">Logout</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+            <h2 class="text-xl font-black text-navy-900">Walk-in POS Registration</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-xs font-bold text-slate-500"><i class="fa-solid fa-location-dot text-brand-500 mr-1"></i> Yamunanagar HQ</span>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <form action="/pos_book_test" method="POST" id="posForm" class="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-8">
+                
+                <!-- Left Column: Patient Details & Test Selection -->
+                <div class="flex-1 space-y-6">
+                    
+                    <!-- Patient Information Card -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                            <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider"><i class="fa-solid fa-user-injured mr-2 text-brand-500"></i>Patient Details</h3>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Full Name *</label>
+                                <input type="text" name="full_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="Patient's Name">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Mobile Number *</label>
+                                <input type="tel" name="phone" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="+91 XXXXX XXXXX">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Email Address</label>
+                                <input type="email" name="email" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="For digital reports">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Age *</label>
+                                <input type="number" name="age" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="Years">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Gender *</label>
+                                <select name="gender" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 text-sm bg-white">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">Collection Address (If Home Collection)</label>
+                                <input type="text" name="address" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 text-sm" placeholder="Leave blank if Walk-in">
+                            </div>
+                            
+                            <!-- Hidden Fields to hold JS calculated values -->
+                            <input type="hidden" name="tests_requested" id="tests_requested_input" required>
+                            <input type="hidden" name="total_bill" id="total_bill_input" value="0">
+                            <input type="hidden" name="time_slot" value="Walk-in Collection">
+                        </div>
+                    </div>
+
+                    <!-- Test Selection Card -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider"><i class="fa-solid fa-vial mr-2 text-brand-500"></i>Select Tests</h3>
+                            <input type="text" id="testSearch" onkeyup="filterTests()" placeholder="Search catalog..." class="border border-slate-300 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-brand-500">
+                        </div>
+                        <div class="p-0 max-h-[400px] overflow-y-auto">
+                            <table class="w-full text-left whitespace-nowrap" id="testsTable">
+                                <tbody class="divide-y divide-slate-100">
+                                    {% for t in tests %}
+                                    <tr class="hover:bg-slate-50 transition test-row">
+                                        <td class="px-6 py-3 w-10">
+                                            <input type="checkbox" class="w-4 h-4 text-brand-500 rounded border-slate-300 focus:ring-brand-500 test-checkbox" 
+                                                   data-name="{{ t.name }}" data-price="{{ t.price }}" onchange="updateCart()">
+                                        </td>
+                                        <td class="px-2 py-3">
+                                            <p class="text-sm font-bold text-navy-900 test-name">{{ t.name }}</p>
+                                            <p class="text-[10px] text-slate-500 font-bold uppercase">{{ t.category }}</p>
+                                        </td>
+                                        <td class="px-6 py-3 text-right">
+                                            <span class="text-sm font-black text-slate-700">₹{{ t.price|int }}</span>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-8 text-center text-slate-400 font-bold text-sm">
+                                            No tests available in the catalog.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Financial Summary -->
+                <div class="w-full lg:w-[350px] shrink-0">
+                    <div class="bg-navy-900 rounded-2xl shadow-xl border border-navy-800 overflow-hidden sticky top-8 text-white">
+                        <div class="px-6 py-5 border-b border-white/10">
+                            <h3 class="font-black text-white uppercase tracking-wider text-sm"><i class="fa-solid fa-receipt mr-2 text-brand-400"></i>Financial Summary</h3>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div id="cartItems" class="space-y-3 mb-6 min-h-[100px] max-h-[250px] overflow-y-auto text-sm">
+                                <!-- JS inserts selected tests here -->
+                                <p class="text-slate-400 text-xs text-center italic mt-8">No tests selected yet.</p>
+                            </div>
+
+                            <div class="border-t border-white/10 pt-4 mb-6">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Payable</span>
+                                    <span class="text-3xl font-black text-brand-400" id="display_total">₹0</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="submitBtn" disabled class="w-full bg-brand-500 hover:bg-brand-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                                Record Payment & Book
+                            </button>
+                            <p class="text-[10px] text-slate-400 text-center mt-3 font-medium">Verify patient details before recording payment. This action creates a live laboratory accession.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function filterTests() {
+            let input = document.getElementById("testSearch").value.toLowerCase();
+            let rows = document.querySelectorAll(".test-row");
+            
+            rows.forEach(row => {
+                let name = row.querySelector(".test-name").innerText.toLowerCase();
+                if (name.includes(input)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        function updateCart() {
+            let total = 0;
+            let selectedNames = [];
+            let cartHTML = '';
+            
+            document.querySelectorAll('.test-checkbox:checked').forEach(cb => {
+                let name = cb.getAttribute('data-name');
+                let price = parseFloat(cb.getAttribute('data-price'));
+                
+                total += price;
+                selectedNames.push(name);
+                
+                cartHTML += `
+                    <div class="flex justify-between items-start">
+                        <span class="font-bold text-slate-200 pr-2">${name}</span>
+                        <span class="font-bold text-white shrink-0">₹${price}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('display_total').innerText = '₹' + total;
+            document.getElementById('total_bill_input').value = total;
+            document.getElementById('tests_requested_input').value = selectedNames.join(', ');
+            
+            let btn = document.getElementById('submitBtn');
+            let cartContainer = document.getElementById('cartItems');
+
+            if (selectedNames.length > 0) {
+                cartContainer.innerHTML = cartHTML;
+                btn.disabled = false;
+            } else {
+                cartContainer.innerHTML = '<p class="text-slate-400 text-xs text-center italic mt-8">No tests selected yet.</p>';
+                btn.disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>
