@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reception Login | CareDrop</title>
+    <title>Reception Portal | CareDrop Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,20 +11,73 @@
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E1F6F6', 500: '#00A8A8', 600: '#008F8F' }, navy: { 900: '#0B192C' } } } } }
     </script>
 </head>
-<body class="bg-[#F8F9FA] flex items-center justify-center min-h-screen p-4 font-sans antialiased">
-    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-sm text-center">
-        <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 transform -rotate-6"><i class="fa-solid fa-notes-medical"></i></div>
-        <h2 class="text-xl font-black text-navy-900 mb-1">CareDrop Workspace</h2>
-        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mb-6">Reception Portal</p>
+<body class="bg-slate-50 font-sans antialiased min-h-screen flex items-center justify-center p-4">
+    
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden w-full max-w-[1000px] flex flex-col md:flex-row min-h-[600px]">
         
-        <form method="POST" class="space-y-4">
-            <div>
-                <input type="password" name="password" required class="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:brand-500 text-sm text-center" placeholder="Enter Passcode">
+        <!-- Left Side: Branding & Features -->
+        <div class="bg-[#F0F7FF] w-full md:w-5/12 p-10 flex flex-col relative overflow-hidden">
+            <div class="flex items-center gap-2 mb-12 relative z-10">
+                <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6"><i class="fa-solid fa-notes-medical"></i></div>
+                <div>
+                    <span class="text-xl font-black tracking-tight text-navy-900 leading-none block">CareDrop</span>
+                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest block">Diagnostics Made Simpler</span>
+                </div>
             </div>
-            <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition shadow-md">
-                Secure Login
-            </button>
-        </form>
+            
+            <div class="relative z-10">
+                <h1 class="text-3xl font-black text-navy-900 mb-2">Reception Portal</h1>
+                <p class="text-sm font-medium text-slate-600 mb-8">Patients. Orders. Payments. Seamlessly.</p>
+                
+                <ul class="space-y-4 text-sm font-bold text-slate-700">
+                    <li class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-file-medical"></i></div> Book New Orders</li>
+                    <li class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-users"></i></div> Manage Patients</li>
+                    <li class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-credit-card"></i></div> Process Payments</li>
+                    <li class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-vial"></i></div> Handle Sample Tracking</li>
+                </ul>
+            </div>
+            
+            <!-- Decorative Background Element -->
+            <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+        </div>
+
+        <!-- Right Side: Login Form -->
+        <div class="w-full md:w-7/12 p-10 lg:p-16 flex flex-col justify-center">
+            <h2 class="text-2xl font-black text-navy-900 mb-1">Reception Login</h2>
+            <p class="text-sm text-slate-500 font-medium mb-8">Access your reception dashboard</p>
+            
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="bg-rose-50 text-rose-600 text-xs font-bold p-3 rounded-lg border border-rose-100 mb-6">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ messages[0] }}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Email / Username</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-user absolute left-4 top-3.5 text-slate-400"></i>
+                        <input type="text" name="username" required class="w-full border border-slate-300 pl-11 pr-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 text-sm" placeholder="Enter your username">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
+                        <input type="password" name="password" required class="w-full border border-slate-300 pl-11 pr-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 text-sm" placeholder="Enter your password">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+                        Sign In <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </body>
 </html>
