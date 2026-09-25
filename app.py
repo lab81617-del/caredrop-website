@@ -139,13 +139,11 @@ def patient_login():
     return render_template('auth_patient.html')
 
 @app.route('/admin/login', methods=['GET', 'POST'])
-d@app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # Default is admin / admin123 unless changed in Render
         valid_user = os.environ.get('ADMIN_USER', 'admin')
         valid_pass = os.environ.get('ADMIN_PASSWORD', 'admin123')
         
@@ -161,7 +159,6 @@ def reception_login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # Default is reception / reception123 unless changed in Render
         valid_user = os.environ.get('RECEPTION_USER', 'reception')
         valid_pass = os.environ.get('RECEPTION_PASSWORD', 'reception123')
         
@@ -169,7 +166,7 @@ def reception_login():
             session['role'] = 'reception'
             return redirect(url_for('admin'))
         flash("Invalid Reception Credentials")
-    return render_template('auth_reception.html')
+    return render_template('auth_reception.html') 
 
 @app.route('/partner/login', methods=['GET', 'POST'])
 def partner_login():
@@ -401,10 +398,8 @@ def confirm_booking():
     session['role'] = 'patient'
     session['patient_email'] = o_data['email']
     
-    # 1. Email to Patient
     send_email_async(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}</p>")
     
-    # 2. Instant Email Notification to HQ
     hq_alert = f"""
     <div style='font-family: sans-serif; padding: 20px;'>
         <h2 style='color: #00A8A8;'>New Home Collection Booking</h2>
