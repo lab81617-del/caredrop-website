@@ -202,22 +202,6 @@ def logout():
         
     return redirect(url_for('index'))
 
-@app.route('/admin/wipe_orders')
-@admin_only
-def admin_wipe_orders():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    # CASCADE safely deletes the orders and any linked lab results
-    cur.execute('TRUNCATE TABLE orders CASCADE')
-    try:
-        cur.execute('TRUNCATE TABLE test_results CASCADE')
-    except:
-        pass
-    conn.commit()
-    cur.close()
-    conn.close()
-    return redirect(url_for('admin'))
-
 @app.route('/api/send_login_otp', methods=['POST'])
 def send_login_otp():
     email = request.form.get('email').lower().strip()
@@ -567,26 +551,24 @@ def admin():
     cur.execute('SELECT * FROM orders ORDER BY id DESC')
     raw_orders = cur.fetchall()
     
-    # Sanitize data to prevent HTML template crashes on older/blank records
     orders = []
     for o in raw_orders:
         order_dict = dict(o)
         
-        # 1. Protect against blank time_slots breaking the .split() function
+        # Protect against blank time_slots
         if not order_dict.get('time_slot'):
             order_dict['time_slot'] = 'N/A | N/A'
         elif ' | ' not in order_dict['time_slot']:
             order_dict['time_slot'] = f"{order_dict['time_slot']} | N/A"
             
-        # 2. Protect against blank bills breaking math calculations
+        # Protect against blank bills
         order_dict['total_bill'] = float(order_dict.get('total_bill') or 0)
         
-        # 3. Protect against blank statuses
+        # Protect against blank statuses
         order_dict['status'] = order_dict.get('status') or 'Pending'
         
         orders.append(order_dict)
     
-    # Safe calculations using the sanitized data
     today_orders = len([o for o in orders if o['status'] != 'Completed'])
     revenue = sum([o['total_bill'] for o in orders if o['status'] == 'Completed'])
     pending_reports = len([o for o in orders if o['status'] == 'Sample Collected' and not o.get('uploaded_pdf')])
@@ -615,7 +597,7 @@ def admin_pos():
     tests = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template('admin_pos.html', tests=tests)
+    return render_template('admin_pos.html', tests=tests, role=session.get('role'))
 
 @app.route('/admin/partners')
 @admin_only
@@ -689,17 +671,23 @@ def admin_wipe_catalog():
     conn.close()
     flash("Catalog completely wiped. You can now start fresh.")
     return redirect(url_for('admin_catalog'))
+
 @app.route('/admin/wipe_orders')
 @admin_only
 def admin_wipe_orders():
     conn = get_db_connection()
     cur = conn.cursor()
-    # CASCADE ensures that any linked test_results are also deleted
+    # CASCADE safely deletes the orders and any linked lab results
     cur.execute('TRUNCATE TABLE orders CASCADE')
+    try:
+        cur.execute('TRUNCATE TABLE test_results CASCADE')
+    except:
+        pass
     conn.commit()
     cur.close()
     conn.close()
     return redirect(url_for('admin'))
+
 @app.route('/admin/add_parameter', methods=['POST'])
 @admin_only
 def admin_add_parameter():
