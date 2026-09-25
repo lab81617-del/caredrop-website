@@ -12,9 +12,9 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: { 
-                        brand: { 50: '#E1F6F6', 100: '#CCEEEE', 500: '#00A8A8', 600: '#008F8F' }, 
-                        navy: { 800: '#1A2938', 900: '#0B192C' } 
+                    colors: {
+                        brand: { 50: '#E1F6F6', 100: '#CCEEEE', 500: '#00A8A8', 600: '#008F8F' },
+                        navy: { 800: '#1A2938', 900: '#0B1920' }
                     }
                 }
             }
@@ -28,7 +28,7 @@
     </style>
 </head>
 <body class="bg-[#F8F9FA] text-slate-800 font-sans antialiased pb-24 lg:pb-12">
-
+    
     <!-- Desktop Navigation -->
     <header class="hidden lg:flex bg-white sticky top-0 z-50 border-b border-slate-200 shadow-sm">
         <div class="max-w-[1440px] w-full mx-auto px-8 h-[76px] flex items-center justify-between">
@@ -36,13 +36,11 @@
                 <div class="w-9 h-9 flex items-center justify-center text-brand-500 text-3xl transform -rotate-6"><i class="fa-solid fa-notes-medical"></i></div>
                 <span class="text-2xl font-black tracking-tight text-navy-900">CareDrop</span>
             </a>
-            
             <div class="flex items-center gap-8 font-bold text-sm text-slate-600">
                 <a href="/" class="hover:text-brand-500 transition">Home</a>
                 <a href="/tests" class="text-brand-500 border-b-2 border-brand-500 pb-1">Tests</a>
                 <a href="/login" class="hover:text-brand-500 transition">Download Reports</a>
             </div>
-
             <div class="flex items-center gap-4">
                 <a href="/checkout" class="bg-navy-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold transition text-sm flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-cart-shopping"></i> View Cart
@@ -112,7 +110,7 @@
         <!-- ================= CENTER COLUMN (Main Content) ================= -->
         <div class="lg:col-span-6 space-y-4 lg:space-y-6">
             
-            <!-- Desktop Banner (Hidden on Mobile for screen space) -->
+            <!-- Desktop Banner -->
             <div class="hidden lg:flex bg-gradient-to-r from-brand-50 to-white rounded-2xl p-8 border border-brand-100 shadow-sm relative overflow-hidden flex-col justify-center min-h-[140px]">
                 <h1 class="text-4xl font-black text-navy-900 tracking-tight mb-2">Book Lab Tests</h1>
                 <p class="text-sm text-slate-500 font-medium relative z-10">Find the right test, check the price, and book in minutes.</p>
@@ -135,7 +133,7 @@
                 <button onclick="setMobileFilter('lipid', this)" class="cat-btn bg-white text-slate-600 px-5 py-2 rounded-full font-bold text-[11px] whitespace-nowrap border border-slate-200 transition">Heart</button>
             </div>
 
-            <!-- Dynamic Test List (App Style Cards) -->
+            <!-- Dynamic Test List -->
             <div class="space-y-3 lg:space-y-4" id="test-list">
                 {% for t in tests %}
                 <div class="test-card bg-white p-4 lg:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3 lg:gap-4 transition hover:shadow-md" data-name="{{ t.get('name', '') | lower }}" data-category="{{ t.get('category', '') | lower }}">
@@ -143,26 +141,30 @@
                     <!-- Left: Icon & Details -->
                     <div class="flex items-start gap-3 w-full">
                         <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-lg lg:text-xl shrink-0">
-                            {% if 'thyroid' in t.get('category', '').lower() %} <i class="fa-solid fa-dna text-brand-500 bg-brand-50 w-full h-full rounded-full flex items-center justify-center"></i>
-                            {% elif 'lipid' in t.get('category', '').lower() %} <i class="fa-solid fa-heart-pulse text-rose-500 bg-rose-50 w-full h-full rounded-full flex items-center justify-center"></i>
-                            {% elif 'liver' in t.get('category', '').lower() %} <i class="fa-solid fa-lungs text-amber-500 bg-amber-50 w-full h-full rounded-full flex items-center justify-center"></i>
-                            {% else %} <i class="fa-solid fa-droplet text-red-500 bg-red-50 w-full h-full rounded-full flex items-center justify-center"></i> {% endif %}
+                            {% if 'thyroid' in t.get('category', '').lower() %} 
+                                <i class="fa-solid fa-dna text-brand-500 bg-brand-50 w-full h-full rounded-full flex items-center justify-center"></i>
+                            {% elif 'lipid' in t.get('category', '').lower() %} 
+                                <i class="fa-solid fa-heart-pulse text-rose-500 bg-rose-50 w-full h-full rounded-full flex items-center justify-center"></i>
+                            {% elif 'liver' in t.get('category', '').lower() %} 
+                                <i class="fa-solid fa-lungs text-amber-500 bg-amber-50 w-full h-full rounded-full flex items-center justify-center"></i>
+                            {% else %} 
+                                <i class="fa-solid fa-droplet text-red-500 bg-red-50 w-full h-full rounded-full flex items-center justify-center"></i> 
+                            {% endif %}
                         </div>
-                        
                         <div class="flex-1">
-                            <h3 class="font-black text-sm lg:text-base text-navy-900 leading-tight mb-0.5">{{ t.get('name', 'Lab Test') }}</h3>
+                            <!-- MOBILE WRAPPING FIX APPLIED HERE -->
+                            <h3 class="font-black text-sm lg:text-base text-navy-900 leading-tight mb-0.5 break-words whitespace-normal">{{ t.get('name', 'Lab Test') }}</h3>
                             <p class="text-[10px] lg:text-[11px] text-slate-500 font-medium mb-1.5">Diagnostic evaluation for {{ t.get('category', 'General') }}</p>
-                            
-                            <span class="block text-base lg:text-lg font-black text-navy-900 mb-1.5">₹{{ t.get('price', 0)|int }}</span>
+                            <span class="block text-base lg:text-lg font-black text-navy-900 mb-1.5">₹{{ t.get('price', 0) | int }}</span>
                             
                             <!-- Inline Tags -->
                             <div class="flex flex-wrap items-center gap-3 text-[9px] lg:text-[10px] font-bold text-emerald-600">
                                 <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> Same day</span>
-                                <span class="flex items-center gap-1"><i class="fa-solid fa-vial"></i> Blood sample</span>
+                                <span class="flex items-center gap-1 text-slate-500"><i class="fa-solid fa-vial"></i> Blood sample</span>
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Right: Action -->
                     <div class="shrink-0 flex flex-col justify-end items-end h-full">
                         <button onclick="addToCart({{ t.get('id', 0) }}, {{ t.get('price', 0) }}, this)" class="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2 rounded-lg font-bold transition text-[11px] lg:text-xs shadow-sm mt-4 lg:mt-6">
@@ -172,7 +174,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm mt-2">
-                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300 text-2xl">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-2xl mb-3 text-slate-300">
                         <i class="fa-solid fa-box-open"></i>
                     </div>
                     <p class="font-bold text-slate-600 text-sm">No tests match your criteria.</p>
@@ -232,23 +234,23 @@
         </a>
     </div>
 
-    <!-- Mobile Bottom Navigation Bar (Line Icon Style) -->
+   <!-- Mobile Bottom Navigation Bar -->
     <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-[68px] z-40 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
         <a href="/" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition"><i class="fa-solid fa-house text-lg"></i><span class="text-[9px] font-bold">Home</span></a>
         <a href="/tests" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-magnifying-glass text-lg"></i><span class="text-[9px] font-bold">Search</span></a>
-        <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition relative">
-            <i class="fa-solid fa-cart-shopping text-lg"></i><span class="text-[9px] font-bold">Cart</span>
-        </a>
+        <a href="/checkout" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition relative"><i class="fa-solid fa-cart-shopping text-lg"></i><span class="text-[9px] font-bold">Cart</span></a>
         <a href="/login" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition"><i class="fa-regular fa-user text-lg"></i><span class="text-[9px] font-bold">User</span></a>
     </div>
 
     <script>
-        let cartTotal = 0; let cartCount = 0;
+        let cartTotal = 0; 
+        let cartCount = 0;
 
         function filterTests() {
             let input = document.getElementById('searchInput').value.toLowerCase();
             let cards = document.getElementsByClassName('test-card');
             let visibleCount = 0;
+            
             for (let i = 0; i < cards.length; i++) {
                 let name = cards[i].getAttribute('data-name');
                 let cat = cards[i].getAttribute('data-category');
@@ -261,20 +263,20 @@
             }
         }
 
-        function setFilter(term, btn) { 
-            document.getElementById('searchInput').value = term; 
-            filterTests(); 
+        function setFilter(term, btn) {
+            document.getElementById('searchInput').value = term;
+            filterTests();
             let btns = document.getElementsByClassName('desktop-cat-btn');
             for(let b of btns) {
                 b.classList.remove('desktop-cat-active');
                 b.classList.add('text-slate-600');
             }
-            btn.classList.add('desktop-cat-active');
             btn.classList.remove('text-slate-600');
+            btn.classList.add('desktop-cat-active');
         }
 
         function setMobileFilter(term, btn) {
-            document.getElementById('searchInput').value = term; 
+            document.getElementById('searchInput').value = term;
             filterTests();
             let btns = document.getElementsByClassName('cat-btn');
             for(let b of btns) {
@@ -289,24 +291,31 @@
             try {
                 const res = await fetch(`/api/cart/add/${testId}`, { method: 'POST' });
                 const data = await res.json();
+                
                 if (data.status === 'success') {
                     btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Added';
                     btnElement.className = "bg-brand-50 text-brand-600 px-5 py-2 rounded-lg font-bold text-[11px] lg:text-xs shadow-sm mt-4 lg:mt-6 cursor-not-allowed";
                     btnElement.disabled = true;
-
-                    cartCount++; cartTotal += parseFloat(price);
+                    
+                    cartCount++; 
+                    cartTotal += parseFloat(price);
                     
                     document.getElementById('side-cart-count').innerText = `${cartCount} item${cartCount > 1 ? 's' : ''}`;
                     document.getElementById('side-cart-total').innerText = `₹${cartTotal}`;
+                    
                     let sideBtn = document.getElementById('side-cart-btn');
                     sideBtn.className = "block w-full text-center bg-brand-500 hover:bg-brand-600 text-white py-3 rounded-xl font-bold transition text-sm shadow-md";
-
+                    
                     document.getElementById('mobile-cart-badge').innerText = cartCount;
                     document.getElementById('mobile-cart-total').innerText = `₹${cartTotal}`;
-                    document.getElementById('floating-cart').classList.remove('hidden');
-                    document.getElementById('floating-cart').classList.add('flex');
+                    
+                    let floatingCart = document.getElementById('floating-cart');
+                    floatingCart.classList.remove('hidden');
+                    floatingCart.classList.add('flex');
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e); 
+            }
         }
 
         function toggleMobileMenu() {
@@ -314,7 +323,7 @@
             if (menu.classList.contains('hidden')) {
                 menu.classList.remove('hidden');
                 menu.classList.add('flex');
-                document.body.style.overflow = 'hidden'; 
+                document.body.style.overflow = 'hidden';
             } else {
                 menu.classList.add('hidden');
                 menu.classList.remove('flex');
