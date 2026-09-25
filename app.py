@@ -695,14 +695,26 @@ def admin_add_parameter():
     param_name = request.form.get('param_name')
     unit = request.form.get('unit')
     ref_range = request.form.get('ref_range')
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s)", (test_id, param_name, unit, ref_range))
-    conn.commit()
-    cur.close()
-    conn.close()
+    
+    # 1. Prevent crash if user tries to save without selecting a test
+    if not test_id or not str(test_id).strip():
+        return redirect(url_for('admin_catalog'))
+        
+    # 2. Safely attempt the database insert
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s)", 
+            (test_id, param_name, unit, ref_range)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"Database Error while adding parameter: {e}")
+        
     return redirect(url_for('admin_catalog'))
-
 # ==========================================
 # 7. LIMS & REPORT ENGINE
 # ==========================================
