@@ -69,8 +69,6 @@ def send_email(to_email, subject, body):
                 "content-type": "application/json"
             }
             res = requests.post(url, json=payload, headers=headers, timeout=5)
-            print(f"Brevo API response [{res.status_code}]: {res.text}")
-            
             if res.status_code in [200, 201, 202]:
                 return
             else:
@@ -80,7 +78,6 @@ def send_email(to_email, subject, body):
 
     password = os.environ.get('MAIL_PASSWORD')
     if not password or not to_email:
-        print("SMTP password or recipient email missing; dispatch aborted.")
         return
         
     try:
@@ -95,7 +92,6 @@ def send_email(to_email, subject, body):
         server.login(sender_email, password.strip())
         server.send_message(msg)
         server.quit()
-        print(f"Fallback SMTP dispatch successful to {to_email}")
     except Exception as e:
         print(f"SMTP dispatch failed: {e}")
 
@@ -192,7 +188,6 @@ def logout():
     role = session.get('role')
     session.clear()
     
-    # Smart redirect based on who is logging out
     if role == 'admin':
         return redirect(url_for('admin_login'))
     elif role == 'reception':
@@ -497,35 +492,48 @@ def partner_dashboard():
     conn.close()
     return render_template('partner_dashboard.html', partner=partner, orders=orders, tests=tests)
 
-@app.route('/admin/add_parameter', methods=['POST'])
-@admin_only
-def admin_add_parameter():
-    test_id = request.form.get('test_id')
-    param_name = request.form.get('param_name')
-    unit = request.form.get('unit')
-    ref_range = request.form.get('ref_range')
+@app.route('/partner/book_test', methods=['POST'])
+@partner_required
+def partner_book_test():
+    full_name = request.form.get('full_name')
+    age = request.form.get('age')
+    gender = request.form.get('gender')
+    phone = request.form.get('phone')
+    email = request.form.get('email', '')
+    address = request.form.get('address')
+    time_slot = request.form.get('time_slot')
+    discount_pct = float(request.form.get('discount_pct', 0))
+    tests_requested = request.form.get('tests_requested')
+    gross_bill = float(request.form.get('total_bill', 0))
     
-    if not test_id or not str(test_id).strip():
-        flash("Error: You must select a test from the dropdown.", "error")
-        return redirect(url_for('admin_catalog'))
-        
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        # Forcing test_id to integer prevents PostgreSQL type errors
-        cur.execute(
-            "INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s)", 
-            (int(test_id), param_name, unit, ref_range)
-        )
-        conn.commit()
-        cur.close()
-        conn.close()
-        flash(f"Success! Parameter '{param_name}' added.", "success")
-    except Exception as e:
-        print(f"DB Error: {e}")
-        flash(f"Database Error: {str(e)}", "error")
-        
-    return redirect(url_for('admin_catalog'))
+    code = session.get('referral_code')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT margin_pool_pct FROM partners WHERE referral_code = %s', (code,))
+    partner = cur.fetchone()
+    
+    margin_pool_pct = partner['margin_pool_pct'] * 100
+    if discount_pct > margin_pool_pct: 
+        discount_pct = margin_pool_pct 
+    
+    discount_given = round(gross_bill * (discount_pct / 100))
+    total_bill = gross_bill - discount_given
+    partner_commission = round(gross_bill * ((margin_pool_pct - discount_pct) / 100))
+    order_code = f"CD-{random.randint(1000, 9999)}"
+
+    cur.execute('''
+        INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, referral_code, partner_commission)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
+    ''', (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, code, partner_commission))
+    
+    cur.execute("UPDATE partners SET wallet_balance = wallet_balance + %s WHERE referral_code = %s", (partner_commission, code))
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    if email: 
+        send_email_async(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total: ₹{total_bill}.</p>")
+    return redirect(url_for('partner_dashboard'))
 
 # ==========================================
 # 6. ADMIN & OPERATIONS MANAGEMENT
@@ -541,19 +549,13 @@ def admin():
     orders = []
     for o in raw_orders:
         order_dict = dict(o)
-        
-        # Protect against blank time_slots
         if not order_dict.get('time_slot'):
             order_dict['time_slot'] = 'N/A | N/A'
         elif ' | ' not in order_dict['time_slot']:
             order_dict['time_slot'] = f"{order_dict['time_slot']} | N/A"
             
-        # Protect against blank bills
         order_dict['total_bill'] = float(order_dict.get('total_bill') or 0)
-        
-        # Protect against blank statuses
         order_dict['status'] = order_dict.get('status') or 'Pending'
-        
         orders.append(order_dict)
     
     today_orders = len([o for o in orders if o['status'] != 'Completed'])
@@ -645,6 +647,7 @@ def admin_add_test():
     conn.commit()
     cur.close()
     conn.close()
+    flash(f"Test '{name}' added to catalog.", "success")
     return redirect(url_for('admin_catalog'))
 
 @app.route('/admin/wipe_catalog')
@@ -656,7 +659,7 @@ def admin_wipe_catalog():
     conn.commit()
     cur.close()
     conn.close()
-    flash("Catalog completely wiped. You can now start fresh.")
+    flash("Catalog completely wiped. You can now start fresh.", "success")
     return redirect(url_for('admin_catalog'))
 
 @app.route('/admin/wipe_orders')
@@ -664,7 +667,6 @@ def admin_wipe_catalog():
 def admin_wipe_orders():
     conn = get_db_connection()
     cur = conn.cursor()
-    # CASCADE safely deletes the orders and any linked lab results
     cur.execute('TRUNCATE TABLE orders CASCADE')
     try:
         cur.execute('TRUNCATE TABLE test_results CASCADE')
@@ -683,25 +685,27 @@ def admin_add_parameter():
     unit = request.form.get('unit')
     ref_range = request.form.get('ref_range')
     
-    # 1. Prevent crash if user tries to save without selecting a test
     if not test_id or not str(test_id).strip():
+        flash("Error: You must select a test from the dropdown.", "error")
         return redirect(url_for('admin_catalog'))
         
-    # 2. Safely attempt the database insert
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
             "INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s)", 
-            (test_id, param_name, unit, ref_range)
+            (int(test_id), param_name, unit, ref_range)
         )
         conn.commit()
         cur.close()
         conn.close()
+        flash(f"Success! Parameter '{param_name}' added.", "success")
     except Exception as e:
-        print(f"Database Error while adding parameter: {e}")
+        print(f"DB Error: {e}")
+        flash(f"Database Error: {str(e)}", "error")
         
     return redirect(url_for('admin_catalog'))
+
 # ==========================================
 # 7. LIMS & REPORT ENGINE
 # ==========================================
