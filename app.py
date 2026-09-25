@@ -826,7 +826,28 @@ def debug_email():
             
     html += "</div>"
     return html
-
+@app.route('/admin/fix_schema')
+@admin_only
+def fix_schema():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # 1. Destroy the outdated table
+    cur.execute("DROP TABLE IF EXISTS test_parameters CASCADE")
+    # 2. Rebuild it with the exact columns our new system needs
+    cur.execute('''
+        CREATE TABLE test_parameters (
+            id SERIAL PRIMARY KEY,
+            test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE,
+            param_name VARCHAR(255) NOT NULL,
+            unit VARCHAR(100),
+            ref_range VARCHAR(255)
+        )
+    ''')
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Database Schema Fixed! You can now add parameters.", "success")
+    return redirect(url_for('admin_catalog'))
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
