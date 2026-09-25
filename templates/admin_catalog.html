@@ -36,7 +36,10 @@
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
             <h2 class="text-xl font-black text-navy-900">Enterprise Catalog Manager</h2>
-            <a href="/admin/upgrade_schema" class="bg-brand-50 text-brand-600 border border-brand-200 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-100 transition shadow-sm"><i class="fa-solid fa-database mr-1"></i> Upgrade DB Schema for Bulk LIMS</a>
+            <div class="flex items-center gap-4">
+                <a href="/admin/upgrade_schema" class="bg-brand-50 text-brand-600 border border-brand-200 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-100 transition shadow-sm"><i class="fa-solid fa-database mr-1"></i> Upgrade DB Schema for Bulk LIMS</a>
+                <a href="/admin/wipe_catalog" class="bg-rose-50 text-rose-600 border border-rose-200 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition shadow-sm" onclick="return confirm('WARNING: Wipe the entire catalog?');"><i class="fa-solid fa-trash mr-1"></i> Wipe Catalog</a>
+            </div>
         </header>
 
         <div class="flex-1 overflow-y-auto p-8">
@@ -52,10 +55,10 @@
                     {% endif %}
                 {% endwith %}
 
-                <!-- THE BULK CSV UPLOADER -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <!-- SECTION 1: THE BULK CSV UPLOADER -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
                     <h3 class="font-black text-navy-900 mb-2"><i class="fa-solid fa-file-csv text-brand-500 mr-2"></i>Bulk Upload Catalog & Parameters (CSV)</h3>
-                    <p class="text-xs text-slate-500 mb-4 font-medium">Upload hundreds of tests, pediatric ranges, methodologies, and interpretations at once. Make sure you run the Database Upgrade first.</p>
+                    <p class="text-xs text-slate-500 mb-4 font-medium">Upload hundreds of tests, pediatric ranges, methodologies, and interpretations at once.</p>
                     <div class="flex flex-col md:flex-row gap-4 items-center">
                         <a href="/admin/download_csv_template" class="text-xs font-bold text-brand-600 bg-brand-50 px-5 py-2.5 rounded-lg border border-brand-100 hover:bg-brand-100 transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-download mr-1"></i> Download CSV Template</a>
                         <form action="/admin/bulk_upload_catalog" method="POST" enctype="multipart/form-data" class="flex-1 w-full flex gap-2">
@@ -65,16 +68,66 @@
                     </div>
                 </div>
 
-                <!-- Danger Zone -->
-                <div class="bg-rose-50 rounded-2xl border border-rose-200 p-6 mb-8 flex justify-between items-center">
-                    <div>
-                        <h3 class="font-black text-rose-700 mb-1"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Wipe Catalog Data</h3>
-                        <p class="text-xs text-rose-600 font-medium">Erase all tests and parameters before importing a fresh CSV file.</p>
+                <!-- SECTION 2: MANUAL ENTRY FORMS -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+                    
+                    <!-- Manual Add Test -->
+                    <div class="xl:col-span-1 space-y-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-full">
+                            <h3 class="font-black text-navy-900 mb-4"><i class="fa-solid fa-plus-circle text-brand-500 mr-2"></i>Manual: Add New Test</h3>
+                            <form action="/admin/add_test" method="POST" class="space-y-4">
+                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Test Name</label><input type="text" name="name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none"></div>
+                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Category</label><select name="category" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-white"><option>General Health / Blood</option><option>Diabetes</option><option>Heart / Lipid</option><option>Thyroid</option><option>Liver</option></select></div>
+                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Retail Price (₹)</label><input type="number" name="retail_price" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none"></div>
+                                <div><label class="block text-xs font-bold text-brand-600 mb-1">B2B Base Cost (₹)</label><input type="number" name="b2b_cost" required class="w-full border-2 border-brand-100 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none"></div>
+                                <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-sm transition mt-2">Save Test</button>
+                            </form>
+                        </div>
                     </div>
-                    <a href="/admin/wipe_catalog" class="bg-white border border-rose-200 hover:bg-rose-600 hover:text-white text-rose-600 font-bold py-2 px-6 rounded-xl text-sm transition shadow-sm" onclick="return confirm('WARNING: Wipe the entire catalog?');">Wipe Catalog</a>
+
+                    <!-- Manual Add Smart Parameter -->
+                    <div class="xl:col-span-2 space-y-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="font-black text-navy-900 mb-4"><i class="fa-solid fa-flask text-brand-500 mr-2"></i>Manual: Add Smart Parameter</h3>
+                            <form action="/admin/add_parameter" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4" onsubmit="buildSmartRange()">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Link to Active Test</label>
+                                    <select name="test_id" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-white">
+                                        <option value="">-- Select --</option>
+                                        {% for t in tests %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Parameter Name</label><input type="text" name="param_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. Hemoglobin"></div>
+                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Unit</label><input type="text" name="unit" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. g/dl"></div>
+                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Methodology</label><input type="text" name="method" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. Photometric"></div>
+                                
+                                <div class="md:col-span-2 grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2">
+                                    <div class="col-span-3"><label class="block text-xs font-black text-navy-900"><i class="fa-solid fa-mars-and-venus text-brand-500 mr-1"></i> Demographic Limits (e.g. "12.0-15.0")</label></div>
+                                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Adult Male</label><input type="text" id="man_range" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. 13.0-17.0"></div>
+                                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Adult Female</label><input type="text" id="woman_range" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. 12.0-15.0"></div>
+                                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Pediatric (Child)</label><input type="text" id="child_range" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. 11.0-14.0"></div>
+                                </div>
+                                
+                                <input type="hidden" name="ref_range" id="smart_ref_range">
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Clinical Interpretation (Prints on Report)</label>
+                                    <textarea name="interpretation" rows="2" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. Low levels indicate anemia..."></textarea>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Additional Lab Notes (Internal / Technician Info)</label>
+                                    <textarea name="additional_info" rows="2" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. Fasting required for 12 hours."></textarea>
+                                </div>
+
+                                <div class="md:col-span-2 mt-2">
+                                    <button type="submit" class="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 px-8 rounded-xl text-sm transition shadow-sm">Save Parameter</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Current Catalog Table -->
+                <!-- SECTION 3: Current Catalog Table -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
                         <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Active Catalog & Parameters</h3>
@@ -120,7 +173,7 @@
                                     <td colspan="2" class="px-6 py-12 text-center text-slate-400">
                                         <i class="fa-solid fa-folder-open text-3xl mb-3"></i>
                                         <p class="font-bold text-sm">Your catalog is empty.</p>
-                                        <p class="text-xs mt-1">Download the CSV template above and upload your tests.</p>
+                                        <p class="text-xs mt-1">Upload a CSV or add tests manually.</p>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -132,5 +185,16 @@
             </div>
         </div>
     </main>
+
+    <script>
+        function buildSmartRange() {
+            let smartData = {
+                male: document.getElementById('man_range').value,
+                female: document.getElementById('woman_range').value,
+                child: document.getElementById('child_range').value
+            };
+            document.getElementById('smart_ref_range').value = JSON.stringify(smartData);
+        }
+    </script>
 </body>
 </html>
