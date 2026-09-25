@@ -539,12 +539,31 @@ def admin():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM orders ORDER BY id DESC')
-    orders = cur.fetchall()
+    raw_orders = cur.fetchall()
     
-    # Safe calculations that won't crash if old database rows have missing data
-    today_orders = len([o for o in orders if o.get('status') != 'Completed'])
-    revenue = sum([float(o.get('total_bill') or 0) for o in orders if o.get('status') == 'Completed'])
-    pending_reports = len([o for o in orders if o.get('status') == 'Sample Collected' and not o.get('uploaded_pdf')])
+    # Sanitize data to prevent HTML template crashes on older/blank records
+    orders = []
+    for o in raw_orders:
+        order_dict = dict(o)
+        
+        # 1. Protect against blank time_slots breaking the .split() function
+        if not order_dict.get('time_slot'):
+            order_dict['time_slot'] = 'N/A | N/A'
+        elif ' | ' not in order_dict['time_slot']:
+            order_dict['time_slot'] = f"{order_dict['time_slot']} | N/A"
+            
+        # 2. Protect against blank bills breaking math calculations
+        order_dict['total_bill'] = float(order_dict.get('total_bill') or 0)
+        
+        # 3. Protect against blank statuses
+        order_dict['status'] = order_dict.get('status') or 'Pending'
+        
+        orders.append(order_dict)
+    
+    # Safe calculations using the sanitized data
+    today_orders = len([o for o in orders if o['status'] != 'Completed'])
+    revenue = sum([o['total_bill'] for o in orders if o['status'] == 'Completed'])
+    pending_reports = len([o for o in orders if o['status'] == 'Sample Collected' and not o.get('uploaded_pdf')])
     
     cur.close()
     conn.close()
