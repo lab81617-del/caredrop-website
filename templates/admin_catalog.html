@@ -15,7 +15,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
 
-    <!-- SIDEBAR (Unified Workspace Design) -->
+    <!-- SIDEBAR -->
     <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
         <div class="h-[72px] flex items-center px-6 border-b border-white/10">
             <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
@@ -61,138 +61,158 @@
         </header>
 
         <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-[1200px] mx-auto grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div class="max-w-[1200px] mx-auto">
                 
-                <!-- LEFT COLUMN: Adding Tests & Danger Zone -->
-                <div class="xl:col-span-1 space-y-6">
-                    
-                    <!-- Add Test Form -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <h3 class="font-black text-navy-900 mb-4"><i class="fa-solid fa-plus-circle text-brand-500 mr-2"></i>Add New Test</h3>
-                        <form action="/admin/add_test" method="POST" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Test Name</label>
-                                <input type="text" name="name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. Complete Blood Count">
+                <!-- SMART ALERT SYSTEM -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="mb-6 p-4 rounded-xl text-sm font-bold shadow-sm flex items-center gap-3 {% if category == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+                                {% if category == 'error' %}
+                                    <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-check text-lg"></i>
+                                {% endif %}
+                                {{ message }}
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Category</label>
-                                <select name="category" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500 bg-white">
-                                    <option value="General Health / Blood">General Health / Blood</option>
-                                    <option value="Diabetes">Diabetes</option>
-                                    <option value="Heart / Lipid">Heart / Lipid</option>
-                                    <option value="Thyroid">Thyroid</option>
-                                    <option value="Liver">Liver</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Retail Price (₹)</label>
-                                <input type="number" name="retail_price" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="Public patient price">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-brand-600 mb-1">B2B Base Cost (₹) *</label>
-                                <input type="number" name="b2b_cost" required class="w-full border-2 border-brand-100 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="Required for partner math">
-                            </div>
-                            <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-sm transition mt-2">Save to Catalog</button>
-                        </form>
-                    </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-                    <!-- Danger Zone -->
-                    <div class="bg-rose-50 rounded-2xl border border-rose-200 p-6">
-                        <h3 class="font-black text-rose-700 mb-2"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Danger Zone</h3>
-                        <p class="text-xs text-rose-600 mb-4 font-medium">Erase all tests and parameters from the database. This cannot be undone.</p>
-                        <a href="/admin/wipe_catalog" class="block text-center w-full bg-white border border-rose-200 hover:bg-rose-600 hover:text-white text-rose-600 font-bold py-2.5 rounded-xl text-sm transition" onclick="return confirm('WARNING: Are you absolutely sure you want to wipe the entire catalog?');">
-                            Wipe Entire Catalog
-                        </a>
-                    </div>
-                </div>
-
-                <!-- RIGHT COLUMN: LIMS Parameters & Data Table -->
-                <div class="xl:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     
-                    <!-- Add LIMS Parameter Form -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <h3 class="font-black text-navy-900 mb-2"><i class="fa-solid fa-flask text-brand-500 mr-2"></i>LIMS: Add Test Parameter</h3>
-                        <p class="text-xs text-slate-500 mb-5 font-medium">Define exactly what lab values need to be entered to generate reports (e.g., Hemoglobin for CBC).</p>
+                    <!-- LEFT COLUMN: Adding Tests & Danger Zone -->
+                    <div class="xl:col-span-1 space-y-6">
                         
-                        <form action="/admin/add_parameter" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Link to Active Test</label>
-                                <select name="test_id" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500 bg-white">
-                                    <option value="">-- Select a test --</option>
-                                    {% for t in tests %}
-                                        <option value="{{ t.id }}">{{ t.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Parameter Name</label>
-                                <input type="text" name="param_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. Total RBC Count">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Unit of Measurement</label>
-                                <input type="text" name="unit" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. mill/cumm">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Reference Range (Normal Limits)</label>
-                                <input type="text" name="ref_range" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. 4.5 - 5.5">
-                            </div>
-                            <div class="md:col-span-2 mt-2">
-                                <button type="submit" class="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 px-8 rounded-xl text-sm transition shadow-sm">Save Parameter</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Current Catalog Table -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
-                            <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Active Catalog & Parameters</h3>
+                        <!-- Add Test Form -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="font-black text-navy-900 mb-4"><i class="fa-solid fa-plus-circle text-brand-500 mr-2"></i>Add New Test</h3>
+                            <form action="/admin/add_test" method="POST" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Test Name</label>
+                                    <input type="text" name="name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. Complete Blood Count">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Category</label>
+                                    <select name="category" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500 bg-white">
+                                        <option value="General Health / Blood">General Health / Blood</option>
+                                        <option value="Diabetes">Diabetes</option>
+                                        <option value="Heart / Lipid">Heart / Lipid</option>
+                                        <option value="Thyroid">Thyroid</option>
+                                        <option value="Liver">Liver</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Retail Price (₹)</label>
+                                    <input type="number" name="retail_price" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="Public patient price">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-brand-600 mb-1">B2B Base Cost (₹) *</label>
+                                    <input type="number" name="b2b_cost" required class="w-full border-2 border-brand-100 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="Required for partner math">
+                                </div>
+                                <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-sm transition mt-2">Save to Catalog</button>
+                            </form>
                         </div>
-                        <div class="max-h-[400px] overflow-y-auto">
-                            <table class="w-full text-left text-sm whitespace-nowrap">
-                                <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 text-[10px] text-slate-500 uppercase tracking-widest z-10">
-                                    <tr>
-                                        <th class="px-6 py-4 font-black">Test Details</th>
-                                        <th class="px-6 py-4 font-black">Financials</th>
-                                        <th class="px-6 py-4 font-black">LIMS Parameters</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100">
-                                    {% for t in tests %}
-                                    <tr class="hover:bg-slate-50 transition">
-                                        <td class="px-6 py-4">
-                                            <p class="font-bold text-navy-900">{{ t.name }}</p>
-                                            <p class="text-[10px] text-slate-500 font-bold uppercase">{{ t.category }}</p>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <p class="text-xs font-bold text-brand-600">Retail: ₹{{ t.price|int }}</p>
-                                            <p class="text-[10px] font-bold text-slate-500">B2B Cost: ₹{{ t.b2b_cost|int }}</p>
-                                        </td>
-                                        <td class="px-6 py-4 text-xs text-slate-600 whitespace-normal min-w-[250px]">
-                                            <ul class="space-y-1">
-                                                {% for p in test_params %}
-                                                    {% if p.test_id == t.id %}
-                                                        <li class="flex items-start gap-2 bg-slate-100 px-2 py-1 rounded">
-                                                            <i class="fa-solid fa-microscope text-brand-500 mt-0.5"></i> 
-                                                            <span><strong class="text-navy-900">{{ p.param_name }}</strong> <br><span class="text-[10px]">{{ p.ref_range }} {{ p.unit }}</span></span>
-                                                        </li>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </ul>
-                                        </td>
-                                    </tr>
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="3" class="px-6 py-12 text-center text-slate-400">
-                                            <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
-                                            <p class="font-bold text-sm">Your catalog is empty.</p>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+
+                        <!-- Danger Zone -->
+                        <div class="bg-rose-50 rounded-2xl border border-rose-200 p-6">
+                            <h3 class="font-black text-rose-700 mb-2"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Danger Zone</h3>
+                            <p class="text-xs text-rose-600 mb-4 font-medium">Erase all tests and parameters from the database. This cannot be undone.</p>
+                            <a href="/admin/wipe_catalog" class="block text-center w-full bg-white border border-rose-200 hover:bg-rose-600 hover:text-white text-rose-600 font-bold py-2.5 rounded-xl text-sm transition" onclick="return confirm('WARNING: Are you absolutely sure you want to wipe the entire catalog?');">
+                                Wipe Entire Catalog
+                            </a>
                         </div>
                     </div>
 
+                    <!-- RIGHT COLUMN: LIMS Parameters & Data Table -->
+                    <div class="xl:col-span-2 space-y-6">
+                        
+                        <!-- Add LIMS Parameter Form -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="font-black text-navy-900 mb-2"><i class="fa-solid fa-flask text-brand-500 mr-2"></i>LIMS: Add Test Parameter</h3>
+                            <p class="text-xs text-slate-500 mb-5 font-medium">Define exactly what lab values need to be entered to generate reports (e.g., Hemoglobin for CBC).</p>
+                            
+                            <form action="/admin/add_parameter" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Link to Active Test</label>
+                                    <select name="test_id" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500 bg-white">
+                                        <option value="">-- Select a test --</option>
+                                        {% for t in tests %}
+                                            <option value="{{ t.id }}">{{ t.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Parameter Name</label>
+                                    <input type="text" name="param_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. Total RBC Count">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Unit of Measurement</label>
+                                    <input type="text" name="unit" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. mill/cumm">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Reference Range (Normal Limits)</label>
+                                    <input type="text" name="ref_range" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. 4.5 - 5.5">
+                                </div>
+                                <div class="md:col-span-2 mt-2">
+                                    <button type="submit" class="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 px-8 rounded-xl text-sm transition shadow-sm">Save Parameter</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Current Catalog Table -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                                <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Active Catalog & Parameters</h3>
+                            </div>
+                            <div class="max-h-[400px] overflow-y-auto">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 text-[10px] text-slate-500 uppercase tracking-widest z-10">
+                                        <tr>
+                                            <th class="px-6 py-4 font-black">Test Details</th>
+                                            <th class="px-6 py-4 font-black">Financials</th>
+                                            <th class="px-6 py-4 font-black">LIMS Parameters</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        {% for t in tests %}
+                                        <tr class="hover:bg-slate-50 transition">
+                                            <td class="px-6 py-4">
+                                                <p class="font-bold text-navy-900">{{ t.name }}</p>
+                                                <p class="text-[10px] text-slate-500 font-bold uppercase">{{ t.category }}</p>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <p class="text-xs font-bold text-brand-600">Retail: ₹{{ t.price|int }}</p>
+                                                <p class="text-[10px] font-bold text-slate-500">B2B Cost: ₹{{ t.b2b_cost|int }}</p>
+                                            </td>
+                                            <td class="px-6 py-4 text-xs text-slate-600 whitespace-normal min-w-[250px]">
+                                                <ul class="space-y-1">
+                                                    {% for p in test_params %}
+                                                        <!-- Forced string matching to prevent database type conflicts -->
+                                                        {% if p.test_id|string == t.id|string %}
+                                                            <li class="flex items-start gap-2 bg-slate-100 px-2 py-1 rounded">
+                                                                <i class="fa-solid fa-microscope text-brand-500 mt-0.5"></i> 
+                                                                <span><strong class="text-navy-900">{{ p.param_name }}</strong> <br><span class="text-[10px]">{{ p.ref_range }} {{ p.unit }}</span></span>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-12 text-center text-slate-400">
+                                                <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
+                                                <p class="font-bold text-sm">Your catalog is empty.</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
