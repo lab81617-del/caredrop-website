@@ -7,6 +7,7 @@ import traceback
 import smtplib
 import threading
 import json
+import csv
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
@@ -90,6 +91,7 @@ def partner_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ================= AUTHENTICATION =================
 @app.route('/login', methods=['GET', 'POST'])
 def patient_login(): return render_template('auth_patient.html')
 
@@ -155,6 +157,7 @@ def verify_login_otp():
     flash("Invalid OTP")
     return redirect(url_for('patient_login'))
 
+# ================= PUBLIC FACING =================
 @app.route('/')
 def index(): 
     try:
@@ -297,6 +300,7 @@ def my_bookings():
     conn.close()
     return render_template('my_bookings.html', bookings=bookings)
 
+# ================= POS & DASHBOARDS =================
 @app.route('/pos_book_test', methods=['POST'])
 @reception_required
 def pos_book_test():
@@ -453,6 +457,7 @@ def mark_commissions_paid(referral_code):
     conn.close()
     return redirect(url_for('admin_partners'))
 
+# ================= ENTERPRISE CATALOG & CSV UPLOAD =================
 @app.route('/admin/catalog')
 @admin_only
 def admin_catalog():
@@ -460,78 +465,152 @@ def admin_catalog():
     cur = conn.cursor()
     cur.execute('SELECT * FROM tests WHERE is_active = TRUE ORDER BY id DESC')
     tests = cur.fetchall()
-    cur.execute('SELECT * FROM test_parameters')
-    raw_params = cur.fetchall()
     
-    # Safely unpack JSON for UI Display
+    # We use a try/except because the user might not have run the schema upgrade yet
+    try:
+        cur.execute('SELECT * FROM test_parameters')
+        raw_params = cur.fetchall()
+    except:
+        conn.rollback()
+        raw_params = []
+        flash("Please click 'Upgrade DB Schema' to enable the Enterprise LIMS features.", "error")
+        
     test_params = []
     for p in raw_params:
         p_dict = dict(p)
         try:
             ranges = json.loads(p_dict['ref_range'])
-            p_dict['display_range'] = f"M: {ranges.get('male',{}).get('min','')}-{ranges.get('male',{}).get('max','')} | F: {ranges.get('female',{}).get('min','')}-{ranges.get('female',{}).get('max','')}"
+            p_dict['display_range'] = f"Adult: {ranges.get('male','')} | Child: {ranges.get('child','')}"
         except:
-            p_dict['display_range'] = p_dict['ref_range']
+            p_dict['display_range'] = p_dict.get('ref_range', '')
         test_params.append(p_dict)
 
     cur.close()
     conn.close()
     return render_template('admin_catalog.html', tests=tests, test_params=test_params)
 
-@app.route('/admin/add_test', methods=['POST'])
-@admin_only
-def admin_add_test():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('INSERT INTO tests (name, category, price, b2b_cost) VALUES (%s, %s, %s, %s)', (request.form.get('name'), request.form.get('category', 'General'), float(request.form.get('retail_price') or 0), float(request.form.get('b2b_cost') or 0)))
-    conn.commit()
-    cur.close()
-    conn.close()
-    flash(f"Test added to catalog.", "success")
-    return redirect(url_for('admin_catalog'))
-
-@app.route('/admin/add_parameter', methods=['POST'])
-@admin_only
-def admin_add_parameter():
-    test_id = request.form.get('test_id')
-    if not test_id:
-        flash("Error: You must select a test from the dropdown.", "error")
-        return redirect(url_for('admin_catalog'))
-        
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            "INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s)", 
-            (int(test_id), request.form.get('param_name'), request.form.get('unit'), request.form.get('ref_range'))
-        )
-        conn.commit()
-        flash(f"Success! Smart Parameter added.", "success")
-    except Exception as e:
-        flash(f"Database Error: {str(e)}", "error")
-    finally:
-        cur.close()
-        conn.close()
-    return redirect(url_for('admin_catalog'))
-
 @app.route('/admin/upgrade_schema')
 @admin_only
 def admin_upgrade_schema():
-    # Widens the ref_range column to TEXT so it can securely hold complex JSON payloads
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        # Adds the Method, Interpretation, and Additional Random Info columns safely
+        cur.execute("ALTER TABLE test_parameters ADD COLUMN IF NOT EXISTS method VARCHAR(255) DEFAULT 'Automated'")
+        cur.execute("ALTER TABLE test_parameters ADD COLUMN IF NOT EXISTS interpretation TEXT")
+        cur.execute("ALTER TABLE test_parameters ADD COLUMN IF NOT EXISTS additional_info TEXT")
         cur.execute("ALTER TABLE test_parameters ALTER COLUMN ref_range TYPE TEXT")
         conn.commit()
-        flash("Enterprise Schema Upgraded: Database is now ready for Smart JSON Parameters.", "success")
+        flash("Enterprise Schema Upgraded successfully! You can now use bulk uploads and complex logic.", "success")
     except Exception as e:
         conn.rollback()
-        flash(f"Schema Upgrade Not Needed / Error: {e}", "error")
+        flash(f"Schema Upgrade Status: {e}", "error")
     finally:
         cur.close()
         conn.close()
     return redirect(url_for('admin_catalog'))
 
+@app.route('/admin/download_csv_template')
+@admin_only
+def download_csv_template():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Test_Name', 'Category', 'Price', 'B2B_Cost', 'Param_Name', 'Unit', 'Method', 'Adult_Male', 'Adult_Female', 'Child', 'Interpretation', 'Additional_Info'])
+    writer.writerow(['Complete Blood Count', 'Blood', '300', '150', 'Hemoglobin (HB)', 'g/dl', 'Photometric', '13.0-17.0', '12.0-15.0', '11.0-14.0', 'Low levels indicate anemia...', 'Fasting not required.'])
+    writer.writerow(['Lipid Profile', 'Heart', '450', '200', 'Total Cholesterol', 'mg/dl', 'Spectrophotometry', '0-200', '0-200', '0-170', 'High levels increase risk of stroke...', '12-hour strict fasting required.'])
+    
+    output.seek(0)
+    return send_file(io.BytesIO(output.getvalue().encode('utf-8')), mimetype='text/csv', download_name='CareDrop_Bulk_Catalog_Template.csv')
+
+@app.route('/admin/bulk_upload_catalog', methods=['POST'])
+@admin_only
+def bulk_upload_catalog():
+    if 'csv_file' not in request.files:
+        flash("No file uploaded", "error")
+        return redirect(url_for('admin_catalog'))
+        
+    file = request.files['csv_file']
+    if file.filename == '':
+        flash("No file selected", "error")
+        return redirect(url_for('admin_catalog'))
+
+    try:
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_input = csv.DictReader(stream)
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        for row in csv_input:
+            test_name = row.get('Test_Name', '').strip()
+            if not test_name: continue
+                
+            cur.execute("SELECT id FROM tests WHERE name = %s", (test_name,))
+            test = cur.fetchone()
+            
+            if not test:
+                cur.execute(
+                    "INSERT INTO tests (name, category, price, b2b_cost) VALUES (%s, %s, %s, %s) RETURNING id",
+                    (test_name, row.get('Category', 'General'), float(row.get('Price', 0) or 0), float(row.get('B2B_Cost', 0) or 0))
+                )
+                test_id = cur.fetchone()['id']
+            else:
+                test_id = test['id']
+
+            param_name = row.get('Param_Name', '').strip()
+            if param_name:
+                smart_range = {
+                    "male": row.get('Adult_Male', ''),
+                    "female": row.get('Adult_Female', ''),
+                    "child": row.get('Child', '')
+                }
+                
+                cur.execute('''
+                    INSERT INTO test_parameters (test_id, param_name, unit, ref_range, method, interpretation, additional_info) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''', (
+                    test_id, param_name, row.get('Unit', ''), json.dumps(smart_range),
+                    row.get('Method', 'Automated'), row.get('Interpretation', ''), row.get('Additional_Info', '')
+                ))
+                
+        conn.commit()
+        flash("Bulk upload successful! Catalog and LIMS updated.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"CSV Error: Ensure columns match exactly. Have you upgraded the schema? Details: {str(e)}", "error")
+    finally:
+        cur.close()
+        conn.close()
+        
+    return redirect(url_for('admin_catalog'))
+
+@app.route('/admin/wipe_catalog')
+@admin_only
+def admin_wipe_catalog():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('TRUNCATE TABLE tests CASCADE')
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Catalog completely wiped. You can now upload a fresh CSV.", "success")
+    return redirect(url_for('admin_catalog'))
+
+@app.route('/admin/wipe_orders')
+@admin_only
+def admin_wipe_orders():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('TRUNCATE TABLE orders CASCADE')
+    try:
+        cur.execute('TRUNCATE TABLE test_results CASCADE')
+    except: pass
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin'))
+
+# ================= LIMS GENERATOR =================
 @app.route('/admin/upload_pdf/<int:order_id>', methods=['POST'])
 @reception_required
 def upload_pdf(order_id):
@@ -587,26 +666,49 @@ def lims_report(order_id):
     cur.execute('SELECT * FROM test_results WHERE order_id = %s', (order_id,))
     raw_results = cur.fetchall()
     
-    # PHASE 2: SMART DEMOGRAPHIC ENGINE (Extracts gender-specific logic)
-    results = []
+    # DEMOGRAPHIC ROUTING
     patient_gender = str(order['gender']).lower() if order['gender'] else 'male'
+    try:
+        age = float(order['age'])
+    except:
+        age = 30
+    is_child = age <= 12 # Cutoff for pediatric ranges
     
+    results = []
     for r in raw_results:
         r_dict = dict(r)
+        
+        # JOIN equivalent: We pull the latest method and additional info from the catalog
+        try:
+            cur.execute('SELECT method, additional_info FROM test_parameters WHERE param_name = %s LIMIT 1', (r_dict['parameter_name'],))
+            extra = cur.fetchone()
+            r_dict['method'] = extra['method'] if extra else 'Automated'
+            r_dict['additional_info'] = extra['additional_info'] if extra else ''
+        except:
+            r_dict['method'] = 'Automated'
+            r_dict['additional_info'] = ''
+            
         try:
             ranges = json.loads(r_dict['ref_interval'])
-            r_dict['min_val'] = ranges.get(patient_gender, {}).get('min', '')
-            r_dict['max_val'] = ranges.get(patient_gender, {}).get('max', '')
-            r_dict['display_range'] = ranges.get('text', '')
+            if is_child and ranges.get('child'):
+                display = ranges['child']
+            elif patient_gender == 'female' and ranges.get('female'):
+                display = ranges['female']
+            else:
+                display = ranges.get('male', '')
+                
+            r_dict['display_range'] = display
             
-            # If no manual text was provided, build the string automatically
-            if not r_dict['display_range'] and r_dict['min_val'] and r_dict['max_val']:
-                r_dict['display_range'] = f"{r_dict['min_val']} - {r_dict['max_val']}"
+            # Simple dash extractor for Auto-Flagging limits (e.g., "13.0-17.0")
+            if isinstance(display, str) and '-' in display:
+                parts = display.split('-')
+                r_dict['min_val'] = parts[0].strip()
+                r_dict['max_val'] = parts[1].strip()
+            else:
+                r_dict['min_val'], r_dict['max_val'] = '', ''
         except:
-            # Fallback for old plain-text references
             r_dict['display_range'] = r_dict['ref_interval']
-            r_dict['min_val'] = ''
-            r_dict['max_val'] = ''
+            r_dict['min_val'], r_dict['max_val'] = '', ''
             
         results.append(r_dict)
         
