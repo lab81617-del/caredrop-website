@@ -189,8 +189,34 @@ def partner_login():
 
 @app.route('/logout')
 def logout():
+    role = session.get('role')
     session.clear()
+    
+    # Smart redirect based on who is logging out
+    if role == 'admin':
+        return redirect(url_for('admin_login'))
+    elif role == 'reception':
+        return redirect(url_for('reception_login'))
+    elif role == 'partner':
+        return redirect(url_for('partner_login'))
+        
     return redirect(url_for('index'))
+
+@app.route('/admin/wipe_orders')
+@admin_only
+def admin_wipe_orders():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # CASCADE safely deletes the orders and any linked lab results
+    cur.execute('TRUNCATE TABLE orders CASCADE')
+    try:
+        cur.execute('TRUNCATE TABLE test_results CASCADE')
+    except:
+        pass
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin'))
 
 @app.route('/api/send_login_otp', methods=['POST'])
 def send_login_otp():
