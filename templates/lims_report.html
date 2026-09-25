@@ -28,7 +28,6 @@
         </nav>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
             <div class="flex items-center gap-3">
@@ -40,7 +39,6 @@
         <div class="flex-1 overflow-y-auto p-8">
             <div class="max-w-[1000px] mx-auto">
                 
-                <!-- Order Summary -->
                 <div class="bg-navy-900 rounded-t-2xl p-6 text-white flex justify-between items-end border-b border-white/10">
                     <div>
                         <p class="text-brand-400 font-black tracking-widest text-[10px] uppercase mb-1">Order #{{ order.order_code }}</p>
@@ -49,34 +47,38 @@
                     </div>
                 </div>
 
-                <!-- Data Entry Form -->
                 <div class="bg-white rounded-b-2xl shadow-sm border border-slate-200 border-t-0 p-8">
                     <form action="/api/lab/submit_results/{{ order.id }}" method="POST">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left whitespace-nowrap mb-8">
                                 <thead>
                                     <tr class="border-b border-slate-200 text-[10px] text-slate-500 uppercase tracking-widest bg-slate-50">
-                                        <th class="px-6 py-3 font-black">Parameter</th>
+                                        <th class="px-6 py-3 font-black">Parameter & Notes</th>
                                         <th class="px-6 py-3 font-black">Observed Value</th>
-                                        <th class="px-6 py-3 font-black">Unit</th>
-                                        <th class="px-6 py-3 font-black">Biological Ref. Interval</th>
+                                        <th class="px-6 py-3 font-black">Unit & Method</th>
+                                        <th class="px-6 py-3 font-black">Target Reference Interval</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
                                     {% for r in results %}
                                     <tr class="hover:bg-slate-50 transition">
-                                        <td class="px-6 py-5 font-bold text-navy-900 text-sm">{{ r.parameter_name }}</td>
-                                        <td class="px-6 py-5 relative">
-                                            <!-- The Data Input with embedded Math limits -->
+                                        <td class="px-6 py-5 whitespace-normal">
+                                            <p class="font-bold text-navy-900 text-sm">{{ r.parameter_name }}</p>
+                                            {% if r.additional_info %}
+                                                <p class="text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded inline-block mt-1 font-bold border border-amber-200"><i class="fa-solid fa-circle-info mr-1"></i>{{ r.additional_info }}</p>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-5 relative align-top">
                                             <input type="number" step="any" name="param_{{ r.id }}" value="{{ r.observed_value or '' }}" required 
                                                    data-min="{{ r.min_val }}" data-max="{{ r.max_val }}" oninput="checkLimits(this)"
-                                                   class="w-32 border border-slate-300 px-3 py-2 rounded-lg text-sm font-bold text-navy-900 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition result-input" 
-                                                   placeholder="e.g. 14.5">
-                                            <!-- Realtime Flag Indicator -->
+                                                   class="w-32 border border-slate-300 px-3 py-2 rounded-lg text-sm font-bold text-navy-900 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition result-input">
                                             <span class="flag-indicator absolute top-7 -right-4 text-[10px] font-black uppercase tracking-widest hidden"></span>
                                         </td>
-                                        <td class="px-6 py-5 text-xs font-bold text-slate-500">{{ r.units }}</td>
-                                        <td class="px-6 py-5 text-xs font-medium text-slate-500 whitespace-pre-wrap">{{ r.display_range }}</td>
+                                        <td class="px-6 py-5 align-top">
+                                            <p class="text-sm font-bold text-slate-700">{{ r.units }}</p>
+                                            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase">{{ r.method }}</p>
+                                        </td>
+                                        <td class="px-6 py-5 text-xs font-medium text-slate-600 whitespace-pre-wrap align-top bg-slate-50/50">{{ r.display_range }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -97,7 +99,6 @@
         </div>
     </main>
 
-    <!-- REAL-TIME JAVASCRIPT VALIDATION -->
     <script>
         function checkLimits(inputElement) {
             const val = parseFloat(inputElement.value);
@@ -105,13 +106,11 @@
             const max = parseFloat(inputElement.getAttribute('data-max'));
             const indicator = inputElement.nextElementSibling;
             
-            // Reset styles
             inputElement.classList.remove('border-rose-500', 'bg-rose-50', 'text-rose-700', 'border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
             indicator.classList.add('hidden');
             
             if (isNaN(val)) return;
 
-            // If we have math limits, check them
             if (!isNaN(min) && !isNaN(max)) {
                 if (val < min || val > max) {
                     inputElement.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-700');
