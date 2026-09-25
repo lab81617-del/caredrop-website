@@ -15,14 +15,14 @@ from database import get_db_connection, init_db
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'caredrop_enterprise_secret_key_2026')
 
-# Initialize DB and patch columns on startup
+# Initialize DB
 try:
     init_db()
 except Exception as e:
     print(f"Startup DB Init Failed: {e}")
 
 # ==========================================
-# 0. GLOBAL DYNAMIC SETTINGS CONTEXT
+# 0. GLOBAL DYNAMIC SETTINGS
 # ==========================================
 @app.context_processor
 def inject_settings():
@@ -48,13 +48,12 @@ def inject_settings():
         })
 
 # ==========================================
-# 1. NOTIFICATION ENGINE (BREVO + SMTP FALLBACK)
+# 1. NOTIFICATION ENGINE
 # ==========================================
 def send_email(to_email, subject, body):
     brevo_key = os.environ.get('BREVO_API_KEY')
     sender_email = os.environ.get('MAIL_USERNAME', 'ihcdiagnostics.ynr@gmail.com')
     
-    # 1. Attempt delivery via Brevo API
     if brevo_key:
         try:
             url = "https://api.brevo.com/v3/smtp/email"
@@ -79,7 +78,6 @@ def send_email(to_email, subject, body):
         except Exception as e:
             print(f"Brevo connection error: {e}. Falling back to SMTP...")
 
-    # 2. Automatic Fallback: Standard Gmail SMTP
     password = os.environ.get('MAIL_PASSWORD')
     if not password or not to_email:
         print("SMTP password or recipient email missing; dispatch aborted.")
@@ -102,7 +100,6 @@ def send_email(to_email, subject, body):
         print(f"SMTP dispatch failed: {e}")
 
 def send_email_async(to_email, subject, body):
-    """Executes email dispatch on a background daemon thread to eliminate UI latency."""
     thread = threading.Thread(target=send_email, args=(to_email, subject, body))
     thread.daemon = True
     thread.start()
@@ -123,14 +120,6 @@ def reception_required(f):
     def decorated_function(*args, **kwargs):
         if session.get('role') not in ['admin', 'reception']: 
             return redirect(url_for('reception_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-def rider_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get('role') != 'rider': 
-            return redirect(url_for('rider_login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -163,18 +152,9 @@ def reception_login():
     if request.method == 'POST':
         if request.form.get('password') == os.environ.get('RECEPTION_PASSWORD', 'reception123'):
             session['role'] = 'reception'
-            return redirect(url_for('admin_pos'))
+            return redirect(url_for('admin'))
         flash("Invalid Reception Clearance")
     return render_template('auth_reception.html') 
-
-@app.route('/rider/login', methods=['GET', 'POST'])
-def rider_login():
-    if request.method == 'POST':
-        if request.form.get('password') == 'rider123':
-            session['role'] = 'rider'
-            return redirect(url_for('rider_dashboard'))
-        flash("Invalid Rider Clearance")
-    return render_template('auth_rider.html')
 
 @app.route('/partner/login', methods=['GET', 'POST'])
 def partner_login():
@@ -231,7 +211,6 @@ def index():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Only display tests with a defined price greater than 0
         cur.execute('SELECT * FROM tests WHERE is_active = TRUE AND price > 0 ORDER BY id DESC LIMIT 4')
         recent_tests = [dict(row) for row in cur.fetchall()]
         cur.close()
@@ -386,7 +365,6 @@ def confirm_booking():
     
     order_id = cur.fetchone()['id']
     
-    # Safe Parameter Sync for LIMS
     try:
         if test_ids:
             cur.execute('SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id = ANY(%s)', (test_ids,))
@@ -408,21 +386,24 @@ def confirm_booking():
     session['role'] = 'patient'
     session['patient_email'] = o_data['email']
     
-    confirmation_body = f"""
+    # 1. Email to Patient
+    send_email_async(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}</p>")
+    
+    # 2. Instant Email Notification to HQ
+    hq_alert = f"""
     <div style='font-family: sans-serif; padding: 20px;'>
-        <h2>Booking Confirmed - CareDrop</h2>
-        <p>Dear {o_data['full_name']},</p>
-        <p>Your sample collection has been scheduled successfully.</p>
-        <ul>
-            <li><strong>Order ID:</strong> {order_code}</li>
-            <li><strong>Tests:</strong> {tests_requested}</li>
-            <li><strong>Scheduled Slot:</strong> {combined_time_slot}</li>
-            <li><strong>Payable at Collection:</strong> ₹{total_bill}</li>
-        </ul>
-        <p>Our phlebotomist will arrive during your selected window.</p>
+        <h2 style='color: #00A8A8;'>New Home Collection Booking</h2>
+        <p><strong>Order ID:</strong> {order_code}</p>
+        <p><strong>Patient:</strong> {o_data['full_name']} (Age: {o_data['age']}, {o_data['gender']})</p>
+        <p><strong>Phone:</strong> {o_data['phone']}</p>
+        <p><strong>Tests:</strong> {tests_requested}</p>
+        <p><strong>Time Slot:</strong> {combined_time_slot}</p>
+        <p><strong>Address:</strong> {o_data['address']}</p>
+        <p><strong>Total Bill:</strong> ₹{total_bill}</p>
     </div>
     """
-    send_email_async(o_data['email'], "CareDrop Booking Confirmed", confirmation_body)
+    send_email_async('caredrop.ynr@gmail.com', f"🚨 NEW BOOKING: {tests_requested} | {combined_time_slot}", hq_alert)
+    
     return jsonify({'status': 'success', 'redirect': '/my_bookings'})
 
 @app.route('/my_bookings')
@@ -478,7 +459,7 @@ def pos_book_test():
     conn.commit()
     cur.close()
     conn.close()
-    return redirect(url_for('admin_pos'))
+    return redirect(url_for('admin'))
 
 @app.route('/partner/dashboard')
 @partner_required
@@ -549,9 +530,25 @@ def admin():
     cur = conn.cursor()
     cur.execute('SELECT * FROM orders ORDER BY id DESC')
     orders = cur.fetchall()
+    
+    today_orders = len([o for o in orders if 'Completed' not in o['status']])
+    revenue = sum([o['total_bill'] for o in orders if o['status'] == 'Completed'])
+    pending_reports = len([o for o in orders if o['status'] == 'Sample Collected' and not o['uploaded_pdf']])
+    
     cur.close()
     conn.close()
-    return render_template('admin.html', orders=orders, role=session.get('role'))
+    return render_template('hq_dashboard.html', orders=orders, today_orders=today_orders, revenue=revenue, pending_reports=pending_reports, role=session.get('role'))
+
+@app.route('/admin/mark_collected/<int:order_id>')
+@reception_required
+def hq_mark_collected(order_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE orders SET status = 'Sample Collected' WHERE id = %s", (order_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin'))
 
 @app.route('/admin/pos')
 @reception_required
@@ -595,18 +592,6 @@ def mark_commissions_paid(referral_code):
     cur.close()
     conn.close()
     return redirect(url_for('admin_partners'))
-
-@app.route('/admin/assign_rider/<int:order_id>', methods=['POST'])
-@reception_required
-def admin_assign_rider(order_id):
-    rider_name = request.form.get('rider_name')
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("UPDATE orders SET assigned_rider = %s WHERE id = %s", (rider_name, order_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return redirect(url_for('admin'))
 
 @app.route('/admin/catalog')
 @admin_only
@@ -747,41 +732,8 @@ def lims_report(order_id):
     return render_template('lims_report.html', order=order, results=results, role=session.get('role'))
 
 # ==========================================
-# 8. RIDER LOGISTICS
+# 8. EMAIL DIAGNOSTICS
 # ==========================================
-@app.route('/rider')
-@app.route('/rider_dashboard')
-@rider_required
-def rider_dashboard():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM orders WHERE status != 'Completed' ORDER BY id DESC")
-    orders = cur.fetchall()
-    cur.execute("SELECT COALESCE(SUM(total_bill), 0) as total FROM orders WHERE is_paid = TRUE AND payment_mode = 'Cash'")
-    cash_collected = cur.fetchone()['total']
-    cur.close()
-    conn.close()
-    return render_template('rider_dashboard.html', orders=orders, cash_collected=cash_collected)
-
-@app.route('/api/rider/complete', methods=['POST'])
-@rider_required
-def rider_complete():
-    order_id = request.form.get('order_id')
-    barcode = request.form.get('barcode')
-    temp_log = request.form.get('temperature')
-    payment_mode = request.form.get('payment_mode')
-    is_paid = True if payment_mode in ['Cash', 'UPI'] else False
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("UPDATE orders SET barcode=%s, temp_log=%s, payment_mode=%s, status='Sample Collected', is_paid=%s WHERE id=%s", (barcode, temp_log, payment_mode, is_paid, order_id))
-    cur.execute("SELECT email, full_name, tests_requested FROM orders WHERE id=%s", (order_id,))
-    order = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-    send_email_async(order['email'], "Sample Collected", f"<h3>Hello {order['full_name']},</h3><p>Your sample for {order['tests_requested']} has been successfully collected. Marked payment: {payment_mode}.</p>")
-    return redirect(url_for('rider_dashboard'))
 @app.route('/debug_email')
 def debug_email():
     brevo_key = os.environ.get('BREVO_API_KEY')
@@ -800,7 +752,7 @@ def debug_email():
             url = "https://api.brevo.com/v3/smtp/email"
             payload = {
                 "sender": {"name": "CareDrop Diagnostics", "email": sender_email},
-                "to": [{"email": sender_email}], # Sending an email to yourself to test
+                "to": [{"email": sender_email}], 
                 "subject": "CareDrop Diagnostic Test",
                 "htmlContent": "<p>If you get this, Brevo is working perfectly!</p>"
             }
