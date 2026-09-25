@@ -77,7 +77,12 @@
             
             <!-- Welcome & Stats Row -->
             <div class="mb-8">
-                <h3 class="text-2xl font-black text-navy-900 mb-1">Good morning, Team!</h3>
+               <h3 class="text-2xl font-black text-navy-900 mb-1" id="dynamic-greeting">Welcome, Team!</h3>
+<script>
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('dynamic-greeting').innerText = greeting + ', Team!';
+</script>
                 <p class="text-sm text-slate-500 font-medium mb-6">Here is what's happening today at your lab.</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
