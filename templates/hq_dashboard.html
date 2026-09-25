@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reception / HQ Portal | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E1F6F6', 500: '#00A8A8', 600: '#008F8F' }, navy: { 800: '#1A2938', 900: '#0B192C' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
+        <div class="h-[72px] flex items-center px-6 border-b border-white/10">
+            <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight leading-tight">CareDrop</h1>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Diagnostics Made Simpler</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
+            
+            <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500/10 text-brand-400 font-bold text-sm transition">
+                <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
+            </a>
+            <a href="/admin/pos" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-desktop w-5 text-center"></i> Walk-in POS
+            </a>
+            
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Management</p>
+            
+            <a href="/admin/catalog" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-vial w-5 text-center"></i> Test Catalog
+            </a>
+            {% if role == 'admin' %}
+            <a href="/admin/partners" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-handshake w-5 text-center"></i> B2B Partners
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-user"></i></div>
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-white leading-tight capitalize">{{ role }}</p>
+                    <a href="/logout" class="text-[10px] text-slate-400 hover:text-brand-400 font-medium">Logout</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Top Header -->
+        <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+            <h2 class="text-xl font-black text-navy-900">Reception / HQ Portal</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-xs font-bold text-slate-500"><i class="fa-solid fa-location-dot text-brand-500 mr-1"></i> Yamunanagar & Jagadhri</span>
+                <span class="bg-brand-50 text-brand-600 border border-brand-100 px-3 py-1.5 rounded-full text-xs font-black capitalize shadow-sm">
+                    {{ role }} Access
+                </span>
+            </div>
+        </header>
+
+        <!-- Scrollable Dashboard -->
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <!-- Welcome & Stats Row -->
+            <div class="mb-8">
+                <h3 class="text-2xl font-black text-navy-900 mb-1">Good morning, Team!</h3>
+                <p class="text-sm text-slate-500 font-medium mb-6">Here is what's happening today at your lab.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Active Orders</p>
+                            <p class="text-3xl font-black text-navy-900">{{ today_orders }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-truck-medical"></i></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Reports Pending</p>
+                            <p class="text-3xl font-black text-rose-500">{{ pending_reports }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-file-circle-exclamation"></i></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Revenue</p>
+                            <p class="text-3xl font-black text-emerald-500">₹{{ revenue|int }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-black text-navy-900">Today's Order Queue</h3>
+                    <a href="/admin/pos" class="text-xs font-bold text-brand-600 hover:text-brand-800"><i class="fa-solid fa-plus mr-1"></i> New Walk-in</a>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-[#F8FAFA] border-b border-slate-100 text-[10px] text-slate-500 uppercase tracking-widest">
+                                <th class="px-6 py-4 font-black">Order ID</th>
+                                <th class="px-6 py-4 font-black">Patient Details</th>
+                                <th class="px-6 py-4 font-black">Tests</th>
+                                <th class="px-6 py-4 font-black">Time Slot</th>
+                                <th class="px-6 py-4 font-black">Status</th>
+                                <th class="px-6 py-4 font-black text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {% for o in orders %}
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 text-xs font-bold text-brand-600">{{ o.order_code }}</td>
+                                <td class="px-6 py-4">
+                                    <p class="text-sm font-bold text-navy-900 leading-tight">{{ o.full_name }}</p>
+                                    <p class="text-[10px] text-slate-500 font-bold">{{ o.phone }}</p>
+                                </td>
+                                <td class="px-6 py-4 text-xs font-bold text-slate-700">{{ o.tests_requested }}</td>
+                                <td class="px-6 py-4">
+                                    <p class="text-xs font-bold text-slate-700">{{ o.time_slot.split(' | ')[0] }}</p>
+                                    <p class="text-[10px] font-bold text-brand-500">{{ o.time_slot.split(' | ')[-1] }}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if o.status == 'Completed' %}
+                                        <span class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Released</span>
+                                    {% elif o.status == 'Sample Collected' %}
+                                        <span class="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Processing</span>
+                                    {% else %}
+                                        <span class="bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    
+                                    {% if o.status == 'Completed' %}
+                                        <a href="/download_pdf/{{ o.id }}" target="_blank" class="text-xs font-bold text-slate-400 hover:text-navy-900 border border-slate-200 px-4 py-2 rounded-lg transition">View Report</a>
+                                    
+                                    {% elif o.status == 'Sample Collected' %}
+                                        <button onclick="document.getElementById('upload_{{ o.id }}').classList.remove('hidden')" class="text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg shadow-sm transition">
+                                            <i class="fa-solid fa-file-arrow-up mr-1"></i> Upload PDF
+                                        </button>
+                                        
+                                        <!-- Hidden Upload Form -->
+                                        <form id="upload_{{ o.id }}" action="/admin/upload_pdf/{{ o.id }}" method="POST" enctype="multipart/form-data" class="hidden absolute right-12 mt-2 bg-white p-3 rounded-xl shadow-xl border border-slate-200 z-50 flex items-center gap-2">
+                                            <input type="file" name="pdf_file" required accept=".pdf" class="text-xs text-slate-600 w-48">
+                                            <button type="submit" class="bg-navy-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Save</button>
+                                            <button type="button" onclick="document.getElementById('upload_{{ o.id }}').classList.add('hidden')" class="text-slate-400 ml-1"><i class="fa-solid fa-xmark"></i></button>
+                                        </form>
+
+                                    {% else %}
+                                        <a href="/admin/mark_collected/{{ o.id }}" class="text-xs font-bold bg-navy-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg shadow-sm transition" onclick="return confirm('Confirm sample has been physically collected?')">
+                                            <i class="fa-solid fa-check mr-1"></i> Collected
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                    <i class="fa-solid fa-mug-hot text-2xl mb-2"></i>
+                                    <p class="font-bold text-sm">No orders in the queue yet.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+</body>
+</html>
