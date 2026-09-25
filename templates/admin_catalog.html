@@ -3,88 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Catalog | CareDrop Admin</title>
+    <title>Catalog Manager | CareDrop HQ</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E1F6F6', 500: '#00A8A8', 600: '#008F8F' }, navy: { 800: '#1A2938', 900: '#0B192C' } } } }
+        }
+    </script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans">
-    
-    <header class="bg-white shadow-sm border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-        <h1 class="text-xl font-black text-[#0B192C]">CareDrop <span class="text-slate-400 font-medium">| Catalog Manager</span></h1>
-        <div class="flex gap-6 items-center">
-            <a href="/tests" target="_blank" class="text-sm font-bold text-[#00A8A8] hover:underline">View Live Website</a>
-            <a href="/logout" class="text-sm font-bold text-rose-500 hover:underline">Logout</a>
-        </div>
-    </header>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
 
-    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-8 mt-4">
-        
-        <!-- Left: Add New Test Form -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-max">
-            <h2 class="font-black text-[#0B192C] text-lg mb-4">Add New Test</h2>
-            <form action="/admin/add_test" method="POST" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Test Name</label>
-                    <input type="text" name="name" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00A8A8]" placeholder="e.g. Complete Blood Count" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Category</label>
-                    <select name="category" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00A8A8]" required>
-                        <option value="Blood">General Health / Blood</option>
-                        <option value="Diabetes">Diabetes</option>
-                        <option value="Heart">Heart Health / Lipid</option>
-                        <option value="Thyroid">Thyroid</option>
-                        <option value="Liver">Liver & Kidney</option>
-                        <option value="Popular">Most Popular</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Retail Price (₹)</label>
-                    <input type="number" name="retail_price" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00A8A8]" placeholder="e.g. 250" required>
-                </div>
-                <button type="submit" class="w-full bg-[#00A8A8] text-white font-bold py-2.5 rounded-lg text-sm shadow-sm hover:bg-[#008F8F] transition">Add to Catalog</button>
-            </form>
-        </div>
-
-        <!-- Right: Existing Tests & Danger Zone -->
-        <div class="md:col-span-2 space-y-6">
-            
-            <!-- Danger Zone -->
-            <div class="bg-rose-50 p-6 rounded-2xl border border-rose-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div>
-                    <h3 class="font-black text-rose-900 text-lg">Danger Zone</h3>
-                    <p class="text-xs text-rose-700 font-medium">Instantly wipe all ₹0 dummy tests from the database. This cannot be undone.</p>
-                </div>
-                <a href="/admin/wipe_catalog" onclick="return confirm('Are you sure? This will delete ALL tests forever.')" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition shadow-sm whitespace-nowrap">
-                    Wipe All Tests
-                </a>
+    <!-- SIDEBAR (Unified Workspace Design) -->
+    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
+        <div class="h-[72px] flex items-center px-6 border-b border-white/10">
+            <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight leading-tight">CareDrop</h1>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Diagnostics Made Simpler</p>
             </div>
+        </div>
+        
+        <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
+            <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
+            </a>
+            <a href="/admin/pos" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-desktop w-5 text-center"></i> Walk-in POS
+            </a>
+            
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Management</p>
+            <a href="/admin/catalog" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500/10 text-brand-400 font-bold text-sm transition">
+                <i class="fa-solid fa-vial w-5 text-center"></i> Test Catalog
+            </a>
+            <a href="/admin/partners" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-handshake w-5 text-center"></i> B2B Partners
+            </a>
+        </nav>
 
-            <!-- Live Catalog Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-500 uppercase tracking-widest">
-                            <th class="px-6 py-3 font-bold">ID</th>
-                            <th class="px-6 py-3 font-bold">Test Name</th>
-                            <th class="px-6 py-3 font-bold">Category</th>
-                            <th class="px-6 py-3 font-bold text-right">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for t in tests %}
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="px-6 py-4 text-xs text-slate-400 font-bold">#{{ t.id }}</td>
-                            <td class="px-6 py-4 text-sm font-bold text-[#0B192C]">{{ t.name }}</td>
-                            <td class="px-6 py-4 text-[10px] font-bold text-[#00A8A8] uppercase tracking-wider">{{ t.category }}</td>
-                            <td class="px-6 py-4 text-sm font-black text-slate-800 text-right">₹{{ t.price|int }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-slate-400 font-bold text-sm">Catalog is completely empty.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-user"></i></div>
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-white leading-tight capitalize">HQ Admin</p>
+                    <a href="/logout" class="text-[10px] text-slate-400 hover:text-brand-400 font-medium">Logout</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+            <h2 class="text-xl font-black text-navy-900">Catalog & LIMS Manager</h2>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-[1200px] mx-auto grid grid-cols-1 xl:grid-cols-3 gap-8">
+                
+                <!-- LEFT COLUMN: Adding Tests & Danger Zone -->
+                <div class="xl:col-span-1 space-y-6">
+                    
+                    <!-- Add Test Form -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="font-black text-navy-900 mb-4"><i class="fa-solid fa-plus-circle text-brand-500 mr-2"></i>Add New Test</h3>
+                        <form action="/admin/add_test" method="POST" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Test Name</label>
+                                <input type="text" name="name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. Complete Blood Count">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Category</label>
+                                <select name="category" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500 bg-white">
+                                    <option value="General Health / Blood">General Health / Blood</option>
+                                    <option value="Diabetes">Diabetes</option>
+                                    <option value="Heart / Lipid">Heart / Lipid</option>
+                                    <option value="Thyroid">Thyroid</option>
+                                    <option value="Liver">Liver</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Retail Price (₹)</label>
+                                <input type="number" name="retail_price" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="Public patient price">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-brand-600 mb-1">B2B Base Cost (₹) *</label>
+                                <input type="number" name="b2b_cost" required class="w-full border-2 border-brand-100 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="Required for partner math">
+                            </div>
+                            <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-sm transition mt-2">Save to Catalog</button>
+                        </form>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="bg-rose-50 rounded-2xl border border-rose-200 p-6">
+                        <h3 class="font-black text-rose-700 mb-2"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Danger Zone</h3>
+                        <p class="text-xs text-rose-600 mb-4 font-medium">Erase all tests and parameters from the database. This cannot be undone.</p>
+                        <a href="/admin/wipe_catalog" class="block text-center w-full bg-white border border-rose-200 hover:bg-rose-600 hover:text-white text-rose-600 font-bold py-2.5 rounded-xl text-sm transition" onclick="return confirm('WARNING: Are you absolutely sure you want to wipe the entire catalog?');">
+                            Wipe Entire Catalog
+                        </a>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: LIMS Parameters & Data Table -->
+                <div class="xl:col-span-2 space-y-6">
+                    
+                    <!-- Add LIMS Parameter Form -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="font-black text-navy-900 mb-2"><i class="fa-solid fa-flask text-brand-500 mr-2"></i>LIMS: Add Test Parameter</h3>
+                        <p class="text-xs text-slate-500 mb-5 font-medium">Define exactly what lab values need to be entered to generate reports (e.g., Hemoglobin for CBC).</p>
+                        
+                        <form action="/admin/add_parameter" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Link to Active Test</label>
+                                <select name="test_id" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500 bg-white">
+                                    <option value="">-- Select a test --</option>
+                                    {% for t in tests %}
+                                        <option value="{{ t.id }}">{{ t.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Parameter Name</label>
+                                <input type="text" name="param_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. Total RBC Count">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Unit of Measurement</label>
+                                <input type="text" name="unit" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. mill/cumm">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Reference Range (Normal Limits)</label>
+                                <input type="text" name="ref_range" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-brand-500" placeholder="e.g. 4.5 - 5.5">
+                            </div>
+                            <div class="md:col-span-2 mt-2">
+                                <button type="submit" class="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 px-8 rounded-xl text-sm transition shadow-sm">Save Parameter</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Current Catalog Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                            <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Active Catalog & Parameters</h3>
+                        </div>
+                        <div class="max-h-[400px] overflow-y-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 text-[10px] text-slate-500 uppercase tracking-widest z-10">
+                                    <tr>
+                                        <th class="px-6 py-4 font-black">Test Details</th>
+                                        <th class="px-6 py-4 font-black">Financials</th>
+                                        <th class="px-6 py-4 font-black">LIMS Parameters</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    {% for t in tests %}
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="px-6 py-4">
+                                            <p class="font-bold text-navy-900">{{ t.name }}</p>
+                                            <p class="text-[10px] text-slate-500 font-bold uppercase">{{ t.category }}</p>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <p class="text-xs font-bold text-brand-600">Retail: ₹{{ t.price|int }}</p>
+                                            <p class="text-[10px] font-bold text-slate-500">B2B Cost: ₹{{ t.b2b_cost|int }}</p>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs text-slate-600 whitespace-normal min-w-[250px]">
+                                            <ul class="space-y-1">
+                                                {% for p in test_params %}
+                                                    {% if p.test_id == t.id %}
+                                                        <li class="flex items-start gap-2 bg-slate-100 px-2 py-1 rounded">
+                                                            <i class="fa-solid fa-microscope text-brand-500 mt-0.5"></i> 
+                                                            <span><strong class="text-navy-900">{{ p.param_name }}</strong> <br><span class="text-[10px]">{{ p.ref_range }} {{ p.unit }}</span></span>
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-12 text-center text-slate-400">
+                                            <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
+                                            <p class="font-bold text-sm">Your catalog is empty.</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </main>
