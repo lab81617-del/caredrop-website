@@ -139,22 +139,37 @@ def patient_login():
     return render_template('auth_patient.html')
 
 @app.route('/admin/login', methods=['GET', 'POST'])
+d@app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        if request.form.get('password') == os.environ.get('ADMIN_PASSWORD', 'admin123'):
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        # Default is admin / admin123 unless changed in Render
+        valid_user = os.environ.get('ADMIN_USER', 'admin')
+        valid_pass = os.environ.get('ADMIN_PASSWORD', 'admin123')
+        
+        if username == valid_user and password == valid_pass:
             session['role'] = 'admin'
             return redirect(url_for('admin'))
-        flash("Invalid Admin Clearance")
+        flash("Invalid Admin Credentials")
     return render_template('auth_admin.html') 
 
 @app.route('/reception/login', methods=['GET', 'POST'])
 def reception_login():
     if request.method == 'POST':
-        if request.form.get('password') == os.environ.get('RECEPTION_PASSWORD', 'reception123'):
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        # Default is reception / reception123 unless changed in Render
+        valid_user = os.environ.get('RECEPTION_USER', 'reception')
+        valid_pass = os.environ.get('RECEPTION_PASSWORD', 'reception123')
+        
+        if username == valid_user and password == valid_pass:
             session['role'] = 'reception'
             return redirect(url_for('admin'))
-        flash("Invalid Reception Clearance")
-    return render_template('auth_reception.html') 
+        flash("Invalid Reception Credentials")
+    return render_template('auth_reception.html')
 
 @app.route('/partner/login', methods=['GET', 'POST'])
 def partner_login():
