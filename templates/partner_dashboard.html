@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Workspace | CareDrop Network</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E1F6F6', 500: '#00A8A8', 600: '#008F8F' }, navy: { 800: '#1A2938', 900: '#0B192C' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
+
+    <!-- PARTNER SIDEBAR -->
+    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
+        <div class="h-[72px] flex items-center px-6 border-b border-white/10">
+            <div class="w-8 h-8 bg-white text-navy-900 rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-network-wired"></i></div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight leading-tight">CareDrop</h1>
+                <p class="text-[9px] text-brand-400 font-bold uppercase tracking-widest">Network Partner</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Clinic Workspace</p>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500/10 text-brand-400 font-bold text-sm transition">
+                <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
+            </a>
+            <a href="#" onclick="document.getElementById('newPatientModal').classList.remove('hidden')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition mt-2">
+                <i class="fa-solid fa-user-plus w-5 text-center"></i> Register Patient
+            </a>
+            
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Financials</p>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-wallet w-5 text-center"></i> Wallet & Payouts
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-user-doctor"></i></div>
+                <div class="flex-1 truncate">
+                    <p class="text-xs font-bold text-white leading-tight truncate">{{ partner.clinic_name }}</p>
+                    <a href="/logout" class="text-[10px] text-slate-400 hover:text-rose-400 font-medium">Logout</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+            <h2 class="text-xl font-black text-navy-900">Partner Dashboard</h2>
+            <div class="flex items-center gap-4">
+                <span class="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-black shadow-sm">
+                    Code: <span class="text-brand-600">{{ partner.referral_code }}</span>
+                </span>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-[1200px] mx-auto">
+                
+                <!-- Welcome & Metrics -->
+                <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                    <div>
+                        <h3 class="text-2xl font-black text-navy-900 mb-1">Welcome, {{ partner.clinic_name }}</h3>
+                        <p class="text-sm text-slate-500 font-medium">Track your patients and view commission payouts.</p>
+                    </div>
+                    <button onclick="document.getElementById('newPatientModal').classList.remove('hidden')" class="bg-navy-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm transition shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> New Lab Order
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Referrals</p>
+                        <p class="text-2xl font-black text-navy-900">{{ orders|length }}</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Reports Ready</p>
+                        <p class="text-2xl font-black text-brand-500">
+                            {{ orders|selectattr('status', 'equalto', 'Completed')|list|length }}
+                        </p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm bg-emerald-50/50">
+                        <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Wallet Balance</p>
+                        <p class="text-2xl font-black text-emerald-600">₹{{ partner.wallet_balance|int }}</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Margin Pool</p>
+                        <p class="text-2xl font-black text-navy-900">{{ (partner.margin_pool_pct * 100)|int }}%</p>
+                    </div>
+                </div>
+
+                <!-- Referred Orders Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="font-black text-navy-900">Recent Patient Orders</h3>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-500 uppercase tracking-widest">
+                                    <th class="px-6 py-4 font-black">Date & ID</th>
+                                    <th class="px-6 py-4 font-black">Patient</th>
+                                    <th class="px-6 py-4 font-black">Tests</th>
+                                    <th class="px-6 py-4 font-black">Commission</th>
+                                    <th class="px-6 py-4 font-black">Status</th>
+                                    <th class="px-6 py-4 font-black text-right">Report</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% for o in orders %}
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-6 py-4">
+                                        <p class="text-xs font-bold text-slate-700">{{ o.time_slot.split(' | ')[0] }}</p>
+                                        <p class="text-[10px] font-bold text-brand-500">{{ o.order_code }}</p>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <p class="text-sm font-bold text-navy-900">{{ o.full_name }}</p>
+                                        <p class="text-[10px] text-slate-500 font-bold">{{ o.phone }}</p>
+                                    </td>
+                                    <td class="px-6 py-4 text-xs font-bold text-slate-700">{{ o.tests_requested }}</td>
+                                    <td class="px-6 py-4">
+                                        <p class="text-xs font-bold text-emerald-600">+ ₹{{ o.partner_commission|int }}</p>
+                                        {% if o.is_commission_paid %}
+                                            <span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Paid</span>
+                                        {% else %}
+                                            <span class="text-[9px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {% if o.status == 'Completed' %}
+                                            <span class="bg-brand-50 text-brand-600 border border-brand-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Released</span>
+                                        {% elif o.status == 'Sample Collected' %}
+                                            <span class="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Processing</span>
+                                        {% else %}
+                                            <span class="bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        {% if o.status == 'Completed' %}
+                                            <a href="/download_pdf/{{ o.id }}" target="_blank" class="text-xs font-bold bg-white text-brand-600 border border-brand-200 hover:bg-brand-50 px-4 py-2 rounded-lg transition shadow-sm">View Report</a>
+                                        {% else %}
+                                            <span class="text-[10px] font-bold text-slate-400 italic">Not Ready</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                        <i class="fa-solid fa-notes-medical text-2xl mb-2"></i>
+                                        <p class="font-bold text-sm">No patients referred yet.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- NEW PATIENT MODAL (Hidden by default) -->
+    <div id="newPatientModal" class="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-black text-navy-900">Register Patient & Book Test</h3>
+                <button onclick="document.getElementById('newPatientModal').classList.add('hidden')" class="text-slate-400 hover:text-rose-500 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+                <form action="/partner/book_test" method="POST" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Patient Name</label>
+                            <input type="text" name="full_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Mobile Number</label>
+                            <input type="tel" name="phone" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Age</label>
+                            <input type="number" name="age" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Gender</label>
+                            <select name="gender" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-white">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Time Slot (Walk-in/Home)</label>
+                            <input type="text" name="time_slot" value="Walk-in (Clinic)" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
+                        </div>
+                        
+                        <div class="col-span-2 border-t border-slate-100 pt-4 mt-2">
+                            <label class="block text-xs font-bold text-slate-600 mb-2">Select Tests to Prescribe</label>
+                            <div class="max-h-[150px] overflow-y-auto border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1">
+                                {% for t in tests %}
+                                    <label class="flex items-center gap-3 p-2 hover:bg-white rounded cursor-pointer transition">
+                                        <input type="checkbox" class="test-checkbox w-4 h-4 text-brand-500 rounded focus:ring-brand-500" data-name="{{ t.name }}" data-price="{{ t.price }}" onchange="calculatePartnerBill()">
+                                        <span class="text-sm font-bold text-navy-900 flex-1">{{ t.name }}</span>
+                                        <span class="text-xs font-bold text-slate-500">₹{{ t.price|int }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields to hold JS values -->
+                        <input type="hidden" name="tests_requested" id="tests_requested_input">
+                        <input type="hidden" name="total_bill" id="total_bill_input" value="0">
+                        <input type="hidden" name="discount_pct" value="0"> <!-- Standard submission applies default commission logic -->
+
+                        <div class="col-span-2 bg-navy-900 text-white p-4 rounded-xl flex justify-between items-center mt-2">
+                            <span class="text-xs font-bold tracking-widest uppercase text-brand-400">Gross Total</span>
+                            <span class="text-xl font-black" id="display_total">₹0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" disabled class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 rounded-xl transition shadow-sm mt-4 disabled:bg-slate-300">
+                        Submit Order to CareDrop
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculatePartnerBill() {
+            let total = 0;
+            let names = [];
+            document.querySelectorAll('.test-checkbox:checked').forEach(cb => {
+                total += parseFloat(cb.getAttribute('data-price'));
+                names.push(cb.getAttribute('data-name'));
+            });
+            
+            document.getElementById('display_total').innerText = '₹' + total;
+            document.getElementById('total_bill_input').value = total;
+            document.getElementById('tests_requested_input').value = names.join(', ');
+            
+            document.getElementById('submitBtn').disabled = (names.length === 0);
+        }
+    </script>
+</body>
+</html>
