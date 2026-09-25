@@ -497,48 +497,35 @@ def partner_dashboard():
     conn.close()
     return render_template('partner_dashboard.html', partner=partner, orders=orders, tests=tests)
 
-@app.route('/partner/book_test', methods=['POST'])
-@partner_required
-def partner_book_test():
-    full_name = request.form.get('full_name')
-    age = request.form.get('age')
-    gender = request.form.get('gender')
-    phone = request.form.get('phone')
-    email = request.form.get('email', '')
-    address = request.form.get('address')
-    time_slot = request.form.get('time_slot')
-    discount_pct = float(request.form.get('discount_pct', 0))
-    tests_requested = request.form.get('tests_requested')
-    gross_bill = float(request.form.get('total_bill', 0))
+@app.route('/admin/add_parameter', methods=['POST'])
+@admin_only
+def admin_add_parameter():
+    test_id = request.form.get('test_id')
+    param_name = request.form.get('param_name')
+    unit = request.form.get('unit')
+    ref_range = request.form.get('ref_range')
     
-    code = session.get('referral_code')
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT margin_pool_pct FROM partners WHERE referral_code = %s', (code,))
-    partner = cur.fetchone()
-    
-    margin_pool_pct = partner['margin_pool_pct'] * 100
-    if discount_pct > margin_pool_pct: 
-        discount_pct = margin_pool_pct 
-    
-    discount_given = round(gross_bill * (discount_pct / 100))
-    total_bill = gross_bill - discount_given
-    partner_commission = round(gross_bill * ((margin_pool_pct - discount_pct) / 100))
-    order_code = f"CD-{random.randint(1000, 9999)}"
-
-    cur.execute('''
-        INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, referral_code, partner_commission)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
-    ''', (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, code, partner_commission))
-    
-    cur.execute("UPDATE partners SET wallet_balance = wallet_balance + %s WHERE referral_code = %s", (partner_commission, code))
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    if email: 
-        send_email_async(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total: ₹{total_bill}.</p>")
-    return redirect(url_for('partner_dashboard'))
+    if not test_id or not str(test_id).strip():
+        flash("Error: You must select a test from the dropdown.", "error")
+        return redirect(url_for('admin_catalog'))
+        
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # Forcing test_id to integer prevents PostgreSQL type errors
+        cur.execute(
+            "INSERT INTO test_parameters (test_id, param_name, unit, ref_range) VALUES (%s, %s, %s, %s)", 
+            (int(test_id), param_name, unit, ref_range)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash(f"Success! Parameter '{param_name}' added.", "success")
+    except Exception as e:
+        print(f"DB Error: {e}")
+        flash(f"Database Error: {str(e)}", "error")
+        
+    return redirect(url_for('admin_catalog'))
 
 # ==========================================
 # 6. ADMIN & OPERATIONS MANAGEMENT
