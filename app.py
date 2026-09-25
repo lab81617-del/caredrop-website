@@ -663,7 +663,17 @@ def admin_wipe_catalog():
     conn.close()
     flash("Catalog completely wiped. You can now start fresh.")
     return redirect(url_for('admin_catalog'))
-
+@app.route('/admin/wipe_orders')
+@admin_only
+def admin_wipe_orders():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # CASCADE ensures that any linked test_results are also deleted
+    cur.execute('TRUNCATE TABLE orders CASCADE')
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('admin'))
 @app.route('/admin/add_parameter', methods=['POST'])
 @admin_only
 def admin_add_parameter():
