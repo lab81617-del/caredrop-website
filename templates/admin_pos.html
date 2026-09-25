@@ -15,7 +15,7 @@
 </head>
 <body class="bg-[#F1F5F9] text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
 
-    <!-- SIDEBAR (Matching Mockup Design) -->
+    <!-- CLEANED SIDEBAR -->
     <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
         <div class="h-[72px] flex items-center px-6 border-b border-white/10">
             <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
@@ -26,39 +26,32 @@
         </div>
         
         <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
-            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Reception</p>
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
             
             <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
                 <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
             </a>
             <a href="/admin/pos" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500/10 text-brand-400 font-bold text-sm transition">
-                <i class="fa-solid fa-plus-circle w-5 text-center"></i> New Order / POS
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-users w-5 text-center"></i> Patients
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-clipboard-list w-5 text-center"></i> Orders
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-vial w-5 text-center"></i> Samples
+                <i class="fa-solid fa-desktop w-5 text-center"></i> Walk-in POS
             </a>
             
-            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Finance & Settings</p>
+            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Management</p>
             
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-credit-card w-5 text-center"></i> Payments
-            </a>
             <a href="/admin/catalog" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-book-medical w-5 text-center"></i> Test Catalog
+                <i class="fa-solid fa-vial w-5 text-center"></i> Test Catalog
             </a>
+            {% if role == 'admin' %}
+            <a href="/admin/partners" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
+                <i class="fa-solid fa-handshake w-5 text-center"></i> B2B Partners
+            </a>
+            {% endif %}
         </nav>
 
         <div class="p-4 border-t border-white/10">
             <div class="flex items-center gap-3 px-3 py-2">
                 <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-user"></i></div>
                 <div class="flex-1">
-                    <p class="text-xs font-bold text-white leading-tight">Receptionist</p>
+                    <p class="text-xs font-bold text-white leading-tight capitalize">{{ role }}</p>
                     <a href="/logout" class="text-[10px] text-slate-400 hover:text-brand-400 font-medium">Logout</a>
                 </div>
             </div>
