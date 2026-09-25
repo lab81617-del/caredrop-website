@@ -13,7 +13,7 @@
 </head>
 <body class="bg-[#F1F5F9] text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
 
-    <!-- SIDEBAR (Unified Workspace Design) -->
+    <!-- SIDEBAR -->
     <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
         <div class="h-[72px] flex items-center px-6 border-b border-white/10">
             <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
@@ -22,36 +22,10 @@
                 <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Diagnostics Made Simpler</p>
             </div>
         </div>
-        
         <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
             <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
-            <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
-            </a>
-            <a href="/admin/pos" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-desktop w-5 text-center"></i> Walk-in POS
-            </a>
-            
-            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Management</p>
-            <a href="/admin/catalog" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-vial w-5 text-center"></i> Test Catalog
-            </a>
-            {% if role == 'admin' %}
-            <a href="/admin/partners" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-handshake w-5 text-center"></i> B2B Partners
-            </a>
-            {% endif %}
+            <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition"><i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard</a>
         </nav>
-
-        <div class="p-4 border-t border-white/10">
-            <div class="flex items-center gap-3 px-3 py-2">
-                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-user"></i></div>
-                <div class="flex-1">
-                    <p class="text-xs font-bold text-white leading-tight capitalize">{{ role }}</p>
-                    <a href="/logout" class="text-[10px] text-slate-400 hover:text-brand-400 font-medium">Logout</a>
-                </div>
-            </div>
-        </div>
     </aside>
 
     <!-- MAIN CONTENT AREA -->
@@ -67,14 +41,11 @@
             <div class="max-w-[1000px] mx-auto">
                 
                 <!-- Order Summary -->
-                <div class="bg-navy-900 rounded-t-2xl p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-white/10 gap-4">
+                <div class="bg-navy-900 rounded-t-2xl p-6 text-white flex justify-between items-end border-b border-white/10">
                     <div>
                         <p class="text-brand-400 font-black tracking-widest text-[10px] uppercase mb-1">Order #{{ order.order_code }}</p>
                         <h2 class="text-2xl font-black mb-1">{{ order.full_name }}</h2>
-                        <p class="text-sm text-slate-400 font-medium"><i class="fa-solid fa-vial mr-1"></i> Tests: {{ order.tests_requested }}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"><i class="fa-solid fa-microscope mr-1"></i> Data Entry</span>
+                        <p class="text-sm text-slate-400 font-medium"><i class="fa-solid fa-user mr-1"></i> {{ order.age }} Yrs, {{ order.gender }}</p>
                     </div>
                 </div>
 
@@ -85,29 +56,27 @@
                             <table class="w-full text-left whitespace-nowrap mb-8">
                                 <thead>
                                     <tr class="border-b border-slate-200 text-[10px] text-slate-500 uppercase tracking-widest bg-slate-50">
-                                        <th class="px-6 py-3 font-black rounded-tl-lg">Parameter</th>
+                                        <th class="px-6 py-3 font-black">Parameter</th>
                                         <th class="px-6 py-3 font-black">Observed Value</th>
                                         <th class="px-6 py-3 font-black">Unit</th>
-                                        <th class="px-6 py-3 font-black rounded-tr-lg">Biological Ref. Interval</th>
+                                        <th class="px-6 py-3 font-black">Biological Ref. Interval</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
                                     {% for r in results %}
                                     <tr class="hover:bg-slate-50 transition">
                                         <td class="px-6 py-5 font-bold text-navy-900 text-sm">{{ r.parameter_name }}</td>
-                                        <td class="px-6 py-5">
-                                            <input type="text" name="param_{{ r.id }}" value="{{ r.observed_value or '' }}" required class="w-32 border border-slate-300 px-3 py-2 rounded-lg text-sm font-bold text-navy-900 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition" placeholder="e.g. 14.5">
+                                        <td class="px-6 py-5 relative">
+                                            <!-- The Data Input with embedded Math limits -->
+                                            <input type="number" step="any" name="param_{{ r.id }}" value="{{ r.observed_value or '' }}" required 
+                                                   data-min="{{ r.min_val }}" data-max="{{ r.max_val }}" oninput="checkLimits(this)"
+                                                   class="w-32 border border-slate-300 px-3 py-2 rounded-lg text-sm font-bold text-navy-900 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition result-input" 
+                                                   placeholder="e.g. 14.5">
+                                            <!-- Realtime Flag Indicator -->
+                                            <span class="flag-indicator absolute top-7 -right-4 text-[10px] font-black uppercase tracking-widest hidden"></span>
                                         </td>
                                         <td class="px-6 py-5 text-xs font-bold text-slate-500">{{ r.units }}</td>
-                                        <td class="px-6 py-5 text-xs font-medium text-slate-500">{{ r.ref_interval }}</td>
-                                    </tr>
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-12 text-center text-slate-400">
-                                            <i class="fa-solid fa-triangle-exclamation text-2xl mb-2 text-amber-500"></i>
-                                            <p class="font-bold text-sm text-navy-900">No parameters defined</p>
-                                            <p class="text-xs mt-1">Please use the Catalog Manager to attach parameters to this test.</p>
-                                        </td>
+                                        <td class="px-6 py-5 text-xs font-medium text-slate-500 whitespace-pre-wrap">{{ r.display_range }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -127,5 +96,36 @@
             </div>
         </div>
     </main>
+
+    <!-- REAL-TIME JAVASCRIPT VALIDATION -->
+    <script>
+        function checkLimits(inputElement) {
+            const val = parseFloat(inputElement.value);
+            const min = parseFloat(inputElement.getAttribute('data-min'));
+            const max = parseFloat(inputElement.getAttribute('data-max'));
+            const indicator = inputElement.nextElementSibling;
+            
+            // Reset styles
+            inputElement.classList.remove('border-rose-500', 'bg-rose-50', 'text-rose-700', 'border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+            indicator.classList.add('hidden');
+            
+            if (isNaN(val)) return;
+
+            // If we have math limits, check them
+            if (!isNaN(min) && !isNaN(max)) {
+                if (val < min || val > max) {
+                    inputElement.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-700');
+                    indicator.innerText = (val < min) ? "LOW" : "HIGH";
+                    indicator.classList.replace('text-emerald-500', 'text-rose-500');
+                    indicator.classList.remove('hidden');
+                } else {
+                    inputElement.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+                    indicator.innerText = "NORMAL";
+                    indicator.classList.replace('text-rose-500', 'text-emerald-500');
+                    indicator.classList.remove('hidden');
+                }
+            }
+        }
+    </script>
 </body>
 </html>
