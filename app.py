@@ -541,9 +541,10 @@ def admin():
     cur.execute('SELECT * FROM orders ORDER BY id DESC')
     orders = cur.fetchall()
     
-    today_orders = len([o for o in orders if 'Completed' not in o['status']])
-    revenue = sum([o['total_bill'] for o in orders if o['status'] == 'Completed'])
-    pending_reports = len([o for o in orders if o['status'] == 'Sample Collected' and not o['uploaded_pdf']])
+    # Safe calculations that won't crash if old database rows have missing data
+    today_orders = len([o for o in orders if o.get('status') != 'Completed'])
+    revenue = sum([float(o.get('total_bill') or 0) for o in orders if o.get('status') == 'Completed'])
+    pending_reports = len([o for o in orders if o.get('status') == 'Sample Collected' and not o.get('uploaded_pdf')])
     
     cur.close()
     conn.close()
