@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Partner | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E1F6F6', 500: '#00A8A8', 600: '#008F8F' }, navy: { 800: '#1A2938', 900: '#0B192C' } } } } }
+    </script>
+</head>
+<body class="bg-[#F8F9FA] text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
+
+    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
+        <div class="h-[72px] flex items-center px-6 border-b border-white/10">
+            <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight leading-tight">CareDrop</h1>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">HQ Control Center</p>
+            </div>
+        </div>
+        <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+            <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition"><i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard</a>
+            <a href="/admin/pos" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition"><i class="fa-solid fa-desktop w-5 text-center"></i> Walk-in POS</a>
+            <a href="/admin/catalog" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition"><i class="fa-solid fa-vial w-5 text-center"></i> Test Catalog</a>
+            <a href="/admin/partners" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500/10 text-brand-400 font-bold text-sm transition"><i class="fa-solid fa-network-wired w-5 text-center"></i> Network Partners</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10 shadow-sm">
+            <div class="flex items-center gap-3">
+                <a href="/admin/partners" class="text-slate-400 hover:text-brand-500 transition text-lg"><i class="fa-solid fa-arrow-left"></i></a>
+                <h2 class="text-xl font-black text-navy-900">Add New Partner</h2>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-[1400px] mx-auto grid grid-cols-1 xl:grid-cols-3 gap-8">
+                
+                <div class="xl:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-8 py-6 border-b border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-hospital-user"></i></div>
+                            <div>
+                                <h3 class="font-black text-navy-900 text-lg">Partner Details</h3>
+                                <p class="text-xs text-slate-500 font-medium">Register a new clinic, hospital, or physician.</p>
+                            </div>
+                        </div>
+                        
+                        <form action="/admin/partner/new" method="POST" class="p-8 space-y-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Partner / Clinic Name *</label>
+                                    <input type="text" name="clinic_name" id="input_name" onkeyup="updatePreview()" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. Sunrise Diagnostic Clinic">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Contact Person</label>
+                                    <input type="text" name="contact_person" id="input_person" onkeyup="updatePreview()" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="e.g. Dr. Rohan Mehta">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Phone Number *</label>
+                                    <input type="text" name="phone" id="input_phone" onkeyup="updatePreview()" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="+91 98765 43210">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Email Address</label>
+                                    <input type="email" name="email" id="input_email" onkeyup="updatePreview()" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="rohan@sunrisediagnostic.com">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Clinic Address</label>
+                                    <input type="text" name="address" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="Sector 12, Yamunanagar, Haryana">
+                                </div>
+                            </div>
+
+                            <hr class="border-slate-100">
+
+                            <div>
+                                <h4 class="font-black text-navy-900 mb-4">Financial & Login Setup</h4>
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-xs font-bold text-brand-600 mb-1">Partner Commission (%) *</label>
+                                        <input type="number" name="margin_pool_pct" value="20" required class="w-full border-2 border-brand-100 px-4 py-3 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-brand-50/30">
+                                        <p class="text-[10px] text-slate-400 mt-1">Percentage of MRP they earn per referral.</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 mb-1">Portal Password *</label>
+                                        <input type="text" name="password" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="Set a temporary password">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex justify-end">
+                                <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 px-8 rounded-xl transition shadow-md">Create Partner Account</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Live Preview Card -->
+                <div class="xl:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-8">
+                        <h3 class="font-black text-navy-900 mb-6 border-b border-slate-100 pb-3">Partner Preview</h3>
+                        
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-2xl text-slate-400"><i class="fa-solid fa-hospital"></i></div>
+                            <div>
+                                <h4 class="font-black text-navy-900 leading-tight" id="prev_name">New Clinic</h4>
+                                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase tracking-widest mt-1 inline-block">Active</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 text-sm">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Partner Code</span>
+                                <span class="font-bold text-navy-900">Auto-Generated</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</span>
+                                <span class="font-bold text-navy-900" id="prev_person">-</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone</span>
+                                <span class="font-medium text-slate-600" id="prev_phone">-</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</span>
+                                <span class="font-medium text-slate-600" id="prev_email">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 bg-blue-50 border border-blue-100 p-4 rounded-xl">
+                            <p class="text-xs text-blue-800 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> Upon creation, the system will generate a printable Digital ID Card for this partner.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function updatePreview() {
+            document.getElementById('prev_name').innerText = document.getElementById('input_name').value || 'New Clinic';
+            document.getElementById('prev_person').innerText = document.getElementById('input_person').value || '-';
+            document.getElementById('prev_phone').innerText = document.getElementById('input_phone').value || '-';
+            document.getElementById('prev_email').innerText = document.getElementById('input_email').value || '-';
+        }
+    </script>
+</body>
+</html>
