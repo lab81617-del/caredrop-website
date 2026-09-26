@@ -77,7 +77,32 @@
                             <h3 class="font-black text-navy-900 mb-4"><i class="fa-solid fa-plus-circle text-brand-500 mr-2"></i>Manual: Add New Test</h3>
                             <form action="/admin/add_test" method="POST" class="space-y-4">
                                 <div><label class="block text-xs font-bold text-slate-600 mb-1">Test Name</label><input type="text" name="name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none"></div>
-                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Category</label><select name="category" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-white"><option>General Health / Blood</option><option>Diabetes</option><option>Heart / Lipid</option><option>Thyroid</option><option>Liver</option></select></div>
+                                
+                                <!-- DYNAMIC CLINICAL CATEGORY LIST -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Category / Department</label>
+                                    <input type="text" name="category" list="category_list" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none" placeholder="Type or select a department...">
+                                    <datalist id="category_list">
+                                        <option value="Hematology & Coagulation">
+                                        <option value="Clinical Pathology">
+                                        <option value="Biochemistry">
+                                        <option value="Immunology & Serology">
+                                        <option value="Microbiology & Infectious Diseases">
+                                        <option value="Histopathology & Cytology">
+                                        <option value="Molecular Diagnostics (PCR)">
+                                        <option value="Endocrinology (Hormones)">
+                                        <option value="Tumor Markers (Oncology)">
+                                        <option value="Cardiac Markers">
+                                        <option value="Allergy Testing">
+                                        <option value="Diabetes & Metabolic">
+                                        <option value="Hepatic / Liver Function">
+                                        <option value="Renal / Kidney Function">
+                                    </datalist>
+                                </div>
+
+                                <!-- DELIVERY TIME -->
+                                <div><label class="block text-xs font-bold text-slate-600 mb-1">Report Delivery (Hours)</label><input type="number" name="delivery_time" value="24" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none"></div>
+
                                 <div><label class="block text-xs font-bold text-slate-600 mb-1">Retail Price (₹)</label><input type="number" name="retail_price" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none"></div>
                                 <div><label class="block text-xs font-bold text-brand-600 mb-1">B2B Base Cost (₹)</label><input type="number" name="b2b_cost" required class="w-full border-2 border-brand-100 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none"></div>
                                 <button type="submit" class="w-full bg-navy-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-sm transition mt-2">Save Test</button>
