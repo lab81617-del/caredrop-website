@@ -225,7 +225,14 @@ def index():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT * FROM tests WHERE is_active = TRUE AND price > 0 ORDER BY id DESC LIMIT 4')
+        cur.execute('''
+            SELECT t.*, COUNT(p.id) as param_count 
+            FROM tests t 
+            LEFT JOIN test_parameters p ON t.id = p.test_id 
+            WHERE t.is_active = TRUE AND t.price > 0 
+            GROUP BY t.id 
+            ORDER BY t.id DESC LIMIT 4
+        ''')
         tests = [dict(row) for row in cur.fetchall()]
         cur.close()
         conn.close()
@@ -239,14 +246,12 @@ def tests_catalogue():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Auto-Heal: Add delivery time column if it doesn't exist
         try:
             cur.execute("ALTER TABLE tests ADD COLUMN IF NOT EXISTS delivery_time VARCHAR(50) DEFAULT '24'")
             conn.commit()
         except:
             conn.rollback()
 
-        # Fetch tests AND count their parameters
         cur.execute('''
             SELECT t.*, COUNT(p.id) as param_count 
             FROM tests t 
@@ -415,7 +420,6 @@ def confirm_booking():
     
     send_email_async(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}</p>")
     
-    # NEW: HQ Admin Notification
     hq_alert = f"""
     <div style='font-family: sans-serif; padding: 20px;'>
         <h2 style='color: #00A8A8;'>New Booking Received</h2>
@@ -430,6 +434,7 @@ def confirm_booking():
     send_email_async('caredrop.ynr@gmail.com', f"🚨 NEW BOOKING: {order_code}", hq_alert)
     
     return jsonify({'status': 'success', 'redirect': '/my_bookings'})
+
 @app.route('/my_bookings')
 def my_bookings():
     if session.get('role') != 'patient': 
@@ -601,23 +606,104 @@ def admin_pos():
 @app.route('/admin/partners')
 @admin_only
 def admin_partners():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM partners ORDER BY id DESC')
+        partners = cur.fetchall()
+        cur.execute("SELECT partner_commission, referral_code FROM orders WHERE is_commission_paid = FALSE AND status = 'Completed'")
+        unpaid_orders = cur.fetchall()
+        
+        ledgers = {p['referral_code']: {'details': p, 'unpaid': 0} for p in partners}
+        for u in unpaid_orders:
+            code = u['referral_code']
+            comm = u['partner_commission'] or 0
+            if code in ledgers and comm > 0:
+                ledgers[code]['unpaid'] += comm
+                
+        cur.close()
+        conn.close()
+        return render_template('admin_partners.html', ledgers=ledgers.values())
+        
+    except Exception as e:
+        # AUTO-HEALER
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS partners (
+                    id SERIAL PRIMARY KEY,
+                    clinic_name VARCHAR(255),
+                    referral_code VARCHAR(50) UNIQUE,
+                    password VARCHAR(255),
+                    margin_pool_pct DECIMAL(4,2) DEFAULT 0.20,
+                    wallet_balance DECIMAL(10,2) DEFAULT 0,
+                    contact_person VARCHAR(255),
+                    phone VARCHAR(50),
+                    email VARCHAR(255),
+                    address TEXT
+                )
+            ''')
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS referral_code VARCHAR(50)")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS partner_commission DECIMAL(10,2) DEFAULT 0")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_commission_paid BOOLEAN DEFAULT FALSE")
+            conn.commit()
+            cur.close()
+            conn.close()
+            return redirect(url_for('admin_partners'))
+        except Exception as auto_heal_error:
+            return f"<div style='padding:20px; font-family:sans-serif;'><h2>Critical DB Error</h2><p>Could not load or auto-heal partners. Error: {str(auto_heal_error)}</p></div>"
+
+@app.route('/admin/partner/new', methods=['GET', 'POST'])
+@admin_only
+def admin_add_partner():
+    if request.method == 'POST':
+        clinic_name = request.form.get('clinic_name')
+        contact_person = request.form.get('contact_person')
+        phone = request.form.get('phone')
+        email = request.form.get('email')
+        address = request.form.get('address')
+        margin_pool_pct = float(request.form.get('margin_pool_pct', 20)) / 100.0
+        password = request.form.get('password')
+        
+        referral_code = f"PT-{random.randint(1000, 9999)}"
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS contact_person VARCHAR(255)")
+            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS phone VARCHAR(50)")
+            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS email VARCHAR(255)")
+            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS address TEXT")
+            conn.commit()
+        except:
+            conn.rollback()
+
+        cur.execute('''
+            INSERT INTO partners (clinic_name, referral_code, password, margin_pool_pct, contact_person, phone, email, address)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+        ''', (clinic_name, referral_code, password, margin_pool_pct, contact_person, phone, email, address))
+        
+        partner_id = cur.fetchone()['id']
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(url_for('admin_partner_success', partner_id=partner_id))
+        
+    return render_template('admin_add_partner.html')
+
+@app.route('/admin/partner/<int:partner_id>/success')
+@admin_only
+def admin_partner_success(partner_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM partners ORDER BY id DESC')
-    partners = cur.fetchall()
-    cur.execute('SELECT partner_commission, referral_code FROM orders WHERE is_commission_paid = FALSE AND partner_commission > 0 AND status = %s', ('Completed',))
-    unpaid_orders = cur.fetchall()
-    
-    ledgers = {}
-    for p in partners: 
-        ledgers[p['referral_code']] = {'details': p, 'unpaid': 0}
-    for u in unpaid_orders:
-        if u['referral_code'] in ledgers: 
-            ledgers[u['referral_code']]['unpaid'] += u['partner_commission']
-        
+    cur.execute('SELECT * FROM partners WHERE id = %s', (partner_id,))
+    partner = cur.fetchone()
     cur.close()
     conn.close()
-    return render_template('admin_partners.html', ledgers=ledgers.values())
+    return render_template('admin_partner_card.html', partner=partner)
 
 @app.route('/admin/mark_commissions_paid/<referral_code>')
 @admin_only
@@ -688,9 +774,9 @@ def admin_upgrade_schema():
 def download_csv_template():
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Test_Name', 'Category', 'Price', 'B2B_Cost', 'Param_Name', 'Unit', 'Method', 'Adult_Male', 'Adult_Female', 'Child', 'Interpretation', 'Additional_Info'])
-    writer.writerow(['Complete Blood Count', 'Blood', '300', '150', 'Hemoglobin (HB)', 'g/dl', 'Photometric', '13.0-17.0', '12.0-15.0', '11.0-14.0', 'Low levels indicate anemia...', 'Fasting not required.'])
-    writer.writerow(['Lipid Profile', 'Heart', '450', '200', 'Total Cholesterol', 'mg/dl', 'Spectrophotometry', '0-200', '0-200', '0-170', 'High levels increase risk of stroke...', '12-hour strict fasting required.'])
+    writer.writerow(['Test_Name', 'Category', 'Price', 'B2B_Cost', 'Delivery_Time_Hours', 'Param_Name', 'Unit', 'Method', 'Adult_Male', 'Adult_Female', 'Child', 'Interpretation', 'Additional_Info'])
+    writer.writerow(['Complete Blood Count', 'Hematology & Coagulation', '300', '150', '24', 'Hemoglobin (HB)', 'g/dl', 'Photometric', '13.0-17.0', '12.0-15.0', '11.0-14.0', 'Low levels indicate anemia...', 'Fasting not required.'])
+    writer.writerow(['Lipid Profile', 'Heart / Lipid', '450', '200', '12', 'Total Cholesterol', 'mg/dl', 'Spectrophotometry', '0-200', '0-200', '0-170', 'High levels increase risk of stroke...', '12-hour strict fasting required.'])
     
     output.seek(0)
     return send_file(io.BytesIO(output.getvalue().encode('utf-8')), mimetype='text/csv', download_name='CareDrop_Bulk_Catalog_Template.csv')
@@ -714,6 +800,12 @@ def bulk_upload_catalog():
         conn = get_db_connection()
         cur = conn.cursor()
         
+        try:
+            cur.execute("ALTER TABLE tests ADD COLUMN IF NOT EXISTS delivery_time VARCHAR(50) DEFAULT '24'")
+            conn.commit()
+        except:
+            conn.rollback()
+        
         for row in csv_input:
             test_name = row.get('Test_Name', '').strip()
             if not test_name: 
@@ -724,8 +816,8 @@ def bulk_upload_catalog():
             
             if not test:
                 cur.execute(
-                    "INSERT INTO tests (name, category, price, b2b_cost) VALUES (%s, %s, %s, %s) RETURNING id",
-                    (test_name, row.get('Category', 'General'), float(row.get('Price', 0) or 0), float(row.get('B2B_Cost', 0) or 0))
+                    "INSERT INTO tests (name, category, price, b2b_cost, delivery_time) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                    (test_name, row.get('Category', 'General'), float(row.get('Price', 0) or 0), float(row.get('B2B_Cost', 0) or 0), row.get('Delivery_Time_Hours', '24'))
                 )
                 test_id = cur.fetchone()['id']
             else:
@@ -751,7 +843,7 @@ def bulk_upload_catalog():
         flash("Bulk upload successful! Catalog and LIMS updated.", "success")
     except Exception as e:
         conn.rollback()
-        flash(f"CSV Error: Ensure columns match exactly. Have you upgraded the schema? Details: {str(e)}", "error")
+        flash(f"CSV Error: Ensure columns match exactly. Details: {str(e)}", "error")
     finally:
         cur.close()
         conn.close()
@@ -910,7 +1002,7 @@ def lims_report(order_id):
     cur.execute('SELECT * FROM test_results WHERE order_id = %s', (order_id,))
     raw_results = cur.fetchall()
     
-    # DEMOGRAPHIC ROUTING
+   # DEMOGRAPHIC ROUTING
     patient_gender = str(order['gender']).lower() if order['gender'] else 'male'
     try:
         age = float(order['age'])
