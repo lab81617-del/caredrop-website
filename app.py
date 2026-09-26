@@ -238,16 +238,34 @@ def tests_catalogue():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT * FROM tests WHERE is_active = TRUE ORDER BY category, name ASC')
+        
+        # Auto-Heal: Add delivery time column if it doesn't exist
+        try:
+            cur.execute("ALTER TABLE tests ADD COLUMN IF NOT EXISTS delivery_time VARCHAR(50) DEFAULT '24'")
+            conn.commit()
+        except:
+            conn.rollback()
+
+        # Fetch tests AND count their parameters
+        cur.execute('''
+            SELECT t.*, COUNT(p.id) as param_count 
+            FROM tests t 
+            LEFT JOIN test_parameters p ON t.id = p.test_id 
+            WHERE t.is_active = TRUE 
+            GROUP BY t.id 
+            ORDER BY t.category, t.name ASC
+        ''')
         tests = [dict(row) for row in cur.fetchall()]
         cur.close()
         conn.close()
+
+        unique_categories = sorted(list(set(t.get('category', 'General Health / Blood') for t in tests if t.get('category'))))
 
         search_query = request.args.get('q', '').lower()
         if search_query:
             tests = [t for t in tests if search_query in str(t.get('name', '')).lower() or search_query in str(t.get('category', '')).lower()]
 
-        return render_template('tests.html', tests=tests)
+        return render_template('tests.html', tests=tests, categories=unique_categories)
     except Exception as e:
         return f"<p>System Error: {str(e)}</p>"
 
@@ -396,8 +414,22 @@ def confirm_booking():
     session['patient_email'] = o_data['email']
     
     send_email_async(o_data['email'], "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}</p>")
+    
+    # NEW: HQ Admin Notification
+    hq_alert = f"""
+    <div style='font-family: sans-serif; padding: 20px;'>
+        <h2 style='color: #00A8A8;'>New Booking Received</h2>
+        <p><strong>Order ID:</strong> {order_code}</p>
+        <p><strong>Patient:</strong> {o_data['full_name']} (Age: {o_data['age']}, {o_data['gender']})</p>
+        <p><strong>Phone:</strong> {o_data['phone']}</p>
+        <p><strong>Tests:</strong> {tests_requested}</p>
+        <p><strong>Time Slot:</strong> {combined_time_slot}</p>
+        <p><strong>Total Bill:</strong> ₹{total_bill}</p>
+    </div>
+    """
+    send_email_async('caredrop.ynr@gmail.com', f"🚨 NEW BOOKING: {order_code}", hq_alert)
+    
     return jsonify({'status': 'success', 'redirect': '/my_bookings'})
-
 @app.route('/my_bookings')
 def my_bookings():
     if session.get('role') != 'patient': 
@@ -733,10 +765,17 @@ def admin_add_test():
     category = request.form.get('category', 'General')
     price = float(request.form.get('retail_price') or 0)
     b2b_cost = float(request.form.get('b2b_cost') or 0)
+    delivery_time = request.form.get('delivery_time', '24')
     
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('INSERT INTO tests (name, category, price, b2b_cost) VALUES (%s, %s, %s, %s)', (name, category, price, b2b_cost))
+    try:
+        cur.execute("ALTER TABLE tests ADD COLUMN IF NOT EXISTS delivery_time VARCHAR(50) DEFAULT '24'")
+        conn.commit()
+    except:
+        conn.rollback()
+        
+    cur.execute('INSERT INTO tests (name, category, price, b2b_cost, delivery_time) VALUES (%s, %s, %s, %s, %s)', (name, category, price, b2b_cost, delivery_time))
     conn.commit()
     cur.close()
     conn.close()
