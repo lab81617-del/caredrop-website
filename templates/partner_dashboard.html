@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Workspace | CareDrop Network</title>
+    <title>Partner Dashboard | CareDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,244 +13,504 @@
         }
     </script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
+<body class="bg-[#F8F9FA] text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
 
-    <!-- PARTNER SIDEBAR -->
-    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
+    <!-- DATA CALCULATION WIDGETS (JINJA) -->
+    {% set in_progress = [] %}
+    {% set ready = [] %}
+    {% set lifetime_revenue = 0 %}
+    {% for o in orders %}
+        {% if o.status != 'Completed' %}{% set _ = in_progress.append(o) %}{% endif %}
+        {% if o.status == 'Completed' %}{% set _ = ready.append(o) %}{% endif %}
+        {% set lifetime_revenue = lifetime_revenue + o.total_bill %}
+    {% endfor %}
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20 relative">
         <div class="h-[72px] flex items-center px-6 border-b border-white/10">
-            <div class="w-8 h-8 bg-white text-navy-900 rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-network-wired"></i></div>
+            <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
             <div>
                 <h1 class="text-lg font-black tracking-tight leading-tight">CareDrop</h1>
-                <p class="text-[9px] text-brand-400 font-bold uppercase tracking-widest">Network Partner</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Diagnostics Made Simpler</p>
             </div>
         </div>
         
         <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
-            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Clinic Workspace</p>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500/10 text-brand-400 font-bold text-sm transition">
-                <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
-            </a>
-            <a href="#" onclick="document.getElementById('newPatientModal').classList.remove('hidden')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition mt-2">
-                <i class="fa-solid fa-user-plus w-5 text-center"></i> Register Patient
-            </a>
+            <a href="/partner/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500 text-white font-bold text-sm shadow-md transition"><i class="fa-solid fa-house w-5 text-center"></i> Dashboard</a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition"><i class="fa-solid fa-users-rays w-5 text-center"></i> Patients</a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition"><i class="fa-solid fa-clipboard-list w-5 text-center"></i> Orders</a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition"><i class="fa-solid fa-flask w-5 text-center"></i> Samples</a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition"><i class="fa-solid fa-file-pdf w-5 text-center"></i> Reports</a>
             
-            <p class="px-3 text-[10px] font-black text-slate-500 uppercase tracking-wider mt-6 mb-2">Financials</p>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-bold text-sm transition">
-                <i class="fa-solid fa-wallet w-5 text-center"></i> Wallet & Payouts
-            </a>
+            <div class="my-4 border-t border-white/10"></div>
+            
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition"><i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i> Statements</a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition"><i class="fa-solid fa-credit-card w-5 text-center"></i> Payments</a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition"><i class="fa-regular fa-circle-question w-5 text-center"></i> Support</a>
         </nav>
 
-        <div class="p-4 border-t border-white/10">
-            <div class="flex items-center gap-3 px-3 py-2">
-                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-user-doctor"></i></div>
-                <div class="flex-1 truncate">
-                    <p class="text-xs font-bold text-white leading-tight truncate">{{ partner.clinic_name }}</p>
-                    <a href="/logout" class="text-[10px] text-slate-400 hover:text-rose-400 font-medium">Logout</a>
-                </div>
+        <!-- Clinic Info Badge -->
+        <div class="p-4">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-1">
+                <div class="w-8 h-8 bg-brand-500/20 text-brand-400 rounded-lg flex items-center justify-center text-sm mb-2"><i class="fa-solid fa-hospital"></i></div>
+                <h4 class="font-bold text-sm text-white leading-tight">{{ partner.clinic_name }}</h4>
+                <p class="text-[10px] text-slate-400 font-medium">Partner ID: {{ partner.referral_code }}</p>
+                <span class="inline-block bg-emerald-500/20 text-emerald-400 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded mt-2 w-max border border-emerald-500/30">Active</span>
             </div>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- TOP HEADER -->
         <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
-            <h2 class="text-xl font-black text-navy-900">Partner Dashboard</h2>
-            <div class="flex items-center gap-4">
-                <span class="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-black shadow-sm">
-                    Code: <span class="text-brand-600">{{ partner.referral_code }}</span>
-                </span>
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-100 flex items-center gap-2"><i class="fa-solid fa-network-wired"></i> CareDrop Network</div>
+            </div>
+            
+            <div class="flex-1 max-w-lg mx-8 hidden md:block">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" placeholder="Search patients, orders, reports..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="relative cursor-pointer text-slate-500 hover:text-brand-500 transition">
+                    <i class="fa-regular fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white text-[8px] font-bold text-white flex items-center justify-center">3</span>
+                </div>
+                <div class="flex items-center gap-3 border-l border-slate-200 pl-6 cursor-pointer group">
+                    <div class="w-9 h-9 bg-navy-900 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-brand-500 transition">
+                        {{ partner.contact_person[:1] if partner.contact_person else 'P' }}
+                    </div>
+                    <div class="hidden sm:block">
+                        <p class="text-sm font-bold text-navy-900 leading-tight">{{ partner.contact_person or 'Partner Admin' }}</p>
+                        <p class="text-[10px] text-slate-500 font-medium">{{ partner.clinic_name }}</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+                </div>
+                <a href="/logout" class="text-slate-400 hover:text-rose-500 transition ml-2" title="Logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
             </div>
         </header>
 
         <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-[1200px] mx-auto">
+            <div class="max-w-[1400px] mx-auto">
                 
-                <!-- Welcome & Metrics -->
-                <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <!-- GREETING & DATE -->
+                <div class="flex justify-between items-end mb-6">
                     <div>
-                        <h3 class="text-2xl font-black text-navy-900 mb-1">Welcome, {{ partner.clinic_name }}</h3>
-                        <p class="text-sm text-slate-500 font-medium">Track your patients and view commission payouts.</p>
+                        <h2 class="text-2xl font-black text-navy-900 mb-1">Good morning, {{ partner.contact_person.split(' ')[0] if partner.contact_person else 'Partner' }}</h2>
+                        <p class="text-sm text-slate-500 font-medium">Here's what's happening with your patients and orders today.</p>
                     </div>
-                    <button onclick="document.getElementById('newPatientModal').classList.remove('hidden')" class="bg-navy-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm transition shadow-lg flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> New Lab Order
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Referrals</p>
-                        <p class="text-2xl font-black text-navy-900">{{ orders|length }}</p>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Reports Ready</p>
-                        <p class="text-2xl font-black text-brand-500">
-                            {{ orders|selectattr('status', 'equalto', 'Completed')|list|length }}
-                        </p>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm bg-emerald-50/50">
-                        <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Wallet Balance</p>
-                        <p class="text-2xl font-black text-emerald-600">₹{{ partner.wallet_balance|int }}</p>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Margin Pool</p>
-                        <p class="text-2xl font-black text-navy-900">{{ (partner.margin_pool_pct * 100)|int }}%</p>
+                    <div class="hidden md:flex items-center gap-2 text-sm font-bold text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+                        <i class="fa-regular fa-calendar text-brand-500"></i> <span id="current-date">Today</span>
                     </div>
                 </div>
 
-                <!-- Referred Orders Table -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="font-black text-navy-900">Recent Patient Orders</h3>
+                <!-- KPI STATS ROW -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <!-- Total Orders -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-start gap-4 transition hover:shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clipboard-check"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">Lifetime Orders</p>
+                            <h3 class="text-3xl font-black text-navy-900 leading-none mb-2">{{ orders|length }}</h3>
+                            <p class="text-[10px] font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-arrow-up"></i> <span>All-time total</span></p>
+                        </div>
+                    </div>
+                    <!-- In Progress -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-start gap-4 transition hover:shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-flask"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">Samples in Progress</p>
+                            <h3 class="text-3xl font-black text-navy-900 leading-none mb-2">{{ in_progress|length }}</h3>
+                            <p class="text-[10px] font-bold text-slate-400">Awaiting laboratory analysis</p>
+                        </div>
+                    </div>
+                    <!-- Reports Ready -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-start gap-4 transition hover:shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">Reports Ready</p>
+                            <h3 class="text-3xl font-black text-navy-900 leading-none mb-2">{{ ready|length }}</h3>
+                            <p class="text-[10px] font-bold text-slate-400">Completed & downloadable</p>
+                        </div>
+                    </div>
+                    <!-- Outstanding Balance -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-start gap-4 transition hover:shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">Unpaid Commissions</p>
+                            <h3 class="text-3xl font-black text-emerald-600 leading-none mb-2">₹{{ partner.wallet_balance|int }}</h3>
+                            <p class="text-[10px] font-bold text-slate-400">Owed by CareDrop HQ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIN GRID: Left (2/3) + Right (1/3) -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    
+                    <!-- LEFT COLUMN -->
+                    <div class="xl:col-span-2 space-y-8">
+                        
+                        <!-- Recent Orders Table -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Recent Orders</h3>
+                                <a href="#" class="text-brand-500 text-xs font-bold hover:text-brand-600">View All Orders &rarr;</a>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left whitespace-nowrap">
+                                    <thead>
+                                        <tr class="bg-white border-b border-slate-100 text-[10px] text-slate-500 uppercase tracking-widest">
+                                            <th class="px-6 py-4 font-black"># ID</th>
+                                            <th class="px-6 py-4 font-black">Patient Name</th>
+                                            <th class="px-6 py-4 font-black">Age / Sex</th>
+                                            <th class="px-6 py-4 font-black">Tests</th>
+                                            <th class="px-6 py-4 font-black">Status</th>
+                                            <th class="px-6 py-4 font-black text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-50 text-sm">
+                                        {% for o in orders[:5] %}
+                                        <tr class="hover:bg-slate-50 transition">
+                                            <td class="px-6 py-4 font-bold text-slate-500 text-xs">{{ o.order_code }}</td>
+                                            <td class="px-6 py-4 font-bold text-navy-900">{{ o.full_name }}</td>
+                                            <td class="px-6 py-4 text-slate-600">{{ o.age }} / {{ str(o.gender)[:1]|upper if o.gender else 'U' }}</td>
+                                            <td class="px-6 py-4">
+                                                <div class="max-w-[150px] truncate text-slate-600" title="{{ o.tests_requested }}">{{ o.tests_requested }}</div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                {% if o.status == 'Completed' %}
+                                                    <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-100">Report Ready</span>
+                                                {% elif o.status == 'Sample Collected' %}
+                                                    <span class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-100">Processing</span>
+                                                {% else %}
+                                                    <span class="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-bold border border-amber-100">Pending</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                {% if o.status == 'Completed' %}
+                                                    <a href="/download_pdf/{{ o.id }}" class="text-brand-500 bg-brand-50 border border-brand-100 hover:bg-brand-500 hover:text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm inline-block">Download</a>
+                                                {% else %}
+                                                    <button class="text-slate-400 border border-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold cursor-not-allowed">Track</button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                                <i class="fa-solid fa-clipboard-list text-3xl mb-3"></i>
+                                                <p class="font-bold text-sm">No orders generated yet.</p>
+                                                <p class="text-xs">Click 'New Order' to register your first patient.</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Lower Double Grid -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            
+                            <!-- Billing Summary -->
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Billing Summary</h3>
+                                    <a href="#" class="text-brand-500 text-xs font-bold">View Statements &rarr;</a>
+                                </div>
+                                <div class="flex gap-4 mb-8">
+                                    <div class="flex-1 border border-slate-100 rounded-xl p-4 bg-slate-50 flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center shrink-0"><i class="fa-solid fa-wallet"></i></div>
+                                        <div>
+                                            <h4 class="text-xl font-black text-navy-900 leading-none mb-1">₹{{ partner.wallet_balance|int }}</h4>
+                                            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Unpaid Commissions</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 border border-slate-100 rounded-xl p-4 bg-slate-50 flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div>
+                                        <div>
+                                            <h4 class="text-xl font-black text-navy-900 leading-none mb-1">₹{{ lifetime_revenue|int }}</h4>
+                                            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Gross Revenue</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center border-t border-slate-100 pt-4">
+                                    <div>
+                                        <p class="text-xs font-bold text-navy-900 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-brand-500"></span> {{ (partner.margin_pool_pct * 100)|int }}%</p>
+                                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Margin Rate</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-navy-900 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> ₹0</p>
+                                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Overdue</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Partner Details -->
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Your Partner Details</h3>
+                                </div>
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-12 h-12 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center text-xl text-slate-400"><i class="fa-solid fa-hospital"></i></div>
+                                    <div>
+                                        <h4 class="font-bold text-navy-900 leading-tight">{{ partner.clinic_name }}</h4>
+                                        <span class="inline-block bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded mt-1">Active</span>
+                                    </div>
+                                </div>
+                                <div class="space-y-3 text-xs mb-6">
+                                    <div class="flex justify-between border-b border-slate-50 pb-2">
+                                        <span class="text-slate-500 font-medium">Partner ID</span>
+                                        <span class="font-bold text-navy-900">{{ partner.referral_code }}</span>
+                                    </div>
+                                    <div class="flex justify-between border-b border-slate-50 pb-2">
+                                        <span class="text-slate-500 font-medium">Contact</span>
+                                        <span class="font-bold text-navy-900">{{ partner.contact_person or '-' }}</span>
+                                    </div>
+                                    <div class="flex justify-between border-b border-slate-50 pb-2">
+                                        <span class="text-slate-500 font-medium">Email</span>
+                                        <span class="font-bold text-navy-900">{{ partner.email or '-' }}</span>
+                                    </div>
+                                    <div class="flex justify-between pb-1">
+                                        <span class="text-slate-500 font-medium">Phone</span>
+                                        <span class="font-bold text-navy-900">{{ partner.phone or '-' }}</span>
+                                    </div>
+                                </div>
+                                <button class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-lg transition text-xs flex items-center justify-center gap-2"><i class="fa-solid fa-pen"></i> Edit Profile Request</button>
+                            </div>
+
+                        </div>
                     </div>
                     
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left whitespace-nowrap">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-500 uppercase tracking-widest">
-                                    <th class="px-6 py-4 font-black">Date & ID</th>
-                                    <th class="px-6 py-4 font-black">Patient</th>
-                                    <th class="px-6 py-4 font-black">Tests</th>
-                                    <th class="px-6 py-4 font-black">Commission</th>
-                                    <th class="px-6 py-4 font-black">Status</th>
-                                    <th class="px-6 py-4 font-black text-right">Report</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                {% for o in orders %}
-                                <tr class="hover:bg-slate-50 transition">
-                                    <td class="px-6 py-4">
-                                        <p class="text-xs font-bold text-slate-700">{{ o.time_slot.split(' | ')[0] }}</p>
-                                        <p class="text-[10px] font-bold text-brand-500">{{ o.order_code }}</p>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="text-sm font-bold text-navy-900">{{ o.full_name }}</p>
-                                        <p class="text-[10px] text-slate-500 font-bold">{{ o.phone }}</p>
-                                    </td>
-                                    <td class="px-6 py-4 text-xs font-bold text-slate-700">{{ o.tests_requested }}</td>
-                                    <td class="px-6 py-4">
-                                        <p class="text-xs font-bold text-emerald-600">+ ₹{{ o.partner_commission|int }}</p>
-                                        {% if o.is_commission_paid %}
-                                            <span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Paid</span>
-                                        {% else %}
-                                            <span class="text-[9px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {% if o.status == 'Completed' %}
-                                            <span class="bg-brand-50 text-brand-600 border border-brand-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Released</span>
-                                        {% elif o.status == 'Sample Collected' %}
-                                            <span class="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Processing</span>
-                                        {% else %}
-                                            <span class="bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        {% if o.status == 'Completed' %}
-                                            <a href="/download_pdf/{{ o.id }}" target="_blank" class="text-xs font-bold bg-white text-brand-600 border border-brand-200 hover:bg-brand-50 px-4 py-2 rounded-lg transition shadow-sm">View Report</a>
-                                        {% else %}
-                                            <span class="text-[10px] font-bold text-slate-400 italic">Not Ready</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center text-slate-400">
-                                        <i class="fa-solid fa-notes-medical text-2xl mb-2"></i>
-                                        <p class="font-bold text-sm">No patients referred yet.</p>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-    <!-- NEW PATIENT MODAL (Hidden by default) -->
-    <div id="newPatientModal" class="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="font-black text-navy-900">Register Patient & Book Test</h3>
-                <button onclick="document.getElementById('newPatientModal').classList.add('hidden')" class="text-slate-400 hover:text-rose-500 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            
-            <div class="p-6 overflow-y-auto">
-                <form action="/partner/book_test" method="POST" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Patient Name</label>
-                            <input type="text" name="full_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Mobile Number</label>
-                            <input type="tel" name="phone" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Age</label>
-                            <input type="number" name="age" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Gender</label>
-                            <select name="gender" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-white">
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Time Slot (Walk-in/Home)</label>
-                            <input type="text" name="time_slot" value="Walk-in (Clinic)" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none">
-                        </div>
+                    <!-- RIGHT COLUMN -->
+                    <div class="xl:col-span-1 space-y-8">
                         
-                        <div class="col-span-2 border-t border-slate-100 pt-4 mt-2">
-                            <label class="block text-xs font-bold text-slate-600 mb-2">Select Tests to Prescribe</label>
-                            <div class="max-h-[150px] overflow-y-auto border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1">
-                                {% for t in tests %}
-                                    <label class="flex items-center gap-3 p-2 hover:bg-white rounded cursor-pointer transition">
-                                        <input type="checkbox" class="test-checkbox w-4 h-4 text-brand-500 rounded focus:ring-brand-500" data-name="{{ t.name }}" data-price="{{ t.price }}" onchange="calculatePartnerBill()">
-                                        <span class="text-sm font-bold text-navy-900 flex-1">{{ t.name }}</span>
-                                        <span class="text-xs font-bold text-slate-500">₹{{ t.price|int }}</span>
-                                    </label>
+                        <!-- Quick Actions Menu -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider flex items-center gap-2 mb-4"><i class="fa-solid fa-bolt text-amber-400"></i> Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button onclick="openModal()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-brand-500/30 flex items-center gap-3 text-sm">
+                                    <i class="fa-solid fa-plus text-lg"></i> New Order / POS
+                                </button>
+                                <a href="#" class="block w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-navy-900 font-bold py-3.5 px-4 rounded-xl transition text-sm flex items-center gap-3"><i class="fa-solid fa-magnifying-glass text-brand-500 w-5"></i> Search Patient</a>
+                                <a href="#" class="block w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-navy-900 font-bold py-3.5 px-4 rounded-xl transition text-sm flex items-center gap-3"><i class="fa-solid fa-location-crosshairs text-brand-500 w-5"></i> Track Samples</a>
+                                <a href="#" class="block w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-navy-900 font-bold py-3.5 px-4 rounded-xl transition text-sm flex items-center gap-3"><i class="fa-solid fa-file-pdf text-brand-500 w-5"></i> View Reports</a>
+                            </div>
+                        </div>
+
+                        <!-- Mini Recent Reports List -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Recent Reports</h3>
+                                <a href="#" class="text-brand-500 text-xs font-bold hover:text-brand-600">View All &rarr;</a>
+                            </div>
+                            <div class="space-y-4">
+                                {% for r in ready[:4] %}
+                                <div class="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                                    <div class="flex items-start gap-3 overflow-hidden">
+                                        <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-regular fa-file-pdf text-xs"></i></div>
+                                        <div class="truncate">
+                                            <p class="font-bold text-navy-900 text-xs truncate" title="{{ r.tests_requested }}">{{ r.tests_requested }}</p>
+                                            <p class="text-[10px] text-slate-400 font-medium">{{ r.full_name }} • {{ r.order_code }}</p>
+                                        </div>
+                                    </div>
+                                    <a href="/download_pdf/{{ r.id }}" class="shrink-0 bg-white border border-slate-200 hover:border-brand-500 hover:text-brand-500 text-slate-500 px-3 py-1.5 rounded text-[10px] font-bold transition ml-2">View</a>
+                                </div>
+                                {% else %}
+                                <p class="text-xs text-slate-400 text-center py-4">No completed reports yet.</p>
                                 {% endfor %}
                             </div>
                         </div>
 
-                        <!-- Hidden fields to hold JS values -->
-                        <input type="hidden" name="tests_requested" id="tests_requested_input">
-                        <input type="hidden" name="total_bill" id="total_bill_input" value="0">
-                        <input type="hidden" name="discount_pct" value="0"> <!-- Standard submission applies default commission logic -->
-
-                        <div class="col-span-2 bg-navy-900 text-white p-4 rounded-xl flex justify-between items-center mt-2">
-                            <span class="text-xs font-bold tracking-widest uppercase text-brand-400">Gross Total</span>
-                            <span class="text-xl font-black" id="display_total">₹0</span>
+                        <!-- Marketing Ad Box -->
+                        <div class="bg-gradient-to-br from-brand-50 to-emerald-50 rounded-2xl border border-brand-100 p-6 relative overflow-hidden shadow-sm">
+                            <div class="absolute -bottom-10 -right-10 opacity-10 text-[120px] text-brand-500"><i class="fa-solid fa-flask-vial"></i></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-8 h-8 bg-brand-500 text-white rounded flex items-center justify-center text-sm shadow-sm"><i class="fa-solid fa-handshake-angle"></i></div>
+                                    <h3 class="font-black text-navy-900 text-sm">Partner Benefits</h3>
+                                </div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">More tests. Better reach. Higher value.</p>
+                                <ul class="space-y-2 text-xs text-navy-900 font-medium">
+                                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Earn {{ (partner.margin_pool_pct * 100)|int }}% per referral</li>
+                                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Real-time sample tracking</li>
+                                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Secure LIMS cloud access</li>
+                                </ul>
+                            </div>
                         </div>
-                    </div>
 
-                    <button type="submit" id="submitBtn" disabled class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 rounded-xl transition shadow-sm mt-4 disabled:bg-slate-300">
-                        Submit Order to CareDrop
-                    </button>
-                </form>
+                    </div>
+                </div>
             </div>
+        </div>
+    </main>
+
+    <!-- NEW ORDER MODAL (Walk-in POS equivalent for Partners) -->
+    <div id="orderModal" class="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform scale-95 transition-transform" id="orderModalContent">
+            
+            <div class="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
+                <div>
+                    <h2 class="text-xl font-black text-navy-900">New Patient Order</h2>
+                    <p class="text-xs text-slate-500 font-medium">Register a patient and apply your partner discount.</p>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500 text-2xl transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form action="/partner/book_test" method="POST" class="p-6 md:p-8" onsubmit="return validateOrder()">
+                
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">1. Patient Demographics</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Full Name *</label>
+                        <input type="text" name="full_name" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Age *</label>
+                        <input type="number" name="age" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Gender *</label>
+                        <select name="gender" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-slate-50">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Phone Number *</label>
+                        <input type="text" name="phone" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-slate-50">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Email Address (For Reports)</label>
+                        <input type="email" name="email" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-slate-50">
+                    </div>
+                </div>
+
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">2. Test Selection & Billing</h3>
+                
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Select Tests *</label>
+                    <div class="max-h-[200px] overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50 space-y-2">
+                        {% for t in tests %}
+                        <label class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg hover:border-brand-500 cursor-pointer transition shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" name="test_check" value="{{ t.name }}" data-price="{{ t.price }}" onchange="calculateTotal()" class="w-4 h-4 text-brand-500 rounded focus:ring-brand-500">
+                                <div>
+                                    <span class="block text-sm font-bold text-navy-900">{{ t.name }}</span>
+                                    <span class="block text-[10px] font-bold text-slate-400">{{ t.category }}</span>
+                                </div>
+                            </div>
+                            <span class="text-sm font-black text-brand-600">₹{{ t.price|int }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="tests_requested" id="tests_requested">
+                    <input type="hidden" name="total_bill" id="total_bill">
+                </div>
+
+                <div class="bg-brand-50 border border-brand-100 rounded-xl p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+                    <div class="w-full md:w-1/2">
+                        <label class="block text-xs font-bold text-brand-600 mb-1">Pass Discount to Patient (%)</label>
+                        <input type="number" name="discount_pct" id="discount_pct" value="0" min="0" max="{{ (partner.margin_pool_pct * 100)|int }}" oninput="calculateTotal()" class="w-full border-2 border-brand-200 px-4 py-2.5 rounded-xl text-sm focus:border-brand-500 focus:outline-none bg-white">
+                        <p class="text-[9px] font-bold text-brand-500 mt-1 uppercase tracking-widest"><i class="fa-solid fa-circle-info"></i> Max allowed: {{ (partner.margin_pool_pct * 100)|int }}%</p>
+                    </div>
+                    
+                    <div class="w-full md:w-1/2 text-right">
+                        <p class="text-xs text-slate-500 font-bold mb-1">Final Patient Bill</p>
+                        <p class="text-4xl font-black text-navy-900 leading-none tracking-tight" id="display_total">₹0</p>
+                        <p class="text-[10px] font-bold text-emerald-600 mt-1 uppercase tracking-widest" id="display_commission">Your Commission: ₹0</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-3 px-6 rounded-xl transition text-sm">Cancel</button>
+                    <button type="submit" id="submit_btn" disabled class="bg-navy-900 text-white font-bold py-3 px-8 rounded-xl transition text-sm shadow-md opacity-50 cursor-not-allowed">Generate Order</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
-        function calculatePartnerBill() {
+        // Set dynamic date
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-IN', options);
+
+        // Modal Logic
+        const modal = document.getElementById('orderModal');
+        const content = document.getElementById('orderModalContent');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+       // POS Calculator Logic
+        const marginPct = {{ partner.margin_pool_pct }}; // e.g. 0.20
+
+        function calculateTotal() {
             let total = 0;
-            let names = [];
-            document.querySelectorAll('.test-checkbox:checked').forEach(cb => {
-                total += parseFloat(cb.getAttribute('data-price'));
-                names.push(cb.getAttribute('data-name'));
+            let testNames = [];
+            
+            const checkboxes = document.querySelectorAll('input[name="test_check"]:checked');
+            checkboxes.forEach(box => {
+                total += parseFloat(box.getAttribute('data-price'));
+                testNames.push(box.value);
             });
+
+            let discountInput = document.getElementById('discount_pct').value;
+            let discountPct = parseFloat(discountInput) || 0;
             
-            document.getElementById('display_total').innerText = '₹' + total;
-            document.getElementById('total_bill_input').value = total;
-            document.getElementById('tests_requested_input').value = names.join(', ');
+            // Cap discount at max margin pool
+            if(discountPct > (marginPct * 100)) {
+                discountPct = marginPct * 100;
+                document.getElementById('discount_pct').value = discountPct;
+            }
+
+            let discountGiven = Math.round(total * (discountPct / 100));
+            let finalBill = total - discountGiven;
+            let partnerComm = Math.round(total * (marginPct - (discountPct / 100)));
+
+            document.getElementById('display_total').innerText = `₹${finalBill}`;
+            document.getElementById('display_commission').innerText = `Your Commission: ₹${partnerComm}`;
             
-            document.getElementById('submitBtn').disabled = (names.length === 0);
+            document.getElementById('tests_requested').value = testNames.join(', ');
+            document.getElementById('total_bill').value = total; // Backend handles final math
+
+            const submitBtn = document.getElementById('submit_btn');
+            if(testNames.length > 0) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-navy-900');
+                submitBtn.classList.add('bg-brand-500', 'hover:bg-brand-600');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-navy-900');
+                submitBtn.classList.remove('bg-brand-500', 'hover:bg-brand-600');
+            }
+        }
+
+        function validateOrder() {
+            if(document.querySelectorAll('input[name="test_check"]:checked').length === 0) {
+                alert("Please select at least one test.");
+                return false;
+            }
+            return true;
         }
     </script>
 </body>
