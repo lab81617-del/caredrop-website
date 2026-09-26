@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reception | CareDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#E1F6F6', 500: '#00A8A8', 600: '#008F8F' }, navy: { 800: '#1A2938', 900: '#0B192C' } } } } }
+    </script>
+</head>
+<body class="bg-[#F8F9FA] text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
+
+    <!-- DATA CALCULATION -->
+    {% set pending = [] %}
+    {% set ready = [] %}
+    {% for o in orders %}
+        {% if o.status == 'Pending' %}{% set _ = pending.append(o) %}{% endif %}
+        {% if o.status == 'Completed' %}{% set _ = ready.append(o) %}{% endif %}
+    {% endfor %}
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
+        <div class="h-[72px] flex items-center px-6 border-b border-white/10">
+            <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight leading-tight">CareDrop</h1>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Diagnostics</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 py-6 px-4 space-y-1 overflow-y-auto" id="sidebar-menu">
+            <button onclick="switchTab('tab-dashboard', this)" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-500 text-white font-bold text-sm transition">
+                <i class="fa-solid fa-house w-5 text-center"></i> Dashboard
+            </button>
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 font-medium text-sm transition mt-2 mb-2">
+                <i class="fa-solid fa-plus w-5 text-center"></i> New Order / POS
+            </button>
+            <button onclick="switchTab('tab-orders', this)" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition">
+                <i class="fa-solid fa-clipboard-list w-5 text-center"></i> Orders & Samples
+            </button>
+            <button class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white font-medium text-sm transition">
+                <i class="fa-solid fa-file-pdf w-5 text-center"></i> Reports
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-white/10 flex items-center gap-3">
+            <div class="w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center font-bold">SR</div>
+            <div>
+                <h4 class="font-bold text-sm text-white leading-tight">Sneha R.</h4>
+                <p class="text-[10px] text-slate-400 font-medium">Receptionist</p>
+            </div>
+            <a href="/logout" class="ml-auto text-slate-400 hover:text-rose-500"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+        </div>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <header class="h-[72px] bg-white border-b border-slate-200 flex items-center px-8 shrink-0 z-10">
+            <div class="w-full max-w-2xl relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="globalSearch" onkeyup="performGlobalSearch()" placeholder="Search patients, orders, reports..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-[1400px] mx-auto">
+                
+                <!-- TAB 1: DASHBOARD -->
+                <div id="tab-dashboard" class="tab-section block">
+                    <h2 class="text-2xl font-black text-navy-900 mb-6">Good morning, Sneha!</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clipboard-list"></i></div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 mb-1">New Orders</p>
+                                <h3 class="text-3xl font-black text-navy-900 leading-none">{{ pending|length }}</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 mb-1">Reports Ready</p>
+                                <h3 class="text-3xl font-black text-navy-900 leading-none">{{ ready|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: ORDERS & SAMPLES -->
+                <div id="tab-orders" class="tab-section hidden">
+                    <div class="flex justify-between items-end mb-6">
+                        <h2 class="text-2xl font-black text-navy-900">Sample Management Queue</h2>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left whitespace-nowrap searchable-table">
+                                <thead>
+                                    <tr class="bg-white border-b border-slate-100 text-[10px] text-slate-500 uppercase tracking-widest">
+                                        <th class="px-6 py-4 font-black">Accession ID</th>
+                                        <th class="px-6 py-4 font-black">Patient Name</th>
+                                        <th class="px-6 py-4 font-black">Tests</th>
+                                        <th class="px-6 py-4 font-black">Status</th>
+                                        <th class="px-6 py-4 font-black text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50 text-sm">
+                                    {% for o in orders %}
+                                    <tr class="hover:bg-slate-50 transition search-row">
+                                        <td class="px-6 py-4 font-bold text-slate-500 text-xs">{{ o.order_code }}</td>
+                                        <td class="px-6 py-4 font-bold text-navy-900">{{ o.full_name }}</td>
+                                        <td class="px-6 py-4 text-xs text-slate-600 truncate max-w-[200px]">{{ o.tests_requested }}</td>
+                                        <td class="px-6 py-4">
+                                            {% if o.status == 'Pending' %}
+                                                <span class="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-bold border border-amber-100">Pending Receipt</span>
+                                            {% elif o.status == 'Rejected' %}
+                                                <span class="bg-rose-50 text-rose-600 px-3 py-1 rounded-full text-[10px] font-bold border border-rose-100">Rejected</span>
+                                            {% else %}
+                                                <span class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-100">{{ o.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            {% if o.status == 'Pending' %}
+                                                <div class="flex justify-end gap-2">
+                                                    <a href="#" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded text-xs font-bold transition border border-emerald-200"><i class="fa-solid fa-check"></i> Accept</a>
+                                                    <!-- REJECT BUTTON -->
+                                                    <a href="/reception/reject_order/{{ o.id }}" class="bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white px-3 py-1.5 rounded text-xs font-bold transition border border-rose-200"><i class="fa-solid fa-xmark"></i> Reject</a>
+                                                </div>
+                                            {% else %}
+                                                <button class="text-slate-400 text-xs font-bold cursor-not-allowed">Processed</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(tabId).classList.add('block');
+            
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('bg-brand-500', 'text-white');
+                el.classList.add('text-slate-300', 'hover:bg-white/5');
+            });
+            if(element) {
+                element.classList.remove('text-slate-300', 'hover:bg-white/5');
+                element.classList.add('bg-brand-500', 'text-white');
+            }
+        }
+
+        function performGlobalSearch() {
+            let input = document.getElementById("globalSearch").value.toLowerCase();
+            let activeTab = document.querySelector('.tab-section.block');
+            if (!activeTab) return;
+            let searchableItems = activeTab.querySelectorAll('.search-row');
+            searchableItems.forEach(item => {
+                let itemData = item.textContent.toLowerCase();
+                item.style.display = itemData.includes(input) ? "" : "none";
+            });
+        }
+    </script>
+</body>
+</html>
