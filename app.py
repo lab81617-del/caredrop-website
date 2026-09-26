@@ -579,13 +579,17 @@ def partner_book_test():
         cur.close()
         conn.close()
         
+        # 7. Send Emails
         if email: 
             send_email_async(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total: ₹{total_bill}.</p>")
+            
+        send_email_async(site_settings.get('email', 'hq@caredrop.in'), 
+                         f"New Partner Booking: {order_code}", 
+                         f"<p>Partner {code} just booked an order for {full_name}. Gross Bill: ₹{gross_bill}.</p>")
             
         return redirect(url_for('partner_dashboard'))
         
     except Exception as e:
-        # THE INTERCEPTOR: If it fails again, tell us exactly why instead of 500 error.
         import traceback
         error_details = traceback.format_exc()
         return f"""
@@ -1207,7 +1211,51 @@ def fix_orders_schema():
     conn.close()
     flash("Orders Database completely rebuilt and ready!", "success")
     return redirect(url_for('admin'))
+# ==========================================
+# RECEPTION PORTAL ROUTES
+# ==========================================
+@app.route('/reception/login', methods=['GET', 'POST'])
+def reception_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        if username == 'reception' and password == 'care2026':
+            session['reception_logged_in'] = True
+            return redirect(url_for('reception_dashboard'))
+        flash('Invalid credentials')
+    return render_template('auth_reception.html')
 
+@app.route('/reception/dashboard')
+def reception_dashboard():
+    if not session.get('reception_logged_in'):
+        return redirect(url_for('reception_login'))
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM orders ORDER BY completed_at DESC")
+    orders = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    return render_template('reception_dashboard.html', orders=orders)
+
+@app.route('/reception/reject_order/<int:order_id>')
+def reception_reject_order(order_id):
+    if not session.get('reception_logged_in'): return redirect(url_for('reception_login'))
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE orders SET status = 'Rejected' WHERE id = %s RETURNING order_code, referral_code", (order_id,))
+    data = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    if data and data['referral_code']:
+        print(f"EMAIL TRIGGER: Alerting Partner {data['referral_code']} that order {data['order_code']} was rejected.")
+        
+    flash(f"Order {data['order_code']} marked as Rejected.", "error")
+    return redirect(url_for('reception_dashboard'))
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
