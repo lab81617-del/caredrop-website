@@ -657,43 +657,71 @@ def admin_partners():
 @app.route('/admin/partner/new', methods=['GET', 'POST'])
 @admin_only
 def admin_add_partner():
-    if request.method == 'POST':
-        clinic_name = request.form.get('clinic_name')
-        contact_person = request.form.get('contact_person')
-        phone = request.form.get('phone')
-        email = request.form.get('email')
-        address = request.form.get('address')
-        margin_pool_pct = float(request.form.get('margin_pool_pct', 20)) / 100.0
-        password = request.form.get('password')
-        
-        referral_code = f"PT-{random.randint(1000, 9999)}"
-        
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        try:
-            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS contact_person VARCHAR(255)")
-            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS phone VARCHAR(50)")
-            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS email VARCHAR(255)")
-            cur.execute("ALTER TABLE partners ADD COLUMN IF NOT EXISTS address TEXT")
+    try:
+        if request.method == 'POST':
+            # 1. Safely extract all form data with fallbacks
+            clinic_name = request.form.get('clinic_name', 'New Clinic')
+            contact_person = request.form.get('contact_person', '')
+            phone = request.form.get('phone', '')
+            email = request.form.get('email', '')
+            address = request.form.get('address', '')
+            password = request.form.get('password', '1234')
+            
+            # 2. Safely convert the percentage to a decimal (prevents ValueError crashes)
+            try:
+                raw_pct = request.form.get('margin_pool_pct')
+                margin_pool_pct = float(raw_pct) / 100.0 if raw_pct else 0.20
+            except:
+                margin_pool_pct = 0.20
+            
+            referral_code = f"PT-{random.randint(1000, 9999)}"
+            
+            conn = get_db_connection()
+            cur = conn.cursor()
+            
+            # 3. Auto-Heal: Add columns ONE BY ONE to ensure database stability
+            columns_to_add = [
+                "contact_person VARCHAR(255)",
+                "phone VARCHAR(50)",
+                "email VARCHAR(255)",
+                "address TEXT"
+            ]
+            for col in columns_to_add:
+                try:
+                    cur.execute(f"ALTER TABLE partners ADD COLUMN IF NOT EXISTS {col}")
+                    conn.commit()
+                except Exception as db_alter_err:
+                    conn.rollback() # Clear the error state and keep going
+
+            # 4. Insert the new partner
+            cur.execute('''
+                INSERT INTO partners (clinic_name, referral_code, password, margin_pool_pct, contact_person, phone, email, address)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+            ''', (clinic_name, referral_code, password, margin_pool_pct, contact_person, phone, email, address))
+            
+            partner_id = cur.fetchone()['id']
             conn.commit()
-        except:
-            conn.rollback()
-
-        cur.execute('''
-            INSERT INTO partners (clinic_name, referral_code, password, margin_pool_pct, contact_person, phone, email, address)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
-        ''', (clinic_name, referral_code, password, margin_pool_pct, contact_person, phone, email, address))
+            cur.close()
+            conn.close()
+            
+            return redirect(url_for('admin_partner_success', partner_id=partner_id))
+            
+        return render_template('admin_add_partner.html')
         
-        partner_id = cur.fetchone()['id']
-        conn.commit()
-        cur.close()
-        conn.close()
-        
-        return redirect(url_for('admin_partner_success', partner_id=partner_id))
-        
-    return render_template('admin_add_partner.html')
-
+    except Exception as e:
+        # THE INTERCEPTOR: If anything fails, print the exact error instead of a 500 page
+        import traceback
+        error_details = traceback.format_exc()
+        return f"""
+        <div style='padding: 40px; font-family: sans-serif; max-width: 800px; margin: auto;'>
+            <h2 style='color: #E11D48; font-weight: 900;'>Backend Crash Intercepted!</h2>
+            <p><strong>Primary Error:</strong> {str(e)}</p>
+            <div style='background: #F1F5F9; padding: 20px; border-radius: 8px; border: 1px solid #CBD5E1; overflow-x: auto; margin-top: 20px;'>
+                <pre style='font-size: 12px; color: #334155; margin: 0;'>{error_details}</pre>
+            </div>
+            <a href='/admin/partners' style='display: inline-block; margin-top: 20px; padding: 10px 20px; background: #0F172A; color: white; text-decoration: none; border-radius: 6px;'>Back to Dashboard</a>
+        </div>
+        """
 @app.route('/admin/partner/<int:partner_id>/success')
 @admin_only
 def admin_partner_success(partner_id):
