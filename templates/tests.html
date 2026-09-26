@@ -106,13 +106,20 @@
         <!-- ================= CENTER COLUMN (Main Content) ================= -->
         <div class="lg:col-span-6 space-y-4 lg:space-y-6">
             
-            <div class="hidden lg:flex bg-gradient-to-r from-brand-50 to-white rounded-2xl p-8 border border-brand-100 shadow-sm relative overflow-hidden flex-col justify-center min-h-[140px]">
-                <h1 class="text-4xl font-black text-navy-900 tracking-tight mb-2">Book Lab Tests</h1>
-                <p class="text-sm text-slate-500 font-medium relative z-10">Find the right test, check the price, and book in minutes.</p>
-                <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-[url('https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=400&q=80')] bg-cover bg-center opacity-20" style="mask-image: linear-gradient(to right, transparent, black);"></div>
+            <!-- RESPONSIVE BANNER WITH PHOTO THEME -->
+            <div class="flex bg-gradient-to-r from-brand-50 to-white rounded-xl lg:rounded-2xl p-6 lg:p-8 border border-brand-100 shadow-sm relative overflow-hidden flex-col justify-center min-h-[120px] lg:min-h-[140px] mb-2 lg:mb-0">
+                <!-- Mobile Background (Faded full cover) -->
+                <div class="lg:hidden absolute inset-0 bg-[url('https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80')] bg-cover bg-center opacity-[0.08] mix-blend-multiply z-0 pointer-events-none"></div>
+                <!-- Desktop Background (Faded right side) -->
+                <div class="hidden lg:block absolute right-0 top-0 bottom-0 w-1/3 bg-[url('https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=400&q=80')] bg-cover bg-center opacity-20 z-0 pointer-events-none" style="-webkit-mask-image: linear-gradient(to right, transparent, black); mask-image: linear-gradient(to right, transparent, black);"></div>
+                
+                <div class="relative z-10">
+                    <h1 class="text-2xl lg:text-4xl font-black text-navy-900 tracking-tight mb-1 lg:mb-2">Book Lab Tests</h1>
+                    <p class="text-xs lg:text-sm text-slate-500 font-medium max-w-[80%] lg:max-w-full">Find the right test, check the price, and book in minutes.</p>
+                </div>
             </div>
 
-            <div class="bg-white p-1.5 lg:p-2 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 flex items-center">
+            <div class="bg-white p-1.5 lg:p-2 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 flex items-center relative z-10">
                 <div class="pl-3 text-slate-400 text-lg"><i class="fa-solid fa-magnifying-glass"></i></div>
                 <input type="text" id="searchInput" onkeyup="filterTests()" placeholder="Search tests or health concerns..." class="w-full pl-3 pr-4 py-2.5 bg-transparent outline-none text-slate-800 font-medium text-sm lg:text-base">
                 <button class="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-lg font-bold transition text-sm shadow-sm hidden md:block">Search</button>
@@ -120,7 +127,7 @@
             </div>
 
             <!-- Mobile App Horizontal Pills -->
-            <div class="lg:hidden flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-4 px-4">
+            <div class="lg:hidden flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-4 px-4 relative z-10">
                 <button onclick="setMobileFilter('', this)" class="cat-btn active bg-brand-500 text-white px-5 py-2 rounded-full font-bold text-[11px] whitespace-nowrap shadow-sm border border-brand-500 transition">All Tests</button>
                 
                 {% for c in categories %}
@@ -129,7 +136,7 @@
             </div>
 
             <!-- Dynamic Test List -->
-            <div class="space-y-3 lg:space-y-4" id="test-list">
+            <div class="space-y-3 lg:space-y-4 relative z-10" id="test-list">
                 {% for t in tests %}
                 <div class="test-card bg-white p-4 lg:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3 lg:gap-4 transition hover:shadow-md" data-name="{{ t.get('name', '') | lower }}" data-category="{{ t.get('category', '') | lower }}">
                     
@@ -150,7 +157,6 @@
                             <p class="text-[10px] lg:text-[11px] text-slate-500 font-medium mb-1.5">Diagnostic evaluation for {{ t.get('category', 'General') }}</p>
                             <span class="block text-base lg:text-lg font-black text-navy-900 mb-1.5">₹{{ t.get('price', 0) | int }}</span>
                             
-                            <!-- DYNAMIC INLINE TAGS -->
                             <div class="flex flex-wrap items-center gap-3 text-[9px] lg:text-[10px] font-bold text-emerald-600">
                                 <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> {{ t.get('delivery_time', '24') }} Hours</span>
                                 <span class="flex items-center gap-1 text-blue-500"><i class="fa-solid fa-list-ol"></i> {{ t.get('param_count', 0) }} Parameters</span>
@@ -224,7 +230,7 @@
         </a>
     </div>
 
-   <!-- Mobile Bottom Navigation Bar -->
+    <!-- Mobile Bottom Navigation Bar -->
     <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-[68px] z-40 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
         <a href="/" class="flex flex-col items-center gap-1 text-slate-400 hover:text-brand-500 transition"><i class="fa-solid fa-house text-lg"></i><span class="text-[9px] font-bold">Home</span></a>
         <a href="/tests" class="flex flex-col items-center gap-1 text-brand-500"><i class="fa-solid fa-magnifying-glass text-lg"></i><span class="text-[9px] font-bold">Search</span></a>
