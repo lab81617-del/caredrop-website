@@ -1185,6 +1185,58 @@ def fix_partners_schema():
     conn.close()
     flash("Partners table completely rebuilt and ready!", "success")
     return redirect(url_for('admin_partners'))
+    @app.route('/admin/fix_orders_schema')
+@admin_only
+def fix_orders_schema():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # 1. Drop the old tables
+    cur.execute("DROP TABLE IF EXISTS test_results CASCADE")
+    cur.execute("DROP TABLE IF EXISTS orders CASCADE")
+    
+    # 2. Rebuild the perfect Orders table
+    cur.execute('''
+        CREATE TABLE orders (
+            id SERIAL PRIMARY KEY,
+            order_code VARCHAR(50) UNIQUE,
+            full_name VARCHAR(255),
+            age VARCHAR(20),
+            gender VARCHAR(20),
+            phone VARCHAR(50),
+            email VARCHAR(255),
+            address TEXT,
+            time_slot VARCHAR(100),
+            tests_requested TEXT,
+            gross_bill DECIMAL(10,2) DEFAULT 0,
+            discount_given DECIMAL(10,2) DEFAULT 0,
+            total_bill DECIMAL(10,2) DEFAULT 0,
+            b2b_total_cost DECIMAL(10,2) DEFAULT 0,
+            referral_code VARCHAR(50),
+            partner_commission DECIMAL(10,2) DEFAULT 0,
+            is_commission_paid BOOLEAN DEFAULT FALSE,
+            status VARCHAR(50) DEFAULT 'Pending',
+            uploaded_pdf TEXT,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # 3. Rebuild the linked LIMS Results table
+    cur.execute('''
+        CREATE TABLE test_results (
+            id SERIAL PRIMARY KEY,
+            order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+            parameter_name VARCHAR(255),
+            observed_value VARCHAR(255),
+            units VARCHAR(50),
+            ref_interval TEXT
+        )
+    ''')
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Orders Database completely rebuilt and ready!", "success")
+    return redirect(url_for('admin'))
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
