@@ -1211,33 +1211,6 @@ def fix_orders_schema():
     conn.close()
     flash("Orders Database completely rebuilt and ready!", "success")
     return redirect(url_for('admin'))
-# ==========================================
-# RECEPTION PORTAL ROUTES
-# ==========================================
-@app.route('/reception/login', methods=['GET', 'POST'])
-def reception_login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        if username == 'reception' and password == 'care2026':
-            session['reception_logged_in'] = True
-            return redirect(url_for('reception_dashboard'))
-        flash('Invalid credentials')
-    return render_template('auth_reception.html')
-
-@app.route('/reception/dashboard')
-def reception_dashboard():
-    if not session.get('reception_logged_in'):
-        return redirect(url_for('reception_login'))
-    
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM orders ORDER BY completed_at DESC")
-    orders = cur.fetchall()
-    cur.close()
-    conn.close()
-    
-    return render_template('reception_dashboard.html', orders=orders)
 
 @app.route('/reception/reject_order/<int:order_id>')
 def reception_reject_order(order_id):
