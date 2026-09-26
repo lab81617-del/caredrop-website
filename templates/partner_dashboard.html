@@ -66,12 +66,19 @@
 
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         
-        <!-- TOP HEADER -->
+        <!-- TOP HEADER & SEARCH -->
         <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
             <div class="flex items-center gap-3">
                 <div class="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-100 flex items-center gap-2"><i class="fa-solid fa-network-wired"></i> CareDrop Network</div>
             </div>
             
+            <div class="flex-1 max-w-lg mx-8 hidden md:block">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="globalSearch" onkeyup="performGlobalSearch()" placeholder="Search patients, orders, reports..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                </div>
+            </div>
+
             <div class="flex items-center gap-6">
                 <button onclick="openModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold py-2 px-5 rounded-lg transition shadow-md flex items-center gap-2 text-sm">
                     <i class="fa-solid fa-plus"></i> New Order
@@ -102,7 +109,7 @@
                     </div>
                 </div>
 
-                <!-- GLOBAL KPI STATS ROW (Always visible) -->
+                <!-- GLOBAL KPI STATS ROW -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-start gap-4">
                         <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clipboard-check"></i></div>
@@ -178,7 +185,7 @@
                                                 </td>
                                             </tr>
                                             {% else %}
-                                            <tr><td colspan="3" class="px-6 py-8 text-center text-slate-400 text-sm">No recent activity.</td></tr>
+                                            <tr><td colspan="3" class="px-6 py-8 text-center text-slate-400 text-sm no-search-results">No recent activity.</td></tr>
                                             {% endfor %}
                                         </tbody>
                                     </table>
@@ -239,7 +246,7 @@
                                         </td>
                                     </tr>
                                     {% else %}
-                                    <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm font-bold">No orders found.</td></tr>
+                                    <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm font-bold no-search-results">No orders found.</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -257,7 +264,7 @@
                         </div>
                         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                             {% for r in ready %}
-                            <div class="border border-slate-200 rounded-xl p-5 flex items-center justify-between bg-slate-50 hover:bg-white hover:border-brand-300 transition shadow-sm">
+                            <div class="report-card border border-slate-200 rounded-xl p-5 flex items-center justify-between bg-slate-50 hover:bg-white hover:border-brand-300 transition shadow-sm">
                                 <div class="flex items-center gap-4 overflow-hidden">
                                     <div class="w-10 h-10 rounded bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf text-lg"></i></div>
                                     <div class="truncate">
@@ -269,7 +276,7 @@
                                 <a href="/download_pdf/{{ r.id }}" class="shrink-0 bg-white border border-slate-200 hover:bg-brand-50 hover:border-brand-200 hover:text-brand-600 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-download"></i> Save</a>
                             </div>
                             {% else %}
-                            <div class="col-span-2 text-center py-12">
+                            <div class="col-span-2 text-center py-12 no-search-results">
                                 <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
                                 <p class="text-slate-500 font-bold text-sm">No completed reports available yet.</p>
                             </div>
@@ -343,7 +350,7 @@
         </div>
     </main>
 
-    <!-- NEW ORDER MODAL (Walk-in POS equivalent for Partners) -->
+    <!-- NEW ORDER MODAL -->
     <div id="orderModal" class="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 opacity-0 transition-opacity">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform scale-95 transition-transform" id="orderModalContent">
             <div class="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
@@ -432,35 +439,53 @@
 
         // --- TAB SWITCHER LOGIC ---
         function switchTab(tabId, element) {
-            // Hide all tab sections
             document.querySelectorAll('.tab-section').forEach(el => {
                 el.classList.add('hidden');
                 el.classList.remove('block');
             });
-            // Show targeted tab
             const target = document.getElementById(tabId);
             if(target) {
                 target.classList.remove('hidden');
                 target.classList.add('block');
             }
-
-            // Reset all nav links
             document.querySelectorAll('.nav-link').forEach(el => {
                 el.classList.remove('bg-brand-500', 'text-white', 'shadow-md');
                 el.classList.add('text-slate-300', 'hover:bg-white/5', 'hover:text-white');
             });
-
-            // Set active state on clicked link
             if(element) {
                 element.classList.remove('text-slate-300', 'hover:bg-white/5', 'hover:text-white');
                 element.classList.add('bg-brand-500', 'text-white', 'shadow-md');
             }
+            // Clear search when switching tabs
+            document.getElementById('globalSearch').value = "";
+            performGlobalSearch();
         }
 
-        // --- MODAL & POS LOGIC ---
+        // --- UNIVERSAL SEARCH LOGIC ---
+        function performGlobalSearch() {
+            let input = document.getElementById("globalSearch").value.toLowerCase();
+            let activeTab = document.querySelector('.tab-section.block');
+            if (!activeTab) return;
+
+            // Search in table rows
+            let tableRows = activeTab.querySelectorAll('tbody tr:not(.no-search-results)');
+            tableRows.forEach(row => {
+                let rowData = row.textContent.toLowerCase();
+                row.style.display = rowData.includes(input) ? "" : "none";
+            });
+
+            // Search in report cards
+            let reportCards = activeTab.querySelectorAll('.report-card');
+            reportCards.forEach(card => {
+                let cardData = card.textContent.toLowerCase();
+                card.style.display = cardData.includes(input) ? "flex" : "none";
+            });
+        }
+
+       // --- MODAL & POS LOGIC ---
         const modal = document.getElementById('orderModal');
         const content = document.getElementById('orderModalContent');
-        const marginPct = {{ partner.margin_pool_pct }}; // e.g. 0.20
+        const marginPct = {{ partner.margin_pool_pct }}; 
 
         function openModal() {
             modal.classList.remove('hidden');
