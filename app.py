@@ -510,46 +510,94 @@ def partner_dashboard():
 @app.route('/partner/book_test', methods=['POST'])
 @partner_required
 def partner_book_test():
-    full_name = request.form.get('full_name')
-    age = request.form.get('age')
-    gender = request.form.get('gender')
-    phone = request.form.get('phone')
-    email = request.form.get('email', '')
-    address = request.form.get('address')
-    time_slot = request.form.get('time_slot')
-    discount_pct = float(request.form.get('discount_pct', 0))
-    tests_requested = request.form.get('tests_requested')
-    gross_bill = float(request.form.get('total_bill', 0))
-    
-    code = session.get('referral_code')
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT margin_pool_pct FROM partners WHERE referral_code = %s', (code,))
-    partner = cur.fetchone()
-    
-    margin_pool_pct = partner['margin_pool_pct'] * 100
-    if discount_pct > margin_pool_pct: 
-        discount_pct = margin_pool_pct 
-    
-    discount_given = round(gross_bill * (discount_pct / 100))
-    total_bill = gross_bill - discount_given
-    partner_commission = round(gross_bill * ((margin_pool_pct - discount_pct) / 100))
-    order_code = f"CD-{random.randint(1000, 9999)}"
+    try:
+        # 1. Safely extract data with fallbacks
+        full_name = request.form.get('full_name')
+        age = request.form.get('age')
+        gender = request.form.get('gender')
+        phone = request.form.get('phone')
+        email = request.form.get('email', '').strip()
+        address = request.form.get('address', 'Clinic Walk-in')
+        time_slot = request.form.get('time_slot', 'Walk-in')
+        tests_requested = request.form.get('tests_requested', '')
+        
+        # 2. Safe float conversions for the financial math
+        try:
+            discount_pct = float(request.form.get('discount_pct') or 0)
+        except:
+            discount_pct = 0.0
+            
+        try:
+            gross_bill = float(request.form.get('total_bill') or 0)
+        except:
+            gross_bill = 0.0
 
-    cur.execute('''
-        INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, referral_code, partner_commission)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
-    ''', (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, code, partner_commission))
-    
-    cur.execute("UPDATE partners SET wallet_balance = wallet_balance + %s WHERE referral_code = %s", (partner_commission, code))
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    if email: 
-        send_email_async(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total: ₹{total_bill}.</p>")
-    return redirect(url_for('partner_dashboard'))
+        code = session.get('referral_code')
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # 3. Safely calculate clinic margin
+        cur.execute('SELECT margin_pool_pct FROM partners WHERE referral_code = %s', (code,))
+        partner = cur.fetchone()
+        db_margin = float(partner['margin_pool_pct'] if partner and partner['margin_pool_pct'] else 0.20)
+        margin_pool_pct = db_margin * 100.0
+        
+        if discount_pct > margin_pool_pct: 
+            discount_pct = margin_pool_pct 
+        
+        discount_given = round(gross_bill * (discount_pct / 100.0))
+        total_bill = gross_bill - discount_given
+        partner_commission = round(gross_bill * ((margin_pool_pct - discount_pct) / 100.0))
+        order_code = f"CD-{random.randint(1000, 9999)}"
 
+        # 4. Insert the Order
+        cur.execute('''
+            INSERT INTO orders (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, referral_code, partner_commission)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
+        ''', (order_code, full_name, age, gender, phone, email, address, time_slot, tests_requested, gross_bill, discount_given, total_bill, code, partner_commission))
+        
+        order_id = cur.fetchone()['id']
+        
+        # 5. Add commission to the clinic's wallet
+        cur.execute("UPDATE partners SET wallet_balance = wallet_balance + %s WHERE referral_code = %s", (partner_commission, code))
+        
+        # 6. LIMS INJECTION (Crucial: Generate the blank lab report parameters)
+        if tests_requested:
+            test_names = [n.strip() for n in tests_requested.split(',')]
+            cur.execute('SELECT id FROM tests WHERE name = ANY(%s)', (test_names,))
+            test_ids = [i['id'] for i in cur.fetchall()]
+            
+            if test_ids:
+                cur.execute('SELECT param_name, unit, ref_range FROM test_parameters WHERE test_id = ANY(%s)', (test_ids,))
+                for p in cur.fetchall():
+                    cur.execute(
+                        "INSERT INTO test_results (order_id, parameter_name, units, ref_interval) VALUES (%s, %s, %s, %s)", 
+                        (order_id, p['param_name'], p['unit'], p['ref_range'])
+                    )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        if email: 
+            send_email_async(email, "CareDrop Booking Confirmed", f"<p>Your test is booked. Order ID: {order_code}. Total: ₹{total_bill}.</p>")
+            
+        return redirect(url_for('partner_dashboard'))
+        
+    except Exception as e:
+        # THE INTERCEPTOR: If it fails again, tell us exactly why instead of 500 error.
+        import traceback
+        error_details = traceback.format_exc()
+        return f"""
+        <div style='padding: 40px; font-family: sans-serif; max-width: 800px; margin: auto;'>
+            <h2 style='color: #E11D48; font-weight: 900;'>Partner POS Crash Intercepted!</h2>
+            <p><strong>Primary Error:</strong> {str(e)}</p>
+            <div style='background: #F1F5F9; padding: 20px; border-radius: 8px; border: 1px solid #CBD5E1; overflow-x: auto; margin-top: 20px;'>
+                <pre style='font-size: 12px; color: #334155; margin: 0;'>{error_details}</pre>
+            </div>
+            <a href='/partner/dashboard' style='display: inline-block; margin-top: 20px; padding: 10px 20px; background: #0F172A; color: white; text-decoration: none; border-radius: 6px;'>Back to Dashboard</a>
+        </div>
+        """
 # ==========================================
 # 6. ADMIN & OPERATIONS MANAGEMENT
 # ==========================================
