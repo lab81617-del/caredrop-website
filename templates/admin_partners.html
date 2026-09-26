@@ -13,7 +13,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
 
-    <!-- SIDEBAR -->
     <aside class="w-64 bg-navy-900 text-white flex flex-col h-full shrink-0 shadow-xl z-20">
         <div class="h-[72px] flex items-center px-6 border-b border-white/10">
             <div class="w-8 h-8 bg-brand-500 text-white rounded-lg flex items-center justify-center text-xl transform -rotate-6 shadow-sm mr-3"><i class="fa-solid fa-notes-medical"></i></div>
@@ -32,12 +31,13 @@
         </nav>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <header class="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
-            <h2 class="text-xl font-black text-navy-900">B2B Partner Commission Ledger</h2>
+            <h2 class="text-xl font-black text-navy-900">Network Partner Ledger</h2>
             <div class="flex items-center gap-4">
-                <span class="bg-brand-50 text-brand-600 border border-brand-100 px-3 py-1.5 rounded-full text-xs font-black shadow-sm">HQ Finance Control</span>
+                <a href="/admin/partner/new" class="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Add New Partner
+                </a>
             </div>
         </header>
 
@@ -49,7 +49,6 @@
                     <p class="text-sm text-slate-500 font-medium">Manage margin pools and settle unpaid commissions with your referring clinics.</p>
                 </div>
 
-                <!-- Ledgers Table -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                         <h3 class="font-black text-navy-900 text-sm uppercase tracking-wider">Active Clinic Ledgers</h3>
@@ -106,7 +105,7 @@
                                 <tr>
                                     <td colspan="5" class="px-6 py-16 text-center text-slate-400">
                                         <i class="fa-solid fa-handshake-slash text-3xl mb-3"></i>
-                                        <p class="font-bold text-sm text-navy-900">No B2B Partners Found.</p>
+                                        <p class="font-bold text-sm text-navy-900">No Network Partners Found.</p>
                                         <p class="text-xs mt-1">Register clinics in your database to start tracking referral commissions.</p>
                                     </td>
                                 </tr>
