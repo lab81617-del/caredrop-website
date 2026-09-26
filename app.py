@@ -1158,43 +1158,14 @@ def debug_email():
             
     html += "</div>"
     return html
-@app.route('/admin/fix_partners_schema')
-@admin_only
-def fix_partners_schema():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    # 1. Nuke the old broken table
-    cur.execute("DROP TABLE IF EXISTS partners CASCADE")
-    # 2. Build the perfect Enterprise table
-    cur.execute('''
-        CREATE TABLE partners (
-            id SERIAL PRIMARY KEY,
-            clinic_name VARCHAR(255),
-            referral_code VARCHAR(50) UNIQUE,
-            password VARCHAR(255),
-            margin_pool_pct DECIMAL(4,2) DEFAULT 0.20,
-            wallet_balance DECIMAL(10,2) DEFAULT 0,
-            contact_person VARCHAR(255),
-            phone VARCHAR(50),
-            email VARCHAR(255),
-            address TEXT
-        )
-    ''')
-    conn.commit()
-    cur.close()
-    conn.close()
-    flash("Partners table completely rebuilt and ready!", "success")
-    return redirect(url_for('admin_partners'))
-    @app.route('/admin/fix_orders_schema')
+@app.route('/admin/fix_orders_schema')
 @admin_only
 def fix_orders_schema():
     conn = get_db_connection()
     cur = conn.cursor()
-    # 1. Drop the old tables
     cur.execute("DROP TABLE IF EXISTS test_results CASCADE")
     cur.execute("DROP TABLE IF EXISTS orders CASCADE")
     
-    # 2. Rebuild the perfect Orders table
     cur.execute('''
         CREATE TABLE orders (
             id SERIAL PRIMARY KEY,
@@ -1220,7 +1191,6 @@ def fix_orders_schema():
         )
     ''')
     
-    # 3. Rebuild the linked LIMS Results table
     cur.execute('''
         CREATE TABLE test_results (
             id SERIAL PRIMARY KEY,
@@ -1237,6 +1207,7 @@ def fix_orders_schema():
     conn.close()
     flash("Orders Database completely rebuilt and ready!", "success")
     return redirect(url_for('admin'))
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
